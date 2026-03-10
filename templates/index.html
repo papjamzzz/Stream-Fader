@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StreamFader — What to Watch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #08090d;
+      --surface:  #0d0f1a;
+      --card:     #11131e;
+      --card2:    #151828;
+      --border:   #1e2235;
+      --muted:    #2a2f48;
+      --text:     #f0f2ff;
+      --dim:      #5a6080;
+      --critic:   #4fc3f7;
+      --audience: #ffb74d;
+      --sweet:    #c678dd;
+      --green:    #66bb6a;
+      --red:      #ef5350;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--surface); }
+    ::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+
+    /* ── HEADER ── */
+    .header {
+      background: linear-gradient(180deg, #0e1020 0%, #08090d 100%);
+      border-bottom: 1px solid rgba(79,195,247,0.1);
+      padding: 13px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 1px 0 rgba(79,195,247,0.06), 0 8px 32px rgba(0,0,0,0.6);
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(79,195,247,0.6) 25%, rgba(198,120,221,0.5) 50%, rgba(255,183,77,0.6) 75%, transparent 100%);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand img {
+      height: 30px;
+      border-radius: 6px;
+    }
+    .brand-name {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .brand-name .b1 { color: #ffffff; }
+    .brand-name .b2 {
+      background: linear-gradient(90deg, var(--critic) 0%, var(--sweet) 50%, var(--audience) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    #last-updated {
+      font-size: 11px;
+      color: var(--dim);
+    }
+    .refresh-btn {
+      background: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 14px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+    .refresh-btn:hover {
+      background: var(--critic);
+      color: #000;
+      border-color: var(--critic);
+    }
+    .refresh-btn.loading {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ── GENRE FILTER ── */
+    .genre-bar {
+      padding: 12px 28px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .genre-bar::-webkit-scrollbar { height: 3px; }
+    .genre-pill {
+      flex-shrink: 0;
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--dim);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Inter', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .genre-pill:hover { border-color: var(--sweet); color: var(--sweet); }
+    .genre-pill.active {
+      background: var(--sweet);
+      border-color: var(--sweet);
+      color: #000;
+    }
+
+    /* ══════════════════════════════════════════════
+       THE FADER — HERO SECTION
+    ══════════════════════════════════════════════ */
+    .fader-section {
+      padding: 28px 28px 24px;
+      background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ambient background glow */
+    .fader-section::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse 30% 80% at 5% 50%, rgba(79,195,247,0.05) 0%, transparent 70%),
+        radial-gradient(ellipse 30% 80% at 95% 50%, rgba(255,183,77,0.05) 0%, transparent 70%),
+        radial-gradient(ellipse 20% 60% at 50% 50%, rgba(198,120,221,0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .fader-labels {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .fader-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .fader-label.left  { color: var(--critic); text-shadow: 0 0 16px rgba(79,195,247,0.6); }
+    .fader-label.right { color: var(--audience); text-shadow: 0 0 16px rgba(255,183,77,0.6); }
+    .fader-sweet-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--sweet);
+      opacity: 0.7;
+      transition: opacity 0.3s;
+    }
+    .fader-sweet-label.active { opacity: 1; text-shadow: 0 0 12px rgba(198,120,221,0.8); }
+
+    .fader-wrap {
+      position: relative;
+      padding: 12px 0;
+    }
+
+    /* tick marks */
+    .fader-ticks {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 0 6px;
+    }
+    .tick {
+      width: 1px;
+      height: 6px;
+      background: var(--muted);
+      border-radius: 1px;
+    }
+    .tick.major { height: 10px; background: var(--dim); }
+
+    /* The actual range input styled as a DJ fader */
+    #blend-fader {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg,
+        var(--critic) 0%,
+        var(--sweet) 50%,
+        var(--audience) 100%
+      );
+      outline: none;
+      cursor: grab;
+      position: relative;
+      z-index: 2;
+    }
+    #blend-fader:active { cursor: grabbing; }
+
+    /* Fader track glow overlay (updates via JS) */
+    #fader-glow {
+      position: absolute;
+      left: 0; right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 6px;
+      border-radius: 3px;
+      pointer-events: none;
+      z-index: 1;
+      transition: opacity 0.2s;
+    }
+
+    /* Webkit thumb — the actual fader knob */
+    #blend-fader::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 56px;
+      border-radius: 5px;
+      background: linear-gradient(180deg, #d0d4e8 0%, #8890b0 40%, #6068888 60%, #4a5070 100%);
+      cursor: grab;
+      border: 1px solid rgba(255,255,255,0.25);
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,0.6),
+        0 0 20px rgba(198,120,221,0.5),
+        0 4px 12px rgba(0,0,0,0.8),
+        inset 0 1px 0 rgba(255,255,255,0.3);
+      transition: box-shadow 0.15s;
+      position: relative;
+      z-index: 10;
+    }
+    #blend-fader::-webkit-slider-thumb:hover {
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,0.6),
+        0 0 30px rgba(198,120,221,0.9),
+        0 4px 16px rgba(0,0,0,0.8),
+        inset 0 1px 0 rgba(255,255,255,0.3);
+    }
+    #blend-fader::-moz-range-thumb {
+      width: 20px;
+      height: 56px;
+      border-radius: 5px;
+      background: linear-gradient(180deg, #d0d4e8 0%, #888 100%);
+      cursor: grab;
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 0 20px rgba(198,120,221,0.5);
+    }
+
+    .fader-readout {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+    }
+    .readout-side {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      transition: color 0.2s;
+    }
+    .readout-side.left { color: var(--critic); }
+    .readout-side.right { color: var(--audience); }
+    #blend-badge {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--sweet);
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    /* ── CONTENT GRID ── */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      padding-bottom: 44px;
+    }
+    @media (max-width: 900px) {
+      .content-grid { grid-template-columns: 1fr; }
+    }
+
+    .column {
+      padding: 20px 28px;
+      border-right: 1px solid var(--border);
+    }
+    .column:last-child { border-right: none; }
+
+    .col-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .col-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+    .col-count {
+      font-size: 10px;
+      background: var(--muted);
+      color: var(--dim);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    /* ── CARDS ── */
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .media-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+    }
+    .media-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      border-radius: 12px 0 0 12px;
+      background: var(--blend-color, var(--sweet));
+      opacity: 0.7;
+      transition: background 0.3s;
+    }
+    .media-card:hover {
+      border-color: rgba(198,120,221,0.3);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .card-rank {
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--muted);
+      width: 28px;
+      text-align: center;
+      flex-shrink: 0;
+      line-height: 1;
+      padding-top: 2px;
+      letter-spacing: -1px;
+      font-variant-numeric: tabular-nums;
+    }
+    .card-rank.top { color: var(--sweet); text-shadow: 0 0 16px rgba(198,120,221,0.5); }
+
+    .card-poster {
+      width: 54px;
+      height: 80px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--muted);
+    }
+    .card-poster-placeholder {
+      width: 54px;
+      height: 80px;
+      border-radius: 6px;
+      background: var(--muted);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--dim);
+    }
+
+    .card-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+    .genre-tag {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--dim);
+      background: var(--muted);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .platform-tag {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .card-scores {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .sub-score {
+      font-size: 10px;
+      color: var(--dim);
+      font-weight: 600;
+    }
+    .sub-score span { font-weight: 700; }
+    .sub-score .c { color: var(--critic); }
+    .sub-score .a { color: var(--audience); }
+
+    .card-score-right {
+      margin-left: auto;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .blend-num {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -1px;
+      transition: color 0.3s;
+    }
+    .blend-label {
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--dim);
+      text-align: center;
+    }
+
+    .release-date {
+      font-size: 10px;
+      color: var(--dim);
+      margin-top: 2px;
+    }
+
+    /* ── EMPTY / ERROR / LOADING ── */
+    .empty-state {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--dim);
+    }
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .empty-state p { font-size: 13px; line-height: 1.6; }
+    .empty-state code {
+      background: var(--muted);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--critic);
+    }
+
+    .loading-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .shimmer {
+      background: linear-gradient(90deg, var(--muted) 0%, var(--card2) 50%, var(--muted) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── BOTTOM INFO BAR ── */
+    #info-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(90deg, #060810 0%, #080a12 100%);
+      border-top: 1px solid rgba(79,195,247,0.15);
+      padding: 0 24px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 300;
+      user-select: none;
+    }
+    #info-bar img {
+      height: 18px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    #info-label {
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--sweet);
+      white-space: nowrap;
+      text-shadow: 0 0 12px rgba(198,120,221,0.5);
+    }
+    #info-sep { color: var(--muted); }
+    #info-text {
+      font-size: 11px;
+      color: var(--dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #data-info {
+      margin-left: auto;
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* card fade-swap animation */
+    .card-list.swapping { opacity: 0; transition: opacity 0.15s; }
+    .card-list.swapping-in { opacity: 1; transition: opacity 0.25s; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<header class="header">
+  <div class="brand">
+    <img src="/static/logo.png" onerror="this.style.display='none'">
+    <div class="brand-name">
+      <span class="b1">stream</span><span class="b2">fader</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="last-updated">—</span>
+    <button class="refresh-btn" onclick="loadContent(true)" id="refresh-btn">↻ Refresh</button>
+    <img src="/static/logo2.png" onerror="this.style.display='none'" style="height:28px;border-radius:6px;margin-left:4px;">
+  </div>
+</header>
+
+<!-- ═══════════════════ GENRE FILTER ═══════════════════ -->
+<div class="genre-bar" id="genre-bar">
+  <button class="genre-pill active" data-genre="All" onclick="setGenre('All',this)">All</button>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     THE FADER — HERO
+══════════════════════════════════════════════ -->
+<section class="fader-section">
+  <div class="fader-labels">
+    <div class="fader-label left">🎭 Critics</div>
+    <div class="fader-sweet-label" id="sweet-label">◈ Sweet Spot</div>
+    <div class="fader-label right">🍿 Audience</div>
+  </div>
+
+  <div class="fader-wrap">
+    <div class="fader-ticks">
+      <div class="tick major"></div>
+      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+      <div class="tick major"></div>
+      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+      <div class="tick major"></div>
+      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+      <div class="tick major"></div>
+      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+      <div class="tick major"></div>
+    </div>
+    <input type="range" id="blend-fader" min="0" max="100" value="50"
+           oninput="onFaderMove(this.value)">
+  </div>
+
+  <div class="fader-readout">
+    <div class="readout-side left" id="critic-pct">50% Critics</div>
+    <div id="blend-badge">Sweet Spot</div>
+    <div class="readout-side right" id="audience-pct">50% Audience</div>
+  </div>
+</section>
+
+<!-- ═══════════════════ CONTENT ═══════════════════ -->
+<div class="content-grid">
+  <!-- MOVIES -->
+  <div class="column">
+    <div class="col-header">
+      <span style="font-size:16px;">🎬</span>
+      <span class="col-title">Movies</span>
+      <span class="col-count" id="movie-count">—</span>
+    </div>
+    <div class="card-list" id="movie-list">
+      <!-- loading skeletons -->
+      <div class="loading-card">
+        <div class="shimmer" style="width:28px;height:28px;border-radius:4px;"></div>
+        <div class="shimmer" style="width:54px;height:80px;border-radius:6px;flex-shrink:0;"></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          <div class="shimmer" style="height:14px;width:80%;"></div>
+          <div class="shimmer" style="height:10px;width:50%;"></div>
+          <div class="shimmer" style="height:10px;width:60%;"></div>
+        </div>
+        <div class="shimmer" style="width:44px;height:40px;border-radius:4px;"></div>
+      </div>
+      <div class="loading-card">
+        <div class="shimmer" style="width:28px;height:28px;border-radius:4px;"></div>
+        <div class="shimmer" style="width:54px;height:80px;border-radius:6px;flex-shrink:0;"></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          <div class="shimmer" style="height:14px;width:70%;"></div>
+          <div class="shimmer" style="height:10px;width:40%;"></div>
+        </div>
+        <div class="shimmer" style="width:44px;height:40px;border-radius:4px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TV -->
+  <div class="column">
+    <div class="col-header">
+      <span style="font-size:16px;">📺</span>
+      <span class="col-title">TV Series</span>
+      <span class="col-count" id="tv-count">—</span>
+    </div>
+    <div class="card-list" id="tv-list">
+      <div class="loading-card">
+        <div class="shimmer" style="width:28px;height:28px;border-radius:4px;"></div>
+        <div class="shimmer" style="width:54px;height:80px;border-radius:6px;flex-shrink:0;"></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          <div class="shimmer" style="height:14px;width:75%;"></div>
+          <div class="shimmer" style="height:10px;width:55%;"></div>
+        </div>
+        <div class="shimmer" style="width:44px;height:40px;border-radius:4px;"></div>
+      </div>
+      <div class="loading-card">
+        <div class="shimmer" style="width:28px;height:28px;border-radius:4px;"></div>
+        <div class="shimmer" style="width:54px;height:80px;border-radius:6px;flex-shrink:0;"></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+          <div class="shimmer" style="height:14px;width:65%;"></div>
+          <div class="shimmer" style="height:10px;width:45%;"></div>
+        </div>
+        <div class="shimmer" style="width:44px;height:40px;border-radius:4px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ INFO BAR ═══════════════════ -->
+<div id="info-bar">
+  <img src="/static/logo2.png" onerror="this.style.display='none'">
+  <span id="info-label">STREAMFADER</span>
+  <span id="info-sep">│</span>
+  <span id="info-text">Move the fader to blend critic and audience scores — find your perfect tonight.</span>
+  <span id="data-info">—</span>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────
+let allMovies = [];
+let allTV     = [];
+let fader     = 50;
+let activeGenre = 'All';
+let allGenres = new Set();
+
+// ── Color math ────────────────────────────────────────
+function lerpColor(c1, c2, t) {
+  const h = s => parseInt(s, 16);
+  const r = Math.round(h(c1.slice(1,3)) + (h(c2.slice(1,3)) - h(c1.slice(1,3))) * t);
+  const g = Math.round(h(c1.slice(3,5)) + (h(c2.slice(3,5)) - h(c1.slice(3,5))) * t);
+  const b = Math.round(h(c1.slice(5,7)) + (h(c2.slice(5,7)) - h(c1.slice(5,7))) * t);
+  return `rgb(${r},${g},${b})`;
+}
+
+function blendColor(f) {
+  // 0=blue, 50=purple, 100=amber
+  const t = f / 100;
+  if (t <= 0.5) return lerpColor('#4fc3f7', '#c678dd', t * 2);
+  return lerpColor('#c678dd', '#ffb74d', (t - 0.5) * 2);
+}
+
+// ── Scoring ──────────────────────────────────────────
+function blendScore(item, f) {
+  const c = item.critic_score   ?? 50;
+  const a = item.audience_score ?? 50;
+  const ratio = f / 100;
+  return Math.round(c * (1 - ratio) + a * ratio);
+}
+
+function filterByGenre(items) {
+  if (activeGenre === 'All') return items;
+  return items.filter(i => i.genres && i.genres.includes(activeGenre));
+}
+
+function top5(items, f) {
+  return filterByGenre(items)
+    .map(i => ({ ...i, blend: blendScore(i, f) }))
+    .sort((a, b) => b.blend - a.blend)
+    .slice(0, 5);
+}
+
+// ── Fader UI ──────────────────────────────────────────
+function onFaderMove(val) {
+  fader = parseInt(val);
+  const col = blendColor(fader);
+  const criticPct  = 100 - fader;
+  const audiencePct = fader;
+
+  document.getElementById('critic-pct').textContent   = `${criticPct}% Critics`;
+  document.getElementById('audience-pct').textContent = `${audiencePct}% Audience`;
+
+  const badge = document.getElementById('blend-badge');
+  if (Math.abs(fader - 50) < 8) {
+    badge.textContent = '◈ Sweet Spot';
+    badge.style.color = '#c678dd';
+    badge.style.borderColor = 'rgba(198,120,221,0.4)';
+    document.getElementById('sweet-label').classList.add('active');
+  } else if (fader < 50) {
+    badge.textContent = '🎭 Critic Mode';
+    badge.style.color = '#4fc3f7';
+    badge.style.borderColor = 'rgba(79,195,247,0.4)';
+    document.getElementById('sweet-label').classList.remove('active');
+  } else {
+    badge.textContent = '🍿 Audience Mode';
+    badge.style.color = '#ffb74d';
+    badge.style.borderColor = 'rgba(255,183,77,0.4)';
+    document.getElementById('sweet-label').classList.remove('active');
+  }
+
+  updateCards(false);
+}
+
+// ── Render ────────────────────────────────────────────
+function formatDate(d) {
+  if (!d) return '';
+  try {
+    return new Date(d).toLocaleDateString('en-US', { month:'short', year:'numeric' });
+  } catch { return d; }
+}
+
+function renderCard(item, rank) {
+  const col = blendColor(fader);
+  const isTop = rank <= 2;
+  const rankClass = isTop ? 'card-rank top' : 'card-rank';
+
+  const providers = (item.providers || []).map(p =>
+    `<span class="platform-tag" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44;">${p.name}</span>`
+  ).join('');
+
+  const genres = (item.genres || []).map(g =>
+    `<span class="genre-tag">${g}</span>`
+  ).join('');
+
+  const critTxt  = item.critic_score   != null ? `<span class="c">${item.critic_score}</span>` : '<span>—</span>';
+  const audTxt   = item.audience_score != null ? `<span class="a">${item.audience_score}</span>` : '<span>—</span>';
+  const rtTxt    = item.rt_score       != null ? `RT ${item.rt_score}%` : '';
+  const imdbTxt  = item.imdb_score     != null ? `IMDb ${item.imdb_score}` : '';
+
+  const posterEl = item.poster
+    ? `<img class="card-poster" src="${item.poster}" alt="${item.title}" loading="lazy" onerror="this.style.display='none'">`
+    : `<div class="card-poster-placeholder">${item.media_type === 'movie' ? '🎬' : '📺'}</div>`;
+
+  const releaseEl = item.release ? `<div class="release-date">${formatDate(item.release)}</div>` : '';
+
+  return `
+    <div class="media-card" style="--blend-color:${col}">
+      <div class="${rankClass}">${rank}</div>
+      ${posterEl}
+      <div class="card-body">
+        <div class="card-title">${item.title}</div>
+        <div class="card-meta">${genres}${providers}</div>
+        <div class="card-scores">
+          <span class="sub-score">🎭 ${critTxt}</span>
+          <span class="sub-score" style="color:var(--muted);">·</span>
+          <span class="sub-score">🍿 ${audTxt}</span>
+        </div>
+        <div class="release-date">${[rtTxt, imdbTxt].filter(Boolean).join(' · ')}</div>
+        ${releaseEl}
+      </div>
+      <div class="card-score-right">
+        <div class="blend-num" style="color:${col}">${item.blend}</div>
+        <div class="blend-label">blend</div>
+      </div>
+    </div>`;
+}
+
+function renderList(containerId, items, countId) {
+  const el = document.getElementById(containerId);
+  const count = document.getElementById(countId);
+  const top = top5(items, fader);
+
+  count.textContent = `${top.length} shown`;
+
+  if (top.length === 0) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="icon">🎬</div>
+      <h3>No matches</h3>
+      <p>Try a different genre or move the fader.</p>
+    </div>`;
+    return;
+  }
+  el.innerHTML = top.map((item, i) => renderCard(item, i + 1)).join('');
+}
+
+function updateCards(animate = true) {
+  const movieList = document.getElementById('movie-list');
+  const tvList    = document.getElementById('tv-list');
+
+  if (animate) {
+    movieList.classList.add('swapping');
+    tvList.classList.add('swapping');
+    setTimeout(() => {
+      renderList('movie-list', allMovies, 'movie-count');
+      renderList('tv-list', allTV, 'tv-count');
+      movieList.classList.remove('swapping');
+      tvList.classList.remove('swapping');
+      movieList.classList.add('swapping-in');
+      tvList.classList.add('swapping-in');
+      setTimeout(() => {
+        movieList.classList.remove('swapping-in');
+        tvList.classList.remove('swapping-in');
+      }, 250);
+    }, 150);
+  } else {
+    renderList('movie-list', allMovies, 'movie-count');
+    renderList('tv-list', allTV, 'tv-count');
+  }
+}
+
+// ── Genre pills ────────────────────────────────────────
+function buildGenrePills() {
+  const bar = document.getElementById('genre-bar');
+  const genres = [...allGenres].sort();
+  bar.innerHTML = `<button class="genre-pill${activeGenre === 'All' ? ' active' : ''}" data-genre="All" onclick="setGenre('All',this)">All</button>`;
+  genres.forEach(g => {
+    const active = activeGenre === g ? ' active' : '';
+    bar.innerHTML += `<button class="genre-pill${active}" data-genre="${g}" onclick="setGenre('${g}',this)">${g}</button>`;
+  });
+}
+
+function setGenre(genre, btn) {
+  activeGenre = genre;
+  document.querySelectorAll('.genre-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  updateCards(true);
+}
+
+// ── Data load ────────────────────────────────────────────
+function showError(msg) {
+  const err = `<div class="empty-state">
+    <div class="icon">🔑</div>
+    <h3>API Keys Needed</h3>
+    <p>Add your free API keys to <code>.env</code> and restart.<br><br>
+    <strong>TMDb:</strong> themoviedb.org/settings/api<br>
+    <strong>OMDb:</strong> omdbapi.com/apikey.aspx</p>
+  </div>`;
+  document.getElementById('movie-list').innerHTML = err;
+  document.getElementById('tv-list').innerHTML = err;
+  document.getElementById('movie-count').textContent = '—';
+  document.getElementById('tv-count').textContent = '—';
+}
+
+async function loadContent(force = false) {
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('loading');
+  btn.textContent = '⟳ Loading…';
+
+  try {
+    const url = `/api/content${force ? '?force=true' : ''}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.error === 'missing_keys') {
+      showError();
+      return;
+    }
+
+    allMovies = data.movies || [];
+    allTV     = data.tv     || [];
+
+    // collect genres
+    allGenres = new Set();
+    [...allMovies, ...allTV].forEach(i => (i.genres || []).forEach(g => allGenres.add(g)));
+    buildGenrePills();
+
+    updateCards(true);
+
+    if (data.fetched_at) {
+      const d = new Date(data.fetched_at);
+      document.getElementById('last-updated').textContent =
+        'Updated ' + d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+    }
+
+    const total = allMovies.length + allTV.length;
+    document.getElementById('data-info').textContent =
+      `${allMovies.length} movies · ${allTV.length} shows · last 90 days`;
+
+    document.getElementById('info-text').textContent =
+      `${total} titles scored from last 90 days — move the fader to find your vibe`;
+
+  } catch (e) {
+    showError();
+  } finally {
+    btn.classList.remove('loading');
+    btn.textContent = '↻ Refresh';
+  }
+}
+
+// ── Boot ─────────────────────────────────────────────────
+onFaderMove(50);
+loadContent(false);
+</script>
+</body>
+</html>
