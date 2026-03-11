@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 load_dotenv()
 OMDB_KEY = os.getenv('OMDB_API_KEY', '')
+TMDB_KEY = os.getenv('TMDB_API_KEY', '')
 CACHE_FILE = 'data/cache.json'
 CACHE_TTL = 3 * 3600  # 3 hours
 
@@ -32,6 +33,37 @@ MOVIE_SEARCH_TERMS = [
     'action', 'thriller', 'comedy', 'drama', 'horror',
     'adventure', 'mystery', 'crime', 'romance', 'sci-fi'
 ]
+
+
+def tmdb_providers(imdb_id):
+    if not TMDB_KEY or not imdb_id:
+        return []
+    try:
+        # Resolve IMDB ID → TMDb movie ID
+        r = requests.get(
+            f'https://api.themoviedb.org/3/find/{imdb_id}',
+            params={'api_key': TMDB_KEY, 'external_source': 'imdb_id'},
+            timeout=8
+        )
+        if not r.ok:
+            return []
+        results = r.json().get('movie_results', [])
+        if not results:
+            return []
+        tmdb_id = results[0]['id']
+
+        # Fetch US streaming providers
+        r2 = requests.get(
+            f'https://api.themoviedb.org/3/movie/{tmdb_id}/watch/providers',
+            params={'api_key': TMDB_KEY},
+            timeout=8
+        )
+        if not r2.ok:
+            return []
+        flatrate = r2.json().get('results', {}).get('US', {}).get('flatrate', [])
+        return [{'name': p['provider_name'], 'color': channel_color(p['provider_name'])} for p in flatrate]
+    except Exception:
+        return []
 
 
 def omdb_fetch(imdb_id=None, title=None, year=None):
@@ -245,7 +277,7 @@ def enrich_movie(raw):
         'poster': omdb.get('Poster') if omdb.get('Poster') != 'N/A' else None,
         'release': release,
         'media_type': 'movie',
-        'providers': [],  # streaming platform data requires TMDb
+        'providers': tmdb_providers(raw.get('imdbID')),
         'genres': [g.strip() for g in omdb.get('Genre', '').split(',')][:3],
         'critic_score': critic,
         'audience_score': audience,
