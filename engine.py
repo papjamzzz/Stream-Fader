@@ -7,7 +7,7 @@ load_dotenv()
 OMDB_KEY = os.getenv('OMDB_API_KEY', '')
 TMDB_KEY = os.getenv('TMDB_API_KEY', '')
 CACHE_FILE = 'data/cache.json'
-CACHE_TTL = 3 * 3600  # 3 hours
+CACHE_TTL = 6 * 3600  # 6 hours
 
 STREAMING_NAMES = [
     'Netflix', 'Hulu', 'Amazon', 'Prime', 'Apple TV',
@@ -214,38 +214,48 @@ def enrich_tv(candidate):
     }
 
 
-# ── Movies via OMDb search ────────────────────────────────────────────────────
+# ── Movies via TMDb discover (no daily limit) + OMDb for scores ───────────────
+
+STREAMING_PROVIDER_IDS = '8|119|350|337|15|531|1899|386'  # Netflix|Prime|AppleTV+|Disney+|Hulu|Paramount+|Max|Peacock
 
 def fetch_movies(days=90):
-    if not OMDB_KEY:
+    if not TMDB_KEY:
         return []
 
-    years = set()
-    cutoff = datetime.now() - timedelta(days=days)
-    for i in range((datetime.now() - cutoff).days // 30 + 2):
-        d = datetime.now() - timedelta(days=30 * i)
-        years.add(str(d.year))
-
+    cutoff = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+    candidates = []
     seen = set()
-    raw = []
-    for year in years:
-        for term in MOVIE_SEARCH_TERMS:
-            try:
-                r = requests.get('http://www.omdbapi.com/', params={
-                    'apikey': OMDB_KEY, 's': term,
-                    'type': 'movie', 'y': year, 'page': 1
-                }, timeout=8)
-                data = r.json()
-                for m in data.get('Search', []):
-                    if m.get('imdbID') and m['imdbID'] not in seen:
-                        seen.add(m['imdbID'])
-                        raw.append(m)
-            except Exception:
-                pass
+
+    # TMDb discover: streaming movies released in last 90 days, sorted by popularity
+    for page in range(1, 4):
+        try:
+            r = requests.get(
+                'https://api.themoviedb.org/3/discover/movie',
+                params={
+                    'api_key': TMDB_KEY,
+                    'sort_by': 'popularity.desc',
+                    'watch_region': 'US',
+                    'with_watch_providers': STREAMING_PROVIDER_IDS,
+                    'primary_release_date.gte': cutoff,
+                    'page': page,
+                },
+                timeout=10
+            )
+            if not r.ok:
+                break
+            for m in r.json().get('results', []):
+                if m['id'] not in seen:
+                    seen.add(m['id'])
+                    candidates.append(m)
+        except Exception:
+            break
+
+    # Cap at 40 candidates to stay well within OMDb daily quota
+    candidates = candidates[:40]
 
     enriched = []
     with ThreadPoolExecutor(max_workers=6) as ex:
-        futures = {ex.submit(enrich_movie, m): m for m in raw}
+        futures = {ex.submit(enrich_movie, m): m for m in candidates}
         for future in as_completed(futures):
             result = future.result()
             if result:
@@ -257,28 +267,74 @@ def fetch_movies(days=90):
     return enriched
 
 
-def enrich_movie(raw):
-    omdb = omdb_fetch(imdb_id=raw.get('imdbID'))
-    if not omdb or omdb.get('Response') == 'False':
+def enrich_movie(tmdb_movie):
+    tmdb_id = tmdb_movie.get('id')
+    if not tmdb_id:
         return None
 
-    critic, audience, rt, mc, imdb_display = parse_scores(omdb)
+    # Get IMDB ID + extra details from TMDb (free, no quota)
+    try:
+        r = requests.get(
+            f'https://api.themoviedb.org/3/movie/{tmdb_id}',
+            params={'api_key': TMDB_KEY, 'append_to_response': 'external_ids,watch/providers'},
+            timeout=8
+        )
+        details = r.json() if r.ok else {}
+    except Exception:
+        details = {}
+
+    imdb_id = (details.get('external_ids') or {}).get('imdb_id') or details.get('imdb_id')
+
+    # Get RT/MC/IMDB scores from OMDb (only if we have IMDB id)
+    critic, audience, rt, mc, imdb_display = None, None, None, None, None
+    if imdb_id and OMDB_KEY:
+        omdb = omdb_fetch(imdb_id=imdb_id)
+        if omdb and omdb.get('Response') != 'False':
+            critic, audience, rt, mc, imdb_display = parse_scores(omdb)
+            # Fallback title/plot from OMDb
+            title    = omdb.get('Title') or tmdb_movie.get('title', 'Unknown')
+            overview = omdb.get('Plot', '')[:220] or (tmdb_movie.get('overview') or '')[:220]
+            poster   = omdb.get('Poster') if omdb.get('Poster') not in (None, 'N/A') else None
+        else:
+            title    = tmdb_movie.get('title', 'Unknown')
+            overview = (tmdb_movie.get('overview') or '')[:220]
+            poster   = None
+    else:
+        title    = tmdb_movie.get('title', 'Unknown')
+        overview = (tmdb_movie.get('overview') or '')[:220]
+        poster   = None
+
+    # Use TMDb poster as fallback
+    if not poster and tmdb_movie.get('poster_path'):
+        poster = f"https://image.tmdb.org/t/p/w500{tmdb_movie['poster_path']}"
+
+    # Use IMDB audience score as fallback if no critic score
+    if audience is None and tmdb_movie.get('vote_average'):
+        audience = round(tmdb_movie['vote_average'] * 10)
+
     if critic is None and audience is None:
         return None
 
-    year = omdb.get('Year', '')
-    release = f'{year}-01-01' if year.isdigit() else ''
+    # Streaming providers from TMDb watch/providers
+    wp = (details.get('watch/providers') or {}).get('results', {}).get('US', {})
+    flatrate = wp.get('flatrate', [])
+    providers = [{'name': p['provider_name'], 'color': channel_color(p['provider_name'])} for p in flatrate]
+
+    release = tmdb_movie.get('release_date', '')
+    genres  = [g['name'] for g in (details.get('genres') or [])][:3]
+    if not genres:
+        genres = [g.strip() for g in (details.get('genre_ids') or [])]
 
     return {
-        'id': raw.get('imdbID'),
-        'imdb_id': raw.get('imdbID'),
-        'title': omdb.get('Title', raw.get('Title', 'Unknown')),
-        'overview': omdb.get('Plot', '')[:220],
-        'poster': omdb.get('Poster') if omdb.get('Poster') != 'N/A' else None,
+        'id': imdb_id or str(tmdb_id),
+        'imdb_id': imdb_id,
+        'title': title,
+        'overview': overview,
+        'poster': poster,
         'release': release,
         'media_type': 'movie',
-        'providers': tmdb_providers(raw.get('imdbID')),
-        'genres': [g.strip() for g in omdb.get('Genre', '').split(',')][:3],
+        'providers': providers,
+        'genres': genres,
         'critic_score': critic,
         'audience_score': audience,
         'rt_score': rt,
