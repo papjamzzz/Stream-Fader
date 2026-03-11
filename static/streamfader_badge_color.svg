@@ -1,0 +1,36 @@
+<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="spec" x1="180" y1="220" x2="1020" y2="960" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#4fc3f7"/>
+    <stop offset="0.5" stop-color="#c678dd"/>
+    <stop offset="1" stop-color="#ffb74d"/>
+  </linearGradient>
+  <linearGradient id="chrome" x1="0" y1="0" x2="250" y2="0">
+    <stop offset="0" stop-color="#5b6270"/>
+    <stop offset="0.18" stop-color="#eef2f6"/>
+    <stop offset="0.36" stop-color="#8b93a1"/>
+    <stop offset="0.52" stop-color="#dfe3ea"/>
+    <stop offset="0.68" stop-color="#727987"/>
+    <stop offset="0.84" stop-color="#f7f9fc"/>
+    <stop offset="1" stop-color="#5d6471"/>
+  </linearGradient>
+  <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="24" result="blur"/>
+    <feColorMatrix in="blur" type="matrix"
+      values="1 0 0 0 0
+              0 1 0 0 0
+              0 0 1 0 0
+              0 0 0 0.40 0"/>
+    <feBlend in="SourceGraphic" mode="screen"/>
+  </filter>
+</defs>
+<rect width="1200" height="1200" rx="260" fill="#08090d"/>
+<rect x="108" y="108" width="984" height="984" rx="220" fill="#0d0f1a" stroke="rgba(255,255,255,.05)"/>
+<rect x="504" y="158" width="192" height="848" rx="96" fill="#06080d"/>
+<rect x="521" y="175" width="158" height="814" rx="79" fill="#0b0e15"/>
+<rect x="248" y="541" width="704" height="72" rx="36" fill="url(#spec)" filter="url(#glow)"/>
+<rect x="418" y="450" width="364" height="255" rx="64" fill="url(#chrome)" filter="url(#glow)"/>
+<path d="M490 505h220" stroke="white" opacity=".27" stroke-width="12" stroke-linecap="round"/>
+<path d="M504 555h192" stroke="#4b525f" opacity=".62" stroke-width="12" stroke-linecap="round"/>
+<text x="305" y="984" font-family="Inter, Arial, sans-serif" font-size="176" font-weight="800" letter-spacing="-9" fill="#f0f2ff">sf</text>
+</svg>

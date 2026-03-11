@@ -1,0 +1,53 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="spec" x1="190" y1="180" x2="840" y2="820" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4fc3f7"/>
+      <stop offset="0.5" stop-color="#c678dd"/>
+      <stop offset="1" stop-color="#ffb74d"/>
+    </linearGradient>
+    <linearGradient id="chrome" x1="420" y1="0" x2="604" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5b6270"/>
+      <stop offset="0.18" stop-color="#eef2f6"/>
+      <stop offset="0.36" stop-color="#8b93a1"/>
+      <stop offset="0.52" stop-color="#dfe3ea"/>
+      <stop offset="0.68" stop-color="#727987"/>
+      <stop offset="0.84" stop-color="#f7f9fc"/>
+      <stop offset="1" stop-color="#5d6471"/>
+    </linearGradient>
+    <linearGradient id="slotFill" x1="0" y1="120" x2="0" y2="904" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#11131e"/>
+      <stop offset="1" stop-color="#090b11"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="22" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 0.42 0"/>
+      <feBlend in="SourceGraphic" mode="screen"/>
+    </filter>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" rx="228" fill="#ffffff"/>
+  <rect x="78" y="78" width="868" height="868" rx="196" fill="#f4f5f8" stroke="rgba(0,0,0,.06)"/>
+
+  <rect x="430" y="122" width="164" height="780" rx="82" fill="#d7dae1"/>
+  <rect x="444" y="138" width="136" height="748" rx="68" fill="#cfd3dc"/>
+
+  <rect x="250" y="482" width="524" height="60" rx="30" fill="#111111" filter="url(#glow)" opacity="0.98"/>
+  <rect x="292" y="503" width="440" height="18" rx="9" fill="white" opacity="0.11" filter="url(#soft)"/>
+
+  <g filter="url(#glow)">
+    <rect x="387" y="405" width="250" height="214" rx="54" fill="url(#chrome)"/>
+    <rect x="408" y="426" width="208" height="172" rx="42" fill="rgba(255,255,255,.09)"/>
+    <path d="M437 440h150" stroke="white" opacity=".30" stroke-width="9" stroke-linecap="round"/>
+    <path d="M445 469h134" stroke="#4b525f" opacity=".55" stroke-width="10" stroke-linecap="round"/>
+    <path d="M451 500h122" stroke="white" opacity=".18" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <rect x="182" y="182" width="660" height="660" rx="148" stroke="#111111" opacity=".08" stroke-width="3"/>
+</svg>

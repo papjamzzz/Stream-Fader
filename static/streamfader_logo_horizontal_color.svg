@@ -1,0 +1,44 @@
+<svg width="2200" height="900" viewBox="0 0 2200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="spec" x1="180" y1="160" x2="1360" y2="700" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#4fc3f7"/>
+    <stop offset="0.52" stop-color="#c678dd"/>
+    <stop offset="1" stop-color="#ffb74d"/>
+  </linearGradient>
+  <linearGradient id="chrome" x1="0" y1="0" x2="250" y2="0">
+    <stop offset="0" stop-color="#5b6270"/>
+    <stop offset="0.18" stop-color="#eef2f6"/>
+    <stop offset="0.36" stop-color="#8b93a1"/>
+    <stop offset="0.52" stop-color="#dfe3ea"/>
+    <stop offset="0.68" stop-color="#727987"/>
+    <stop offset="0.84" stop-color="#f7f9fc"/>
+    <stop offset="1" stop-color="#5d6471"/>
+  </linearGradient>
+  <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="20" result="blur"/>
+    <feColorMatrix in="blur" type="matrix"
+      values="1 0 0 0 0
+              0 1 0 0 0
+              0 0 1 0 0
+              0 0 0 0.40 0"/>
+    <feBlend in="SourceGraphic" mode="screen"/>
+  </filter>
+</defs>
+<rect width="2200" height="900" rx="88" fill="#08090d"/>
+<g transform="translate(70,82)">
+  <rect x="0" y="0" width="700" height="700" rx="165" fill="#0d0f1a" stroke="rgba(255,255,255,.05)"/>
+  <rect x="286" y="52" width="128" height="596" rx="64" fill="#06080d"/>
+  <rect x="297" y="64" width="106" height="572" rx="53" fill="#0b0e15"/>
+  <rect x="110" y="320" width="480" height="58" rx="29" fill="url(#spec)" filter="url(#glow)"/>
+  <rect x="233" y="247" width="234" height="204" rx="48" fill="url(#chrome)" filter="url(#glow)"/>
+  <path d="M281 286h138" stroke="white" opacity=".28" stroke-width="10" stroke-linecap="round"/>
+  <path d="M290 323h122" stroke="#4b525f" opacity=".62" stroke-width="10" stroke-linecap="round"/>
+  <path d="M296 355h112" stroke="white" opacity=".16" stroke-width="6" stroke-linecap="round"/>
+</g>
+<g transform="translate(845,218)">
+  <text x="0" y="248" font-family="Inter, Arial, sans-serif" font-size="250" font-weight="800" letter-spacing="-11" fill="#f0f2ff">stream</text>
+  <text x="860" y="248" font-family="Inter, Arial, sans-serif" font-size="250" font-weight="800" letter-spacing="-11" fill="url(#spec)">fader</text>
+  <rect x="3" y="322" width="1288" height="12" rx="6" fill="url(#spec)" opacity=".45"/>
+  <text x="6" y="428" font-family="Inter, Arial, sans-serif" font-size="58" font-weight="800" letter-spacing="10" fill="#aab1c8" opacity=".9">MOVIE AGGREGATION ON A SPECTRUM</text>
+</g>
+</svg>
