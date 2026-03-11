@@ -2,6 +2,8 @@
 
 > **The fader is the product.**
 
+![StreamFader dashboard](static/screenshots/dashboard.png)
+
 A local dashboard that ranks the best new streaming content by blending critic and audience scores through a DJ-style crossfader. Pull left for the critics. Pull right for the crowd. Find the sweet spot in the middle.
 
 ---
