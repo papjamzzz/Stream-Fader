@@ -110,3 +110,12 @@ MIT
 ---
 
 *See what critics love. See what audiences love. Find what's actually worth watching.*
+
+
+---
+
+## Part of Creative Konsoles
+
+Built by [Creative Konsoles](https://creativekonsoles.com) — tools built using thought.
+
+**[creativekonsoles.com](https://creativekonsoles.com)** &nbsp;·&nbsp; support@creativekonsoles.com
