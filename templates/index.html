@@ -115,17 +115,19 @@
 
     /* ── HERO INTRO ── */
     .hero-intro {
-      padding: 20px 28px 16px;
+      padding: 32px 40px 28px;
       background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
       border-bottom: 1px solid var(--border);
+      text-align: center;
     }
     .hero-headline {
-      font-size: 22px;
+      font-size: 44px;
       font-weight: 900;
-      line-height: 1.25;
+      line-height: 1.15;
       letter-spacing: -0.03em;
       color: var(--text);
-      margin-bottom: 8px;
+      margin-bottom: 0;
+      width: 100%;
     }
     .hero-sub {
       font-size: 13px;
@@ -463,10 +465,11 @@
     .card-poster-wrap {
       position: relative;
       width: 100%;
-      aspect-ratio: 2/2.6;
+      aspect-ratio: 2/2.2;
       background: var(--muted);
       overflow: hidden;
       flex-shrink: 0;
+      flex: 0 0 66%;
     }
     .card-poster {
       width: 100%;
@@ -599,13 +602,10 @@
     .score-pill.aud  { background: rgba(255,183,77,0.15);  color: var(--audience); }
     .score-pill.imdb { background: rgba(245,197,24,0.15);  color: #f5c518; }
     .card-overview {
-      font-size: 11px;
-      color: rgba(240,242,255,0.4);
-      line-height: 1.5;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      font-size: 12px;
+      color: rgba(240,242,255,0.82);
+      line-height: 1.55;
+      overflow: visible;
     }
 
     /* ── EMPTY / ERROR / LOADING ── */
@@ -664,9 +664,9 @@
       background: #0d0f1a;
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 20px;
-      max-width: 780px;
+      max-width: 96vw;
       width: 100%;
-      max-height: 90vh;
+      max-height: 94vh;
       overflow-y: auto;
       position: relative;
       box-shadow: 0 32px 80px rgba(0,0,0,0.7);
@@ -741,10 +741,10 @@
       font-weight: 700;
     }
     .detail-overview {
-      font-size: 14px;
-      color: rgba(240,242,255,0.7);
-      line-height: 1.7;
-      padding: 0 28px 20px;
+      font-size: 16px;
+      color: rgba(240,242,255,0.92);
+      line-height: 1.75;
+      padding: 0 32px 24px;
     }
     .detail-footer {
       padding: 16px 28px 24px;
@@ -838,42 +838,44 @@
 
 <!-- ═══════════════════ HEADER ═══════════════════ -->
 <header class="header" style="flex-direction:column;padding:0;gap:0;">
-  <div style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 32px;">
-    <div class="brand" style="gap:14px;">
-      <img src="/static/streamfader_icon_white_on_black.svg" onerror="this.style.display='none'" style="height:36px;">
-      <div class="brand-name" style="font-size:28px;letter-spacing:-0.03em;">
-        <span class="b1">Stream</span><span class="b2">Fader</span>
+  <!-- Brand row — centered -->
+  <div style="display:flex;align-items:center;justify-content:center;width:100%;padding:22px 32px 16px;position:relative;">
+    <div style="text-align:center;">
+      <div style="font-size:72px;font-weight:900;letter-spacing:-0.04em;line-height:1;">
+        <span style="color:#ffffff;">Stream</span><span style="background:linear-gradient(90deg,var(--critic) 0%,var(--sweet) 50%,var(--audience) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Fader</span>
       </div>
     </div>
-    <div class="header-right">
-      <span id="last-updated" style="font-size:12px;"></span>
+    <div style="position:absolute;right:32px;display:flex;align-items:center;gap:10px;">
+      <span id="last-updated" style="font-size:11px;color:var(--dim);"></span>
       <button class="refresh-btn" onclick="loadContent(true)" id="refresh-btn">↻ Refresh</button>
     </div>
   </div>
-  <!-- Source logos strip -->
+  <!-- Source logos strip — centered -->
   <div style="
     width:100%;
     border-top: 1px solid rgba(255,255,255,0.07);
-    background: rgba(0,0,0,0.3);
-    padding: 10px 32px;
+    background: rgba(0,0,0,0.35);
+    padding: 14px 32px;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
-    overflow-x: auto;
+    gap: 12px;
   ">
-    <span style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,242,255,0.35);white-space:nowrap;margin-right:8px;">Some Of Our Sources Related To Scoring</span>
-    <img src="/static/sources/RottenTomatoesLogoWhite.png" alt="Rotten Tomatoes" style="height:26px;object-fit:contain;opacity:0.85;filter:brightness(1.1);" onerror="this.style.display='none'">
-    <img src="/static/sources/IMBDLogo.png" alt="IMDb" style="height:26px;object-fit:contain;opacity:0.85;" onerror="this.style.display='none'">
-    <img src="/static/sources/LetterboxedLogo.png" alt="Letterboxd" style="height:26px;object-fit:contain;opacity:0.85;" onerror="this.style.display='none'">
-    <img src="/static/sources/TMDBLogo.png" alt="TMDb" style="height:26px;object-fit:contain;opacity:0.85;" onerror="this.style.display='none'">
-    <img src="/static/sources/AllMovieLogo.png" alt="AllMovie" style="height:26px;object-fit:contain;opacity:0.85;" onerror="this.style.display='none'">
-    <img src="/static/sources/FlickMetrixLogo.png" alt="FlickMetrix" style="height:26px;object-fit:contain;opacity:0.85;" onerror="this.style.display='none'">
+    <span style="font-size:14px;font-weight:700;letter-spacing:0.5px;color:rgba(240,242,255,0.55);text-align:center;">Some of the sources added to our secret sauce to get you the right watch, now.</span>
+    <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;">
+      <img src="/static/sources/RottenTomatoesLogoWhite.png" alt="Rotten Tomatoes" style="height:30px;object-fit:contain;opacity:0.9;" onerror="this.style.display='none'">
+      <img src="/static/sources/IMBDLogo.png" alt="IMDb" style="height:30px;object-fit:contain;opacity:0.9;" onerror="this.style.display='none'">
+      <img src="/static/sources/LetterboxedLogo.png" alt="Letterboxd" style="height:30px;object-fit:contain;opacity:0.9;" onerror="this.style.display='none'">
+      <img src="/static/sources/TMDBLogo.png" alt="TMDb" style="height:30px;object-fit:contain;opacity:0.9;" onerror="this.style.display='none'">
+      <img src="/static/sources/AllMovieLogo.png" alt="AllMovie" style="height:30px;object-fit:contain;opacity:0.9;" onerror="this.style.display='none'">
+      <img src="/static/sources/FlickMetrixLogo.png" alt="FlickMetrix" style="height:30px;object-fit:contain;opacity:0.9;" onerror="this.style.display='none'">
+    </div>
   </div>
 </header>
 
 <!-- ═══════════════════ HERO INTRO ═══════════════════ -->
 <div class="hero-intro">
-  <h1 class="hero-headline">Move that fader to blend critic and audience scores.<br>Watch the right movie or series now!</h1>
+  <h1 class="hero-headline">Move that fader to blend critic and audience scores. Watch the right movie or series now!</h1>
 </div>
 
 <!-- ═══════════════════ GENRE FILTER ═══════════════════ -->
@@ -1264,9 +1266,11 @@ function updateCards(animate = true) {
 }
 
 // ── Genre pills ────────────────────────────────────────
+const EXCLUDED_GENRES = new Set(['Sci-Fi & Fantasy', 'Science Fiction', 'Fantasy', 'Adventure']);
+
 function buildGenrePills() {
   const bar = document.getElementById('genre-bar');
-  const genres = [...allGenres].sort();
+  const genres = [...allGenres].filter(g => !EXCLUDED_GENRES.has(g)).sort();
   bar.innerHTML = `<button class="genre-pill${activeGenre === 'All' ? ' active' : ''}" data-genre="All" onclick="setGenre('All',this)">All</button>`;
   genres.forEach(g => {
     const active = activeGenre === g ? ' active' : '';

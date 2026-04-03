@@ -354,7 +354,7 @@ def _enrich_movie(source, item):
                          for p in wp.get('flatrate', [])]
             poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
             title    = details.get('title') or item.get('title', 'Unknown')
-            overview = (details.get('overview') or item.get('overview') or '')[:240]
+            overview = (details.get('overview') or item.get('overview') or '')[:600]
             genres   = [g['name'] for g in (details.get('genres') or [])][:3]
             return _movie_record(imdb_id or str(tmdb_id), imdb_id, title, overview,
                                  poster, item.get('release_date', ''), providers, genres, scores,
@@ -377,7 +377,7 @@ def _enrich_movie(source, item):
                 if t.get('poster_path'):
                     poster = f"https://image.tmdb.org/t/p/w500{t['poster_path']}"
             return _movie_record(imdb_id or str(ids.get('trakt', '')), imdb_id,
-                                 item.get('title', 'Unknown'), (item.get('overview') or '')[:240],
+                                 item.get('title', 'Unknown'), (item.get('overview') or '')[:600],
                                  poster, str(item.get('year', '')), providers,
                                  (item.get('genres') or [])[:3], scores)
     except Exception:
@@ -571,7 +571,7 @@ def _enrich_tv(source, item):
             # Append season number if multi-season show
             title = f"{base_title} — S{current_season}" if num_seasons > 1 else base_title
 
-            overview  = (details.get('overview') or item.get('overview') or '')[:240]
+            overview  = (details.get('overview') or item.get('overview') or '')[:600]
             genres    = [g['name'] for g in (details.get('genres') or [])][:3]
             release   = last_air or details.get('first_air_date', '')
 
@@ -592,7 +592,7 @@ def _enrich_tv(source, item):
             img = show.get('image') or {}
             return _tv_record(
                 str(show['id']), imdb_id, show.get('name', 'Unknown'),
-                strip_html(show.get('summary', ''))[:240],
+                strip_html(show.get('summary', ''))[:600],
                 img.get('medium') or img.get('original'),
                 show.get('premiered', ''),
                 [{'name': channel, 'color': channel_color(channel)}],
@@ -617,7 +617,7 @@ def _enrich_tv(source, item):
                     poster = f"https://image.tmdb.org/t/p/w500{t['poster_path']}"
             return _tv_record(
                 imdb_id or str(ids.get('trakt', '')), imdb_id,
-                item.get('title', 'Unknown'), (item.get('overview') or '')[:240],
+                item.get('title', 'Unknown'), (item.get('overview') or '')[:600],
                 poster, str(item.get('year', '')), providers,
                 (item.get('genres') or [])[:3], scores
             )
