@@ -70,7 +70,7 @@ def omdb_fetch(imdb_id=None, title=None, year=None):
         if year:
             params['y'] = year
     try:
-        r = requests.get('http://www.omdbapi.com/', params=params, timeout=8)
+        r = requests.get('http://www.omdbapi.com/', params=params, timeout=5)
         return r.json() if r.ok else {}
     except Exception:
         return {}
@@ -102,7 +102,7 @@ def mdblist_fetch(imdb_id):
         return {}
     try:
         r = requests.get('https://mdblist.com/api/',
-                         params={'apikey': MDBLIST_KEY, 'i': imdb_id}, timeout=8)
+                         params={'apikey': MDBLIST_KEY, 'i': imdb_id}, timeout=5)
         return r.json() if r.ok else {}
     except Exception:
         return {}
@@ -175,7 +175,7 @@ def tmdb_get(path, params=None):
     if params:
         p.update(params)
     try:
-        r = requests.get(f'https://api.themoviedb.org/3{path}', params=p, timeout=8)
+        r = requests.get(f'https://api.themoviedb.org/3{path}', params=p, timeout=5)
         return r.json() if r.ok else {}
     except Exception:
         return {}
@@ -305,7 +305,7 @@ def fetch_movies():
     for t in trakt_popular_movies(20):
         candidates.append(('trakt_movie', t))
 
-    candidates = candidates[:60]
+    candidates = candidates[:40]
     enriched = []
     with ThreadPoolExecutor(max_workers=8) as ex:
         futures = {ex.submit(_enrich_movie, src, item): (src, item) for src, item in candidates}
@@ -598,6 +598,23 @@ Only return valid JSON. No markdown, no explanation."""
             json.dump({'timestamp': time.time(), 'data': pick}, f)
 
         return pick
+    except Exception:
+        return None
+
+
+# ── Stale cache accessor ─────────────────────────────────────────────────────────
+
+def get_cached_content():
+    """Return cached data immediately. Sets _stale=True if TTL has expired."""
+    if not os.path.exists(CACHE_FILE):
+        return None
+    try:
+        with open(CACHE_FILE) as f:
+            cached = json.load(f)
+        data = cached['data']
+        if time.time() - cached.get('timestamp', 0) >= CACHE_TTL:
+            data['_stale'] = True
+        return data
     except Exception:
         return None
 
