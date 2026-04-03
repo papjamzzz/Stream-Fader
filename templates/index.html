@@ -822,7 +822,6 @@
       </div>
     </div>
     <div style="position:absolute;right:32px;display:flex;align-items:center;gap:10px;">
-      <span id="last-updated" style="font-size:11px;color:var(--dim);"></span>
     </div>
   </div>
   <!-- Source logos strip — centered -->
@@ -1297,13 +1296,7 @@ async function loadContent(force = false) {
 
     updateCards(true);
 
-    if (data.fetched_at) {
-      const d = new Date(data.fetched_at);
-      document.getElementById('last-updated').textContent =
-        'Updated ' + d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
-    }
-
-    const total = allMovies.length + allTV.length;
+const total = allMovies.length + allTV.length;
     document.getElementById('data-info').textContent =
       `${allMovies.length} movies · ${allTV.length} shows · last 90 days`;
 
