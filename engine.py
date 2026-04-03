@@ -226,22 +226,78 @@ def best_scores(imdb_id):
 
 # ── Movies ─────────────────────────────────────────────────────────────────────
 
+MIN_VOTES       = 200    # minimum TMDb vote count — filters out small/limited releases
+MIN_POPULARITY  = 10     # TMDb popularity floor — removes truly obscure titles
+MIN_SCORE       = 60     # combined critic+audience floor — only quality content
+DOC_GENRE_ID    = 99     # TMDb genre ID for Documentary
+
+
+def _passes_filters(item):
+    """Return True if a TMDb movie item clears popularity/vote thresholds."""
+    if item.get('vote_count', 0) < MIN_VOTES:
+        return False
+    if item.get('popularity', 0) < MIN_POPULARITY:
+        return False
+    return True
+
+
+def _passes_score_floor(result):
+    """Drop cards where both scores are very low — not worth showing."""
+    critic   = result.get('critic_score') or 0
+    audience = result.get('audience_score') or 0
+    combined = (critic + audience) / 2 if (critic and audience) else max(critic, audience)
+    return combined >= MIN_SCORE
+
+
 def fetch_movies():
     seen_imdb = set()
     candidates = []
 
     if TMDB_KEY:
         cutoff = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
+
+        # ── Popular mainstream movies on streaming (last 90 days) ──
         for page in range(1, 4):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'primary_release_date.gte': cutoff,
+                'vote_count.gte': MIN_VOTES,
+                'popularity.gte': MIN_POPULARITY,
                 'page': page,
             })
             for m in data.get('results', []):
-                candidates.append(('tmdb_movie', m))
+                if _passes_filters(m):
+                    candidates.append(('tmdb_movie', m))
+
+        # ── Hidden gems: older high-rated films now streaming ──
+        # Sort by rating instead of popularity — surfaces excellent older titles
+        data = tmdb_get('/discover/movie', {
+            'sort_by': 'vote_average.desc',
+            'watch_region': 'US',
+            'with_watch_providers': STREAMING_PROVIDER_IDS,
+            'vote_count.gte': 1000,       # needs real vote base to trust the rating
+            'vote_average.gte': 7.5,
+            'popularity.gte': MIN_POPULARITY,
+            'page': 1,
+        })
+        for m in data.get('results', []):
+            candidates.append(('tmdb_movie', m))
+
+        # ── Top documentaries on streaming ──
+        data = tmdb_get('/discover/movie', {
+            'sort_by': 'vote_average.desc',
+            'watch_region': 'US',
+            'with_watch_providers': STREAMING_PROVIDER_IDS,
+            'with_genres': DOC_GENRE_ID,
+            'vote_count.gte': 200,
+            'vote_average.gte': 7.0,
+            'page': 1,
+        })
+        for m in data.get('results', []):
+            m['_is_doc'] = True
+            candidates.append(('tmdb_movie', m))
 
     for t in trakt_trending_movies(30):
         candidates.append(('trakt_movie', t))
@@ -249,13 +305,13 @@ def fetch_movies():
     for t in trakt_popular_movies(20):
         candidates.append(('trakt_movie', t))
 
-    candidates = candidates[:50]
+    candidates = candidates[:60]
     enriched = []
     with ThreadPoolExecutor(max_workers=8) as ex:
         futures = {ex.submit(_enrich_movie, src, item): (src, item) for src, item in candidates}
         for future in as_completed(futures):
             result = future.result()
-            if result:
+            if result and _passes_score_floor(result):
                 key = result.get('imdb_id') or result.get('id')
                 if key and key not in seen_imdb:
                     seen_imdb.add(key)
@@ -264,7 +320,7 @@ def fetch_movies():
     enriched.sort(key=lambda x: (
         ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
     ), reverse=True)
-    return enriched[:30]
+    return enriched[:35]
 
 
 def _enrich_movie(source, item):
@@ -289,7 +345,8 @@ def _enrich_movie(source, item):
             overview = (details.get('overview') or item.get('overview') or '')[:240]
             genres   = [g['name'] for g in (details.get('genres') or [])][:3]
             return _movie_record(imdb_id or str(tmdb_id), imdb_id, title, overview,
-                                 poster, item.get('release_date', ''), providers, genres, scores)
+                                 poster, item.get('release_date', ''), providers, genres, scores,
+                                 is_doc=item.get('_is_doc', False))
 
         elif source == 'trakt_movie':
             ids = item.get('ids') or {}
@@ -315,10 +372,11 @@ def _enrich_movie(source, item):
         return None
 
 
-def _movie_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores):
+def _movie_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores, is_doc=False):
     return {
         'id': uid, 'imdb_id': imdb_id, 'title': title, 'overview': overview,
         'poster': poster, 'release': release, 'media_type': 'movie',
+        'is_doc': is_doc,
         'providers': providers, 'genres': genres,
         'critic_score': scores.get('critic'), 'audience_score': scores.get('audience'),
         'rt_score': scores.get('rt'), 'rt_audience': scores.get('rt_audience'),
@@ -380,6 +438,8 @@ def fetch_tv():
     seen_final = set()
     deduped = []
     for item in enriched:
+        if not _passes_score_floor(item):
+            continue
         key = item.get('imdb_id') or item.get('id')
         if key and key not in seen_final:
             seen_final.add(key)
