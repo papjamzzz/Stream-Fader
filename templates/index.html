@@ -88,31 +88,6 @@
       align-items: center;
       gap: 12px;
     }
-    #last-updated {
-      font-size: 11px;
-      color: var(--dim);
-    }
-    .refresh-btn {
-      background: var(--muted);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 6px 14px;
-      color: var(--text);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: 'Inter', sans-serif;
-    }
-    .refresh-btn:hover {
-      background: var(--critic);
-      color: #000;
-      border-color: var(--critic);
-    }
-    .refresh-btn.loading {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
 
     /* ── HERO INTRO ── */
     .hero-intro {
@@ -848,7 +823,6 @@
     </div>
     <div style="position:absolute;right:32px;display:flex;align-items:center;gap:10px;">
       <span id="last-updated" style="font-size:11px;color:var(--dim);"></span>
-      <button class="refresh-btn" onclick="loadContent(true)" id="refresh-btn">↻ Refresh</button>
     </div>
   </div>
   <!-- Source logos strip — centered -->
@@ -1302,9 +1276,6 @@ function showError(msg) {
 }
 
 async function loadContent(force = false) {
-  const btn = document.getElementById('refresh-btn');
-  btn.classList.add('loading');
-  btn.textContent = '⟳ Loading…';
 
   try {
     const url = `/api/content${force ? '?force=true' : ''}`;
@@ -1346,9 +1317,6 @@ async function loadContent(force = false) {
 
   } catch (e) {
     showError();
-  } finally {
-    btn.classList.remove('loading');
-    btn.textContent = '↻ Refresh';
   }
 }
 
