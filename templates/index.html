@@ -160,34 +160,42 @@
 
     /* ── GENRE FILTER ── */
     .genre-bar {
-      padding: 16px 32px;
+      padding: 20px 32px;
       display: flex;
-      gap: 10px;
+      gap: 12px;
       overflow-x: auto;
       border-bottom: 1px solid var(--border);
-      background: var(--surface);
+      background: #05060e;
     }
     .genre-bar::-webkit-scrollbar { height: 3px; }
     .genre-pill {
       flex-shrink: 0;
-      padding: 8px 20px;
-      border-radius: 24px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: rgba(240,242,255,0.6);
-      font-size: 13px;
-      font-weight: 700;
+      padding: 12px 28px;
+      border-radius: 8px;
+      border: 2px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.9);
+      font-size: 16px;
+      font-weight: 900;
       cursor: pointer;
       transition: all 0.15s;
       font-family: 'Inter', sans-serif;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 1.5px;
+      text-shadow: 0 0 12px rgba(255,255,255,0.3);
     }
-    .genre-pill:hover { border-color: var(--sweet); color: var(--sweet); }
+    .genre-pill:hover {
+      border-color: var(--sweet);
+      color: #fff;
+      background: rgba(198,120,221,0.12);
+      text-shadow: 0 0 20px rgba(198,120,221,0.8);
+    }
     .genre-pill.active {
       background: var(--sweet);
       border-color: var(--sweet);
       color: #000;
+      text-shadow: none;
+      box-shadow: 0 0 24px rgba(198,120,221,0.6);
     }
 
     /* ══════════════════════════════════════════════
@@ -373,32 +381,52 @@
 
     .column {
       padding: 24px 22px;
-      border-right: 1px solid var(--border);
+      border-right: none;
+      position: relative;
     }
-    .column:last-child { border-right: none; }
+    .column:first-child::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0; bottom: 0;
+      width: 6px;
+      background: linear-gradient(180deg,
+        transparent 0%,
+        rgba(79,195,247,0.6) 10%,
+        rgba(198,120,221,0.8) 50%,
+        rgba(255,183,77,0.6) 90%,
+        transparent 100%
+      );
+      box-shadow:
+        0 0 20px rgba(198,120,221,0.5),
+        0 0 40px rgba(198,120,221,0.2);
+    }
 
     .col-header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 18px;
+      border-bottom: 2px solid rgba(255,255,255,0.08);
     }
     .col-title {
-      font-size: 18px;
+      font-size: 48px;
       font-weight: 900;
-      letter-spacing: 3px;
+      letter-spacing: -1px;
       text-transform: uppercase;
       color: #ffffff;
+      line-height: 1;
+      text-shadow: 0 0 40px rgba(255,255,255,0.15);
     }
     .col-count {
-      font-size: 12px;
+      font-size: 14px;
       background: var(--muted);
       color: rgba(240,242,255,0.5);
-      padding: 3px 10px;
+      padding: 4px 12px;
       border-radius: 12px;
       font-weight: 700;
+      align-self: flex-end;
+      margin-bottom: 6px;
     }
 
     /* ── CARDS — small posters, 3 per column ── */
@@ -507,27 +535,27 @@
     }
 
     .card-body {
-      flex: 1;
-      padding: 12px 14px 14px;
+      flex: 0 0 auto;
+      padding: 16px 16px 18px;
       display: flex;
       flex-direction: column;
-      gap: 7px;
-      /* This is the feature section — big, readable, dominant */
+      gap: 9px;
+      background: linear-gradient(180deg, #13151f 0%, #0d0f1a 100%);
     }
     .card-title {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 900;
       color: #ffffff;
-      line-height: 1.25;
+      line-height: 1.2;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
     }
     .card-year {
-      font-size: 12px;
-      color: rgba(240,242,255,0.4);
+      font-size: 13px;
+      color: rgba(240,242,255,0.45);
       font-weight: 600;
     }
     .card-meta {
@@ -546,25 +574,25 @@
       letter-spacing: 0.3px;
     }
     .platform-tag {
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 0.3px;
-      padding: 4px 10px;
-      border-radius: 5px;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.4px;
+      padding: 5px 12px;
+      border-radius: 6px;
       text-transform: uppercase;
     }
     .card-score-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 5px;
+      gap: 6px;
       align-items: center;
       margin-top: 2px;
     }
     .score-pill {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 900;
-      padding: 4px 9px;
-      border-radius: 5px;
+      padding: 5px 10px;
+      border-radius: 6px;
       letter-spacing: 0.02em;
     }
     .score-pill.rt   { background: rgba(79,195,247,0.15); color: var(--critic); }
@@ -809,31 +837,43 @@
 <body>
 
 <!-- ═══════════════════ HEADER ═══════════════════ -->
-<header class="header">
-  <div class="brand">
-    <img src="/static/streamfader_icon_white_on_black.svg" onerror="this.style.display='none'">
-    <div class="brand-name">
-      <span class="b1">Stream</span><span class="b2">Fader</span>
+<header class="header" style="flex-direction:column;padding:0;gap:0;">
+  <div style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 32px;">
+    <div class="brand" style="gap:14px;">
+      <img src="/static/streamfader_icon_white_on_black.svg" onerror="this.style.display='none'" style="height:36px;">
+      <div class="brand-name" style="font-size:28px;letter-spacing:-0.03em;">
+        <span class="b1">Stream</span><span class="b2">Fader</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <span id="last-updated" style="font-size:12px;"></span>
+      <button class="refresh-btn" onclick="loadContent(true)" id="refresh-btn">↻ Refresh</button>
     </div>
   </div>
-  <div class="header-right">
-    <span id="last-updated">Loading…</span>
-    <button class="refresh-btn" onclick="loadContent(true)" id="refresh-btn">↻ Refresh</button>
-    <img src="/static/streamfader_badge_color.svg" onerror="this.style.display='none'" style="height:28px;border-radius:6px;margin-left:4px;">
+  <!-- Source logos strip -->
+  <div style="
+    width:100%;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    background: rgba(0,0,0,0.3);
+    padding: 10px 32px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+  ">
+    <span style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,242,255,0.35);white-space:nowrap;margin-right:8px;">Some Of Our Sources Related To Scoring</span>
+    <img src="/static/sources/RottenTomatoesLogoWhite.png" alt="Rotten Tomatoes" style="height:26px;object-fit:contain;opacity:0.85;filter:brightness(1.1);" onerror="this.style.display='none'">
+    <img src="/static/sources/IMBDLogo.png" alt="IMDb" style="height:26px;object-fit:contain;opacity:0.85;" onerror="this.style.display='none'">
+    <img src="/static/sources/LetterboxedLogo.png" alt="Letterboxd" style="height:26px;object-fit:contain;opacity:0.85;" onerror="this.style.display='none'">
+    <img src="/static/sources/TMDBLogo.png" alt="TMDb" style="height:26px;object-fit:contain;opacity:0.85;" onerror="this.style.display='none'">
+    <img src="/static/sources/AllMovieLogo.png" alt="AllMovie" style="height:26px;object-fit:contain;opacity:0.85;" onerror="this.style.display='none'">
+    <img src="/static/sources/FlickMetrixLogo.png" alt="FlickMetrix" style="height:26px;object-fit:contain;opacity:0.85;" onerror="this.style.display='none'">
   </div>
 </header>
 
 <!-- ═══════════════════ HERO INTRO ═══════════════════ -->
 <div class="hero-intro">
   <h1 class="hero-headline">Move that fader to blend critic and audience scores.<br>Watch the right movie or series now!</h1>
-  <p class="hero-sub">Movies on the left. Series on the right. Slide toward critics for acclaimed picks, toward audience for crowd-pleasers — or land in the middle. Netflix, Hulu, Prime, Max, and more.</p>
-  <div class="hero-sources">
-    <span class="hero-sources-label">Scores from</span>
-    <span class="source-tag">Rotten Tomatoes</span>
-    <span class="source-tag">Metacritic</span>
-    <span class="source-tag">IMDb</span>
-    <span class="source-tag">Letterboxd</span>
-  </div>
 </div>
 
 <!-- ═══════════════════ GENRE FILTER ═══════════════════ -->
