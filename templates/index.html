@@ -396,6 +396,21 @@
       font-variant-numeric: tabular-nums;
     }
     .card-rank.top { color: var(--sweet); text-shadow: 0 0 16px rgba(198,120,221,0.5); }
+    .doc-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(255,183,77,0.15);
+      color: #ffb74d;
+      border: 1px solid rgba(255,183,77,0.4);
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 2px 5px;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
 
     .card-poster {
       width: 54px;
@@ -870,10 +885,13 @@ function renderCard(item, rank) {
 
   const releaseEl = item.release ? `<div class="release-date">${formatDate(item.release)}</div>` : '';
 
+  const docBadge = item.is_doc ? `<div class="doc-badge">Doc</div>` : '';
+
   return `
     <div class="media-card" style="--blend-color:${col}">
       <div class="${rankClass}">${rank}</div>
       ${posterEl}
+      ${docBadge}
       <div class="card-body">
         <div class="card-title">${item.title}</div>
         <div class="card-meta">${genres}${providers}</div>
