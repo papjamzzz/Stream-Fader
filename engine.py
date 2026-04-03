@@ -231,6 +231,18 @@ MIN_POPULARITY  = 10     # TMDb popularity floor — removes truly obscure title
 MIN_SCORE       = 60     # combined critic+audience floor — only quality content
 DOC_GENRE_ID    = 99     # TMDb genre ID for Documentary
 
+# TMDb TV genre IDs to exclude — News, Reality, Soap, Talk
+TV_EXCLUDED_GENRES = '10763,10764,10766,10767'
+
+# TMDb show types to keep — scripted fiction and limited series only
+TV_ALLOWED_TYPES = {'Scripted', 'Miniseries'}
+
+# TVmaze genres that indicate non-fiction / non-scripted programming
+TVMAZE_EXCLUDED_GENRES = {
+    'news', 'talk show', 'sports', 'game show', 'reality',
+    'soap', 'variety', 'awards show', 'sports talk',
+}
+
 
 def _passes_filters(item):
     """Return True if a TMDb movie item clears popularity/vote thresholds."""
@@ -392,13 +404,14 @@ def fetch_tv():
     candidates = []
 
     if TMDB_KEY:
-        # ── Popular shows currently on streaming ──
-        for page in range(1, 4):
+        # ── Popular scripted shows currently on streaming ──
+        for page in range(1, 5):
             data = tmdb_get('/discover/tv', {
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'vote_count.gte': 100,
+                'without_genres': TV_EXCLUDED_GENRES,
+                'vote_count.gte': 50,
                 'popularity.gte': 5,
                 'page': page,
             })
@@ -408,13 +421,14 @@ def fetch_tv():
                     seen_ids.add(sid)
                     candidates.append(('tmdb_tv', s))
 
-        # ── Top-rated shows on streaming (all time) ──
+        # ── Top-rated scripted shows on streaming (all time) ──
         for page in range(1, 3):
             data = tmdb_get('/discover/tv', {
                 'sort_by': 'vote_average.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'vote_count.gte': 500,
+                'without_genres': TV_EXCLUDED_GENRES,
+                'vote_count.gte': 300,
                 'vote_average.gte': 8.0,
                 'page': page,
             })
@@ -429,7 +443,8 @@ def fetch_tv():
             'sort_by': 'vote_average.desc',
             'watch_region': 'US',
             'with_watch_providers': STREAMING_PROVIDER_IDS,
-            'vote_count.gte': 200,
+            'without_genres': TV_EXCLUDED_GENRES,
+            'vote_count.gte': 100,
             'vote_average.gte': 7.5,
             'popularity.lte': 50,
             'page': 1,
@@ -461,6 +476,13 @@ def fetch_tv():
                 net     = show.get('network') or {}
                 channel = wc.get('name') or net.get('name') or ''
                 if not is_streaming(channel):
+                    continue
+                # Skip non-scripted genres
+                show_genres = {g.lower() for g in (show.get('genres') or [])}
+                if show_genres & TVMAZE_EXCLUDED_GENRES:
+                    continue
+                show_type = (show.get('type') or '').lower()
+                if show_type in ('news', 'sports', 'variety', 'talk show', 'reality', 'game show'):
                     continue
                 has_rating = (show.get('rating') or {}).get('average')
                 has_imdb   = (show.get('externals') or {}).get('imdb')
@@ -508,6 +530,13 @@ def _enrich_tv(source, item):
             if not tmdb_id:
                 return None
             details  = tmdb_get(f'/tv/{tmdb_id}', {'append_to_response': 'external_ids,watch/providers'})
+            # Drop non-scripted types — news, reality, talk, game shows, variety
+            show_type = details.get('type', '')
+            if show_type and show_type not in TV_ALLOWED_TYPES:
+                return None
+            # Require at least 3 episodes — filters out one-off specials
+            if details.get('number_of_episodes', 99) < 3:
+                return None
             imdb_id  = (details.get('external_ids') or {}).get('imdb_id')
             scores   = best_scores(imdb_id) if imdb_id else {}
             if not scores.get('critic') and not scores.get('audience'):
