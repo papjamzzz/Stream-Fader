@@ -254,7 +254,7 @@ def fetch_movies():
     candidates = []
 
     if TMDB_KEY:
-        cutoff = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
+        cutoff = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
 
         # ── Popular mainstream movies on streaming (last 90 days) ──
         for page in range(1, 4):
