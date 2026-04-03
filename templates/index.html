@@ -807,11 +807,11 @@ function filterByGenre(items) {
   return items.filter(i => i.genres && i.genres.includes(activeGenre));
 }
 
-function top5(items, f) {
+function top12(items, f) {
   return filterByGenre(items)
     .map(i => ({ ...i, blend: blendScore(i, f) }))
     .sort((a, b) => b.blend - a.blend)
-    .slice(0, 5);
+    .slice(0, 12);
 }
 
 // ── Fader UI ──────────────────────────────────────────
@@ -903,7 +903,7 @@ function renderCard(item, rank) {
 function renderList(containerId, items, countId) {
   const el = document.getElementById(containerId);
   const count = document.getElementById(countId);
-  const top = top5(items, fader);
+  const top = top12(items, fader);
 
   count.textContent = `${top.length} shown`;
 
