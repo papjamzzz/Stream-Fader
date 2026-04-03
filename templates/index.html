@@ -113,6 +113,51 @@
       cursor: not-allowed;
     }
 
+    /* ── HERO INTRO ── */
+    .hero-intro {
+      padding: 20px 28px 16px;
+      background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-headline {
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.25;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .hero-sub {
+      font-size: 13px;
+      color: var(--dim);
+      line-height: 1.6;
+      max-width: 620px;
+      margin-bottom: 12px;
+    }
+    .hero-sources {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .hero-sources-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-right: 2px;
+    }
+    .source-tag {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--dim);
+      background: var(--muted);
+      border: 1px solid var(--border);
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
     /* ── GENRE FILTER ── */
     .genre-bar {
       padding: 12px 28px;
@@ -611,11 +656,24 @@
     </div>
   </div>
   <div class="header-right">
-    <span id="last-updated">—</span>
+    <span id="last-updated">Loading…</span>
     <button class="refresh-btn" onclick="loadContent(true)" id="refresh-btn">↻ Refresh</button>
     <img src="/static/streamfader_badge_color.svg" onerror="this.style.display='none'" style="height:28px;border-radius:6px;margin-left:4px;">
   </div>
 </header>
+
+<!-- ═══════════════════ HERO INTRO ═══════════════════ -->
+<div class="hero-intro">
+  <h1 class="hero-headline">Blend critic and audience scores.<br>Find tonight's watch.</h1>
+  <p class="hero-sub">Slide toward critics for acclaimed picks, toward the audience for crowd-pleasers — or land in the sweet spot. Movies and series from Netflix, Hulu, Prime, and more.</p>
+  <div class="hero-sources">
+    <span class="hero-sources-label">Scores from</span>
+    <span class="source-tag">Rotten Tomatoes</span>
+    <span class="source-tag">Metacritic</span>
+    <span class="source-tag">IMDb</span>
+    <span class="source-tag">Letterboxd</span>
+  </div>
+</div>
 
 <!-- ═══════════════════ GENRE FILTER ═══════════════════ -->
 <div class="genre-bar" id="genre-bar">
@@ -659,7 +717,7 @@
           padding: 3px 10px;
           border-radius: 20px;
           text-transform: uppercase;
-        ">★ Claude's Top Pick Tonight</span>
+        ">★ Tonight's Best Match</span>
         <div id="tp-providers" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
       </div>
       <div id="tp-title" style="font-size:20px; font-weight:800; color:#fff; margin-bottom:6px; line-height:1.2;"></div>
@@ -717,7 +775,7 @@
     </div>
     <div class="card-list" id="movie-list">
       <!-- loading skeletons -->
-      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;">
+      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;border-radius:12px;">
         <div class="shimmer" style="width:100%;aspect-ratio:2/3;"></div>
         <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
           <div class="shimmer" style="height:13px;width:80%;border-radius:3px;"></div>
@@ -725,11 +783,39 @@
           <div class="shimmer" style="height:10px;width:65%;border-radius:3px;"></div>
         </div>
       </div>
-      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;">
+      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;border-radius:12px;">
         <div class="shimmer" style="width:100%;aspect-ratio:2/3;"></div>
         <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
           <div class="shimmer" style="height:13px;width:70%;border-radius:3px;"></div>
           <div class="shimmer" style="height:10px;width:55%;border-radius:3px;"></div>
+        </div>
+      </div>
+      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;border-radius:12px;">
+        <div class="shimmer" style="width:100%;aspect-ratio:2/3;"></div>
+        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+          <div class="shimmer" style="height:13px;width:75%;border-radius:3px;"></div>
+          <div class="shimmer" style="height:10px;width:50%;border-radius:3px;"></div>
+        </div>
+      </div>
+      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;border-radius:12px;">
+        <div class="shimmer" style="width:100%;aspect-ratio:2/3;"></div>
+        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+          <div class="shimmer" style="height:13px;width:60%;border-radius:3px;"></div>
+          <div class="shimmer" style="height:10px;width:40%;border-radius:3px;"></div>
+        </div>
+      </div>
+      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;border-radius:12px;">
+        <div class="shimmer" style="width:100%;aspect-ratio:2/3;"></div>
+        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+          <div class="shimmer" style="height:13px;width:85%;border-radius:3px;"></div>
+          <div class="shimmer" style="height:10px;width:60%;border-radius:3px;"></div>
+        </div>
+      </div>
+      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;border-radius:12px;">
+        <div class="shimmer" style="width:100%;aspect-ratio:2/3;"></div>
+        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+          <div class="shimmer" style="height:13px;width:72%;border-radius:3px;"></div>
+          <div class="shimmer" style="height:10px;width:48%;border-radius:3px;"></div>
         </div>
       </div>
     </div>
@@ -743,18 +829,46 @@
       <span class="col-count" id="tv-count">—</span>
     </div>
     <div class="card-list" id="tv-list">
-      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;">
+      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;border-radius:12px;">
         <div class="shimmer" style="width:100%;aspect-ratio:2/3;"></div>
         <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
           <div class="shimmer" style="height:13px;width:75%;border-radius:3px;"></div>
           <div class="shimmer" style="height:10px;width:50%;border-radius:3px;"></div>
         </div>
       </div>
-      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;">
+      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;border-radius:12px;">
         <div class="shimmer" style="width:100%;aspect-ratio:2/3;"></div>
         <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
           <div class="shimmer" style="height:13px;width:65%;border-radius:3px;"></div>
           <div class="shimmer" style="height:10px;width:40%;border-radius:3px;"></div>
+        </div>
+      </div>
+      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;border-radius:12px;">
+        <div class="shimmer" style="width:100%;aspect-ratio:2/3;"></div>
+        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+          <div class="shimmer" style="height:13px;width:80%;border-radius:3px;"></div>
+          <div class="shimmer" style="height:10px;width:55%;border-radius:3px;"></div>
+        </div>
+      </div>
+      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;border-radius:12px;">
+        <div class="shimmer" style="width:100%;aspect-ratio:2/3;"></div>
+        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+          <div class="shimmer" style="height:13px;width:58%;border-radius:3px;"></div>
+          <div class="shimmer" style="height:10px;width:42%;border-radius:3px;"></div>
+        </div>
+      </div>
+      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;border-radius:12px;">
+        <div class="shimmer" style="width:100%;aspect-ratio:2/3;"></div>
+        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+          <div class="shimmer" style="height:13px;width:70%;border-radius:3px;"></div>
+          <div class="shimmer" style="height:10px;width:48%;border-radius:3px;"></div>
+        </div>
+      </div>
+      <div class="loading-card" style="flex-direction:column;padding:0;overflow:hidden;border-radius:12px;">
+        <div class="shimmer" style="width:100%;aspect-ratio:2/3;"></div>
+        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+          <div class="shimmer" style="height:13px;width:77%;border-radius:3px;"></div>
+          <div class="shimmer" style="height:10px;width:52%;border-radius:3px;"></div>
         </div>
       </div>
     </div>
@@ -766,8 +880,8 @@
   <img src="/static/streamfader_badge_color.svg" onerror="this.style.display='none'">
   <span id="info-label">STREAMFADER</span>
   <span id="info-sep">│</span>
-  <span id="info-text">Move the fader to blend critic and audience scores — find your perfect tonight.</span>
-  <span id="data-info">—</span>
+  <span id="info-text">Slide to blend critic and audience scores — find the right watch for tonight.</span>
+  <span id="data-info">Loading…</span>
 </div>
 
 <script>
