@@ -399,19 +399,23 @@ def _movie_record(uid, imdb_id, title, overview, poster, release, providers, gen
 
 # ── TV Shows ───────────────────────────────────────────────────────────────────
 
+TV_RECENCY_CUTOFF = (datetime.now() - timedelta(days=548)).strftime('%Y-%m-%d')  # ~18 months
+
+
 def fetch_tv():
     seen_ids = set()
     candidates = []
 
     if TMDB_KEY:
-        # ── Popular scripted shows currently on streaming ──
+        # ── Currently airing popular shows — MUST have aired a new episode in last 18 months ──
         for page in range(1, 5):
             data = tmdb_get('/discover/tv', {
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': TV_EXCLUDED_GENRES,
-                'vote_count.gte': 50,
+                'air_date.gte': TV_RECENCY_CUTOFF,   # last episode within 18 months
+                'vote_count.gte': 30,
                 'popularity.gte': 5,
                 'page': page,
             })
@@ -421,15 +425,16 @@ def fetch_tv():
                     seen_ids.add(sid)
                     candidates.append(('tmdb_tv', s))
 
-        # ── Top-rated scripted shows on streaming (all time) ──
+        # ── Top-rated shows with RECENT episodes — high bar, still active ──
         for page in range(1, 3):
             data = tmdb_get('/discover/tv', {
                 'sort_by': 'vote_average.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': TV_EXCLUDED_GENRES,
-                'vote_count.gte': 300,
-                'vote_average.gte': 8.0,
+                'air_date.gte': TV_RECENCY_CUTOFF,
+                'vote_count.gte': 100,
+                'vote_average.gte': 7.8,
                 'page': page,
             })
             for s in data.get('results', []):
@@ -437,23 +442,6 @@ def fetch_tv():
                 if sid and sid not in seen_ids:
                     seen_ids.add(sid)
                     candidates.append(('tmdb_tv', s))
-
-        # ── Hidden gem shows: solid rating, less hyped ──
-        data = tmdb_get('/discover/tv', {
-            'sort_by': 'vote_average.desc',
-            'watch_region': 'US',
-            'with_watch_providers': STREAMING_PROVIDER_IDS,
-            'without_genres': TV_EXCLUDED_GENRES,
-            'vote_count.gte': 100,
-            'vote_average.gte': 7.5,
-            'popularity.lte': 50,
-            'page': 1,
-        })
-        for s in data.get('results', []):
-            sid = str(s.get('id'))
-            if sid and sid not in seen_ids:
-                seen_ids.add(sid)
-                candidates.append(('tmdb_tv', s))
 
     # ── TVmaze: what dropped this week on streaming (supplement) ──
     for day_offset in range(0, 7):
@@ -530,13 +518,33 @@ def _enrich_tv(source, item):
             if not tmdb_id:
                 return None
             details  = tmdb_get(f'/tv/{tmdb_id}', {'append_to_response': 'external_ids,watch/providers'})
-            # Drop non-scripted types — news, reality, talk, game shows, variety
+
+            # Drop non-scripted types
             show_type = details.get('type', '')
             if show_type and show_type not in TV_ALLOWED_TYPES:
                 return None
-            # Require at least 3 episodes — filters out one-off specials
+
+            # Hard recency gate: last_air_date must be within 18 months
+            last_air = details.get('last_air_date') or item.get('last_air_date', '')
+            if last_air and last_air < TV_RECENCY_CUTOFF:
+                return None
+
+            # Require at least 3 episodes
             if details.get('number_of_episodes', 99) < 3:
                 return None
+
+            # Build season label — show which season is current
+            num_seasons = details.get('number_of_seasons', 1)
+            seasons     = details.get('seasons') or []
+            # Find the latest non-special season that aired recently
+            current_season = num_seasons
+            for s in reversed(seasons):
+                if s.get('season_number', 0) > 0:
+                    s_air = s.get('air_date') or ''
+                    if s_air and s_air >= TV_RECENCY_CUTOFF:
+                        current_season = s.get('season_number', num_seasons)
+                        break
+
             imdb_id  = (details.get('external_ids') or {}).get('imdb_id')
             scores   = best_scores(imdb_id) if imdb_id else {}
             if not scores.get('critic') and not scores.get('audience'):
@@ -544,14 +552,29 @@ def _enrich_tv(source, item):
                     scores['audience'] = round(item['vote_average'] * 10)
                 else:
                     return None
+
             wp        = (details.get('watch/providers') or {}).get('results', {}).get('US', {})
             providers = [{'name': p['provider_name'], 'color': channel_color(p['provider_name'])}
                          for p in wp.get('flatrate', [])]
-            poster    = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
-            title     = details.get('name') or item.get('name', 'Unknown')
+
+            # Use season-specific poster if available
+            season_poster = None
+            for s in reversed(seasons):
+                if s.get('season_number') == current_season and s.get('poster_path'):
+                    season_poster = f"https://image.tmdb.org/t/p/w500{s['poster_path']}"
+                    break
+            poster = season_poster or (
+                f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
+            )
+
+            base_title = details.get('name') or item.get('name', 'Unknown')
+            # Append season number if multi-season show
+            title = f"{base_title} — S{current_season}" if num_seasons > 1 else base_title
+
             overview  = (details.get('overview') or item.get('overview') or '')[:240]
             genres    = [g['name'] for g in (details.get('genres') or [])][:3]
-            release   = details.get('first_air_date') or item.get('first_air_date', '')
+            release   = last_air or details.get('first_air_date', '')
+
             return _tv_record(imdb_id or str(tmdb_id), imdb_id, title, overview,
                               poster, release, providers, genres, scores)
 
