@@ -608,6 +608,57 @@
 </div>
 
 <!-- ══════════════════════════════════════════════
+     CLAUDE TOP PICK
+══════════════════════════════════════════════ -->
+<div id="top-pick-wrap" style="display:none; padding: 0 28px 0; max-width:1200px; margin:24px auto 0;">
+  <div id="top-pick-card" style="
+    background: linear-gradient(135deg, #0d1a26 0%, #0a1a10 100%);
+    border: 1px solid rgba(94,232,138,0.25);
+    border-radius: 16px;
+    padding: 24px 28px;
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    position: relative;
+    overflow: hidden;
+  ">
+    <div style="
+      position:absolute; top:0; left:0; right:0; height:2px;
+      background: linear-gradient(90deg, transparent, #5EE88A 40%, #4fc3f7 60%, transparent);
+    "></div>
+    <img id="tp-poster" src="" alt="" style="
+      width: 72px; height: 108px; object-fit: cover;
+      border-radius: 8px; flex-shrink: 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      display:none;
+    ">
+    <div style="flex:1; min-width:0;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+        <span style="
+          background: rgba(94,232,138,0.15);
+          border: 1px solid rgba(94,232,138,0.4);
+          color: #5EE88A;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          padding: 3px 10px;
+          border-radius: 20px;
+          text-transform: uppercase;
+        ">★ Claude's Top Pick Tonight</span>
+        <div id="tp-providers" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+      </div>
+      <div id="tp-title" style="font-size:20px; font-weight:800; color:#fff; margin-bottom:6px; line-height:1.2;"></div>
+      <div id="tp-headline" style="font-size:14px; color:#5EE88A; font-weight:600; margin-bottom:10px;"></div>
+      <div id="tp-reason" style="font-size:13px; color:rgba(240,242,255,0.7); line-height:1.6; margin-bottom:12px;"></div>
+      <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+        <div id="tp-scores" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+        <div id="tp-watch-if" style="font-size:12px; color:rgba(240,242,255,0.45); font-style:italic;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
      THE FADER — HERO
 ══════════════════════════════════════════════ -->
 <section class="fader-section">
@@ -955,12 +1006,73 @@ async function loadContent(force = false) {
     document.getElementById('info-text').textContent =
       `${total} titles scored from last 90 days — move the fader to find your vibe`;
 
+    // ── Claude Top Pick ──
+    if (data.top_pick) {
+      renderTopPick(data.top_pick);
+    }
+
   } catch (e) {
     showError();
   } finally {
     btn.classList.remove('loading');
     btn.textContent = '↻ Refresh';
   }
+}
+
+// ── Claude Top Pick renderer ──────────────────────────────
+function renderTopPick(pick) {
+  const wrap = document.getElementById('top-pick-wrap');
+  if (!pick || !pick.title) return;
+  wrap.style.display = 'block';
+
+  document.getElementById('tp-title').textContent = pick.title;
+  document.getElementById('tp-headline').textContent = pick.headline || '';
+  document.getElementById('tp-reason').textContent = pick.reason || '';
+
+  if (pick.watch_if) {
+    document.getElementById('tp-watch-if').textContent = 'Watch if: ' + pick.watch_if;
+  }
+
+  const poster = document.getElementById('tp-poster');
+  if (pick.poster) {
+    poster.src = pick.poster;
+    poster.style.display = 'block';
+  }
+
+  // Scores
+  const scoresEl = document.getElementById('tp-scores');
+  scoresEl.innerHTML = '';
+  const scoreMap = [
+    { label: 'RT', val: pick.rt_score, unit: '%', color: '#fa320a' },
+    { label: 'MC', val: pick.mc_score, unit: '', color: '#ffcc34' },
+    { label: 'IMDb', val: pick.imdb_score, unit: '', color: '#f5c518' },
+    { label: 'LB', val: pick.letterboxd, unit: '%', color: '#00e054' },
+  ];
+  scoreMap.forEach(s => {
+    if (s.val == null) return;
+    const chip = document.createElement('div');
+    chip.style.cssText = `
+      background: rgba(255,255,255,0.06); border-radius:6px;
+      padding: 3px 8px; font-size: 12px; font-weight: 700;
+      color: ${s.color};
+    `;
+    chip.textContent = `${s.label} ${s.val}${s.unit}`;
+    scoresEl.appendChild(chip);
+  });
+
+  // Providers
+  const provEl = document.getElementById('tp-providers');
+  provEl.innerHTML = '';
+  (pick.providers || []).slice(0,3).forEach(p => {
+    const chip = document.createElement('span');
+    chip.style.cssText = `
+      background: ${p.color}22; border: 1px solid ${p.color}66;
+      color: ${p.color}; font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 12px; letter-spacing: 0.05em;
+    `;
+    chip.textContent = p.name;
+    provEl.appendChild(chip);
+  });
 }
 
 // ── Boot ─────────────────────────────────────────────────

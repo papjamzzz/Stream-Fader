@@ -1,18 +1,27 @@
-import os, json, time, requests, re
+"""
+StreamFader V2 Engine
+Sources: TMDb · OMDb (RT/MC/IMDb scores) · TVmaze · Trakt · MDBList
+AI:      Claude Top Pick via Anthropic API
+"""
+import os, json, time, requests, re, anthropic
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 load_dotenv()
-OMDB_KEY = os.getenv('OMDB_API_KEY', '')
-TMDB_KEY = os.getenv('TMDB_API_KEY', '')
-CACHE_FILE = 'data/cache.json'
-CACHE_TTL = 6 * 3600  # 6 hours
 
-STREAMING_NAMES = [
-    'Netflix', 'Hulu', 'Amazon', 'Prime', 'Apple TV',
-    'Disney+', 'Paramount', 'Max', 'HBO', 'Peacock', 'Showtime', 'AMC'
-]
+OMDB_KEY      = os.getenv('OMDB_API_KEY', '')
+TMDB_KEY      = os.getenv('TMDB_API_KEY', '')
+TRAKT_ID      = os.getenv('TRAKT_CLIENT_ID', '')
+MDBLIST_KEY   = os.getenv('MDBLIST_API_KEY', '')
+ANTHROPIC_KEY = os.getenv('ANTHROPIC_API_KEY', '')
+
+CACHE_FILE      = 'data/cache.json'
+TOPPICK_FILE    = 'data/toppick.json'
+CACHE_TTL       = 6 * 3600
+TOPPICK_TTL     = 12 * 3600
+
+# ── Colors ─────────────────────────────────────────────────────────────────────
 
 CHANNEL_COLORS = {
     'Netflix':    '#e50914',
@@ -29,42 +38,26 @@ CHANNEL_COLORS = {
     'AMC':        '#ff6600',
 }
 
-MOVIE_SEARCH_TERMS = [
-    'action', 'thriller', 'comedy', 'drama', 'horror',
-    'adventure', 'mystery', 'crime', 'romance', 'sci-fi'
-]
+STREAMING_NAMES = list(CHANNEL_COLORS.keys())
+STREAMING_PROVIDER_IDS = '8|119|350|337|15|531|1899|386'
 
 
-def tmdb_providers(imdb_id):
-    if not TMDB_KEY or not imdb_id:
-        return []
-    try:
-        # Resolve IMDB ID → TMDb movie ID
-        r = requests.get(
-            f'https://api.themoviedb.org/3/find/{imdb_id}',
-            params={'api_key': TMDB_KEY, 'external_source': 'imdb_id'},
-            timeout=8
-        )
-        if not r.ok:
-            return []
-        results = r.json().get('movie_results', [])
-        if not results:
-            return []
-        tmdb_id = results[0]['id']
+def channel_color(name):
+    for key, color in CHANNEL_COLORS.items():
+        if key.lower() in name.lower():
+            return color
+    return '#888888'
 
-        # Fetch US streaming providers
-        r2 = requests.get(
-            f'https://api.themoviedb.org/3/movie/{tmdb_id}/watch/providers',
-            params={'api_key': TMDB_KEY},
-            timeout=8
-        )
-        if not r2.ok:
-            return []
-        flatrate = r2.json().get('results', {}).get('US', {}).get('flatrate', [])
-        return [{'name': p['provider_name'], 'color': channel_color(p['provider_name'])} for p in flatrate]
-    except Exception:
-        return []
 
+def is_streaming(channel_name):
+    return any(s.lower() in channel_name.lower() for s in STREAMING_NAMES)
+
+
+def strip_html(text):
+    return re.sub(r'<[^>]+>', '', text or '')
+
+
+# ── OMDb ───────────────────────────────────────────────────────────────────────
 
 def omdb_fetch(imdb_id=None, title=None, year=None):
     if not OMDB_KEY:
@@ -83,7 +76,7 @@ def omdb_fetch(imdb_id=None, title=None, year=None):
         return {}
 
 
-def parse_scores(omdb):
+def parse_omdb_scores(omdb):
     rt, mc, imdb = None, None, None
     for rating in omdb.get('Ratings', []):
         src, val = rating.get('Source', ''), rating.get('Value', '')
@@ -98,32 +91,248 @@ def parse_scores(omdb):
             pass
     critics = [s for s in [rt, mc] if s is not None]
     critic = round(sum(critics) / len(critics)) if critics else None
-    return critic, imdb, rt, mc, round(imdb / 10, 1) if imdb else None
+    imdb_display = round(imdb / 10, 1) if imdb else None
+    return critic, imdb, rt, mc, imdb_display
 
 
-def channel_color(name):
-    for key, color in CHANNEL_COLORS.items():
-        if key.lower() in name.lower():
-            return color
-    return '#888888'
+# ── MDBList ─────────────────────────────────────────────────────────────────────
+
+def mdblist_fetch(imdb_id):
+    if not MDBLIST_KEY or not imdb_id:
+        return {}
+    try:
+        r = requests.get('https://mdblist.com/api/',
+                         params={'apikey': MDBLIST_KEY, 'i': imdb_id}, timeout=8)
+        return r.json() if r.ok else {}
+    except Exception:
+        return {}
 
 
-def is_streaming(channel_name):
-    return any(s.lower() in channel_name.lower() for s in STREAMING_NAMES)
+def parse_mdblist_scores(data):
+    scores = {}
+    for rating in data.get('ratings', []):
+        source = rating.get('source', '').lower()
+        val = rating.get('value')
+        if val is None:
+            continue
+        try:
+            if source == 'tomatoes':
+                scores['rt'] = int(val)
+            elif source == 'tomatoesaudience':
+                scores['rt_audience'] = int(val)
+            elif source == 'metacritic':
+                scores['mc'] = int(val)
+            elif source == 'imdb':
+                scores['imdb'] = round(float(val) * 10)
+                scores['imdb_display'] = float(val)
+            elif source == 'letterboxd':
+                scores['letterboxd'] = round(float(val) * 20)
+            elif source == 'trakt':
+                scores['trakt'] = int(val)
+        except Exception:
+            pass
+    return scores
 
 
-def strip_html(text):
-    return re.sub(r'<[^>]+>', '', text or '')
+# ── Trakt ───────────────────────────────────────────────────────────────────────
+
+def trakt_headers():
+    h = {'Content-Type': 'application/json', 'trakt-api-version': '2'}
+    if TRAKT_ID:
+        h['trakt-api-key'] = TRAKT_ID
+    return h
 
 
-# ── TV via TVmaze (free, no key) ──────────────────────────────────────────────
+def trakt_fetch(path, limit=30):
+    if not TRAKT_ID:
+        return []
+    try:
+        r = requests.get(f'https://api.trakt.tv{path}', headers=trakt_headers(),
+                         params={'limit': limit, 'extended': 'full'}, timeout=10)
+        return r.json() if r.ok else []
+    except Exception:
+        return []
 
-def fetch_tv(days=90):
-    cutoff = datetime.now() - timedelta(days=days)
+
+def trakt_trending_movies(limit=30):
+    return [i.get('movie', {}) for i in trakt_fetch('/movies/trending', limit) if i.get('movie')]
+
+
+def trakt_popular_movies(limit=20):
+    return trakt_fetch('/movies/popular', limit)
+
+
+def trakt_trending_shows(limit=30):
+    return [i.get('show', {}) for i in trakt_fetch('/shows/trending', limit) if i.get('show')]
+
+
+# ── TMDb helpers ───────────────────────────────────────────────────────────────
+
+def tmdb_get(path, params=None):
+    if not TMDB_KEY:
+        return {}
+    p = {'api_key': TMDB_KEY}
+    if params:
+        p.update(params)
+    try:
+        r = requests.get(f'https://api.themoviedb.org/3{path}', params=p, timeout=8)
+        return r.json() if r.ok else {}
+    except Exception:
+        return {}
+
+
+def tmdb_watch_providers(tmdb_id, media='movie'):
+    data = tmdb_get(f'/{media}/{tmdb_id}/watch/providers')
+    flatrate = data.get('results', {}).get('US', {}).get('flatrate', [])
+    return [{'name': p['provider_name'], 'color': channel_color(p['provider_name'])} for p in flatrate]
+
+
+# ── Score aggregation ──────────────────────────────────────────────────────────
+
+def best_scores(imdb_id):
+    scores = {
+        'rt': None, 'rt_audience': None, 'mc': None,
+        'imdb': None, 'imdb_display': None,
+        'letterboxd': None, 'trakt': None,
+        'critic': None, 'audience': None,
+    }
+
+    if MDBLIST_KEY and imdb_id:
+        mdb = mdblist_fetch(imdb_id)
+        if mdb and mdb.get('response') != 'False':
+            s = parse_mdblist_scores(mdb)
+            scores.update({k: v for k, v in s.items() if v is not None})
+
+    if OMDB_KEY and imdb_id and (scores['rt'] is None or scores['mc'] is None):
+        omdb = omdb_fetch(imdb_id=imdb_id)
+        if omdb and omdb.get('Response') != 'False':
+            _, imdb_raw, rt, mc, imdb_disp = parse_omdb_scores(omdb)
+            if scores['rt'] is None and rt is not None:
+                scores['rt'] = rt
+            if scores['mc'] is None and mc is not None:
+                scores['mc'] = mc
+            if scores['imdb'] is None and imdb_raw is not None:
+                scores['imdb'] = imdb_raw
+                scores['imdb_display'] = imdb_disp
+
+    critics = [s for s in [scores['rt'], scores['mc'], scores['letterboxd']] if s is not None]
+    scores['critic'] = round(sum(critics) / len(critics)) if critics else None
+
+    audience_sources = [s for s in [scores['rt_audience'], scores['trakt'], scores['imdb']] if s is not None]
+    scores['audience'] = round(sum(audience_sources) / len(audience_sources)) if audience_sources else scores['imdb']
+
+    return scores
+
+
+# ── Movies ─────────────────────────────────────────────────────────────────────
+
+def fetch_movies():
+    seen_imdb = set()
+    candidates = []
+
+    if TMDB_KEY:
+        cutoff = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
+        for page in range(1, 4):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'popularity.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'primary_release_date.gte': cutoff,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
+    for t in trakt_trending_movies(30):
+        candidates.append(('trakt_movie', t))
+
+    for t in trakt_popular_movies(20):
+        candidates.append(('trakt_movie', t))
+
+    candidates = candidates[:50]
+    enriched = []
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        futures = {ex.submit(_enrich_movie, src, item): (src, item) for src, item in candidates}
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                key = result.get('imdb_id') or result.get('id')
+                if key and key not in seen_imdb:
+                    seen_imdb.add(key)
+                    enriched.append(result)
+
+    enriched.sort(key=lambda x: (
+        ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
+    ), reverse=True)
+    return enriched[:30]
+
+
+def _enrich_movie(source, item):
+    try:
+        if source == 'tmdb_movie':
+            tmdb_id = item.get('id')
+            if not tmdb_id:
+                return None
+            details = tmdb_get(f'/movie/{tmdb_id}', {'append_to_response': 'external_ids,watch/providers'})
+            imdb_id = (details.get('external_ids') or {}).get('imdb_id') or details.get('imdb_id')
+            scores = best_scores(imdb_id) if imdb_id else {}
+            if not scores.get('critic') and not scores.get('audience'):
+                if item.get('vote_average'):
+                    scores['audience'] = round(item['vote_average'] * 10)
+                else:
+                    return None
+            wp = (details.get('watch/providers') or {}).get('results', {}).get('US', {})
+            providers = [{'name': p['provider_name'], 'color': channel_color(p['provider_name'])}
+                         for p in wp.get('flatrate', [])]
+            poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
+            title    = details.get('title') or item.get('title', 'Unknown')
+            overview = (details.get('overview') or item.get('overview') or '')[:240]
+            genres   = [g['name'] for g in (details.get('genres') or [])][:3]
+            return _movie_record(imdb_id or str(tmdb_id), imdb_id, title, overview,
+                                 poster, item.get('release_date', ''), providers, genres, scores)
+
+        elif source == 'trakt_movie':
+            ids = item.get('ids') or {}
+            imdb_id = ids.get('imdb')
+            tmdb_id = ids.get('tmdb')
+            scores = best_scores(imdb_id) if imdb_id else {}
+            if not scores.get('critic') and not scores.get('audience'):
+                if item.get('rating'):
+                    scores['audience'] = round(float(item['rating']) * 10)
+                else:
+                    return None
+            providers = tmdb_watch_providers(tmdb_id, 'movie') if tmdb_id and TMDB_KEY else []
+            poster = None
+            if tmdb_id and TMDB_KEY:
+                t = tmdb_get(f'/movie/{tmdb_id}')
+                if t.get('poster_path'):
+                    poster = f"https://image.tmdb.org/t/p/w500{t['poster_path']}"
+            return _movie_record(imdb_id or str(ids.get('trakt', '')), imdb_id,
+                                 item.get('title', 'Unknown'), (item.get('overview') or '')[:240],
+                                 poster, str(item.get('year', '')), providers,
+                                 (item.get('genres') or [])[:3], scores)
+    except Exception:
+        return None
+
+
+def _movie_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores):
+    return {
+        'id': uid, 'imdb_id': imdb_id, 'title': title, 'overview': overview,
+        'poster': poster, 'release': release, 'media_type': 'movie',
+        'providers': providers, 'genres': genres,
+        'critic_score': scores.get('critic'), 'audience_score': scores.get('audience'),
+        'rt_score': scores.get('rt'), 'rt_audience': scores.get('rt_audience'),
+        'mc_score': scores.get('mc'), 'imdb_score': scores.get('imdb_display'),
+        'letterboxd': scores.get('letterboxd'), 'trakt_score': scores.get('trakt'),
+    }
+
+
+# ── TV Shows ───────────────────────────────────────────────────────────────────
+
+def fetch_tv():
     seen_ids = set()
     candidates = []
 
-    # Query TVmaze web schedule for the last 14 days — finds currently airing streaming shows
     for day_offset in range(0, 14):
         date_str = (datetime.now() - timedelta(days=day_offset)).strftime('%Y-%m-%d')
         try:
@@ -133,239 +342,235 @@ def fetch_tv(days=90):
             )
             if not r.ok:
                 continue
-            episodes = r.json()
-            for ep in episodes:
+            for ep in r.json():
                 show = (ep.get('_embedded') or {}).get('show') or {}
                 if not show:
                     continue
                 sid = show.get('id')
                 if not sid or sid in seen_ids:
                     continue
-                seen_ids.add(sid)
-
-                wc  = show.get('webChannel') or {}
-                net = show.get('network') or {}
+                wc      = show.get('webChannel') or {}
+                net     = show.get('network') or {}
                 channel = wc.get('name') or net.get('name') or ''
                 if not is_streaming(channel):
                     continue
-
-                # Only include shows with a rating or IMDB ID
                 has_rating = (show.get('rating') or {}).get('average')
                 has_imdb   = (show.get('externals') or {}).get('imdb')
                 if not has_rating and not has_imdb:
                     continue
-
-                candidates.append({'show': show, 'channel': channel})
+                seen_ids.add(sid)
+                candidates.append(('tvmaze', {'show': show, 'channel': channel}))
         except Exception:
             continue
 
+    for t in trakt_trending_shows(30):
+        imdb_id = (t.get('ids') or {}).get('imdb')
+        if imdb_id and imdb_id not in seen_ids:
+            seen_ids.add(imdb_id)
+            candidates.append(('trakt_show', t))
+
     enriched = []
-    with ThreadPoolExecutor(max_workers=6) as ex:
-        futures = {ex.submit(enrich_tv, c): c for c in candidates}
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        futures = {ex.submit(_enrich_tv, src, item): (src, item) for src, item in candidates}
         for future in as_completed(futures):
             result = future.result()
             if result:
                 enriched.append(result)
 
-    enriched.sort(key=lambda x: (
+    seen_final = set()
+    deduped = []
+    for item in enriched:
+        key = item.get('imdb_id') or item.get('id')
+        if key and key not in seen_final:
+            seen_final.add(key)
+            deduped.append(item)
+
+    deduped.sort(key=lambda x: (
         ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
     ), reverse=True)
-    return enriched
+    return deduped[:30]
 
 
-def enrich_tv(candidate):
-    show    = candidate['show']
-    channel = candidate['channel']
-    imdb_id = (show.get('externals') or {}).get('imdb')
-
-    critic, audience, rt, mc, imdb_display = None, None, None, None, None
-    if imdb_id:
-        omdb = omdb_fetch(imdb_id=imdb_id)
-        critic, audience, rt, mc, imdb_display = parse_scores(omdb)
-
-    # fallback: use TVmaze average rating as audience proxy
-    if audience is None:
-        avg = (show.get('rating') or {}).get('average')
-        if avg:
-            audience = round(float(avg) * 10)
-
-    if critic is None and audience is None:
-        return None
-
-    img = show.get('image') or {}
-    poster = img.get('medium') or img.get('original')
-    genres = [g for g in (show.get('genres') or [])][:3]
-
-    return {
-        'id': show['id'],
-        'imdb_id': imdb_id,
-        'title': show.get('name', 'Unknown'),
-        'overview': strip_html(show.get('summary', ''))[:220],
-        'poster': poster,
-        'release': show.get('premiered', ''),
-        'media_type': 'tv',
-        'providers': [{'name': channel, 'color': channel_color(channel)}],
-        'genres': genres,
-        'critic_score': critic,
-        'audience_score': audience,
-        'rt_score': rt,
-        'mc_score': mc,
-        'imdb_score': imdb_display,
-    }
-
-
-# ── Movies via TMDb discover (no daily limit) + OMDb for scores ───────────────
-
-STREAMING_PROVIDER_IDS = '8|119|350|337|15|531|1899|386'  # Netflix|Prime|AppleTV+|Disney+|Hulu|Paramount+|Max|Peacock
-
-def fetch_movies(days=90):
-    if not TMDB_KEY:
-        return []
-
-    cutoff = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
-    candidates = []
-    seen = set()
-
-    # TMDb discover: streaming movies released in last 90 days, sorted by popularity
-    for page in range(1, 4):
-        try:
-            r = requests.get(
-                'https://api.themoviedb.org/3/discover/movie',
-                params={
-                    'api_key': TMDB_KEY,
-                    'sort_by': 'popularity.desc',
-                    'watch_region': 'US',
-                    'with_watch_providers': STREAMING_PROVIDER_IDS,
-                    'primary_release_date.gte': cutoff,
-                    'page': page,
-                },
-                timeout=10
-            )
-            if not r.ok:
-                break
-            for m in r.json().get('results', []):
-                if m['id'] not in seen:
-                    seen.add(m['id'])
-                    candidates.append(m)
-        except Exception:
-            break
-
-    # Cap at 40 candidates to stay well within OMDb daily quota
-    candidates = candidates[:40]
-
-    enriched = []
-    with ThreadPoolExecutor(max_workers=6) as ex:
-        futures = {ex.submit(enrich_movie, m): m for m in candidates}
-        for future in as_completed(futures):
-            result = future.result()
-            if result:
-                enriched.append(result)
-
-    enriched.sort(key=lambda x: (
-        ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
-    ), reverse=True)
-    return enriched
-
-
-def enrich_movie(tmdb_movie):
-    tmdb_id = tmdb_movie.get('id')
-    if not tmdb_id:
-        return None
-
-    # Get IMDB ID + extra details from TMDb (free, no quota)
+def _enrich_tv(source, item):
     try:
-        r = requests.get(
-            f'https://api.themoviedb.org/3/movie/{tmdb_id}',
-            params={'api_key': TMDB_KEY, 'append_to_response': 'external_ids,watch/providers'},
-            timeout=8
-        )
-        details = r.json() if r.ok else {}
+        if source == 'tvmaze':
+            show    = item['show']
+            channel = item['channel']
+            imdb_id = (show.get('externals') or {}).get('imdb')
+            scores  = best_scores(imdb_id) if imdb_id else {}
+            if not scores.get('audience'):
+                avg = (show.get('rating') or {}).get('average')
+                if avg:
+                    scores['audience'] = round(float(avg) * 10)
+            if not scores.get('critic') and not scores.get('audience'):
+                return None
+            img = show.get('image') or {}
+            return _tv_record(
+                str(show['id']), imdb_id, show.get('name', 'Unknown'),
+                strip_html(show.get('summary', ''))[:240],
+                img.get('medium') or img.get('original'),
+                show.get('premiered', ''),
+                [{'name': channel, 'color': channel_color(channel)}],
+                (show.get('genres') or [])[:3], scores
+            )
+
+        elif source == 'trakt_show':
+            ids     = item.get('ids') or {}
+            imdb_id = ids.get('imdb')
+            tmdb_id = ids.get('tmdb')
+            scores  = best_scores(imdb_id) if imdb_id else {}
+            if not scores.get('critic') and not scores.get('audience'):
+                if item.get('rating'):
+                    scores['audience'] = round(float(item['rating']) * 10)
+                else:
+                    return None
+            providers = tmdb_watch_providers(tmdb_id, 'tv') if tmdb_id and TMDB_KEY else []
+            poster = None
+            if tmdb_id and TMDB_KEY:
+                t = tmdb_get(f'/tv/{tmdb_id}')
+                if t.get('poster_path'):
+                    poster = f"https://image.tmdb.org/t/p/w500{t['poster_path']}"
+            return _tv_record(
+                imdb_id or str(ids.get('trakt', '')), imdb_id,
+                item.get('title', 'Unknown'), (item.get('overview') or '')[:240],
+                poster, str(item.get('year', '')), providers,
+                (item.get('genres') or [])[:3], scores
+            )
     except Exception:
-        details = {}
-
-    imdb_id = (details.get('external_ids') or {}).get('imdb_id') or details.get('imdb_id')
-
-    # Get RT/MC/IMDB scores from OMDb (only if we have IMDB id)
-    critic, audience, rt, mc, imdb_display = None, None, None, None, None
-    if imdb_id and OMDB_KEY:
-        omdb = omdb_fetch(imdb_id=imdb_id)
-        if omdb and omdb.get('Response') != 'False':
-            critic, audience, rt, mc, imdb_display = parse_scores(omdb)
-            # Fallback title/plot from OMDb
-            title    = omdb.get('Title') or tmdb_movie.get('title', 'Unknown')
-            overview = omdb.get('Plot', '')[:220] or (tmdb_movie.get('overview') or '')[:220]
-            poster   = omdb.get('Poster') if omdb.get('Poster') not in (None, 'N/A') else None
-        else:
-            title    = tmdb_movie.get('title', 'Unknown')
-            overview = (tmdb_movie.get('overview') or '')[:220]
-            poster   = None
-    else:
-        title    = tmdb_movie.get('title', 'Unknown')
-        overview = (tmdb_movie.get('overview') or '')[:220]
-        poster   = None
-
-    # Use TMDb poster as fallback
-    if not poster and tmdb_movie.get('poster_path'):
-        poster = f"https://image.tmdb.org/t/p/w500{tmdb_movie['poster_path']}"
-
-    # Use IMDB audience score as fallback if no critic score
-    if audience is None and tmdb_movie.get('vote_average'):
-        audience = round(tmdb_movie['vote_average'] * 10)
-
-    if critic is None and audience is None:
         return None
 
-    # Streaming providers from TMDb watch/providers
-    wp = (details.get('watch/providers') or {}).get('results', {}).get('US', {})
-    flatrate = wp.get('flatrate', [])
-    providers = [{'name': p['provider_name'], 'color': channel_color(p['provider_name'])} for p in flatrate]
 
-    release = tmdb_movie.get('release_date', '')
-    genres  = [g['name'] for g in (details.get('genres') or [])][:3]
-    if not genres:
-        genres = [g.strip() for g in (details.get('genre_ids') or [])]
-
+def _tv_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores):
     return {
-        'id': imdb_id or str(tmdb_id),
-        'imdb_id': imdb_id,
-        'title': title,
-        'overview': overview,
-        'poster': poster,
-        'release': release,
-        'media_type': 'movie',
-        'providers': providers,
-        'genres': genres,
-        'critic_score': critic,
-        'audience_score': audience,
-        'rt_score': rt,
-        'mc_score': mc,
-        'imdb_score': imdb_display,
+        'id': uid, 'imdb_id': imdb_id, 'title': title, 'overview': overview,
+        'poster': poster, 'release': release, 'media_type': 'tv',
+        'providers': providers, 'genres': genres,
+        'critic_score': scores.get('critic'), 'audience_score': scores.get('audience'),
+        'rt_score': scores.get('rt'), 'rt_audience': scores.get('rt_audience'),
+        'mc_score': scores.get('mc'), 'imdb_score': scores.get('imdb_display'),
+        'letterboxd': scores.get('letterboxd'), 'trakt_score': scores.get('trakt'),
     }
 
 
-# ── Cache + entry point ───────────────────────────────────────────────────────
+# ── Claude Top Pick ─────────────────────────────────────────────────────────────
+
+def generate_top_pick(movies, tv):
+    if not ANTHROPIC_KEY:
+        return None
+
+    if os.path.exists(TOPPICK_FILE):
+        try:
+            with open(TOPPICK_FILE) as f:
+                cached = json.load(f)
+            if time.time() - cached.get('timestamp', 0) < TOPPICK_TTL:
+                return cached['data']
+        except Exception:
+            pass
+
+    def fmt(items, limit=10):
+        lines = []
+        for i in items[:limit]:
+            sc = []
+            if i.get('rt_score'):    sc.append(f"RT {i['rt_score']}%")
+            if i.get('mc_score'):    sc.append(f"MC {i['mc_score']}")
+            if i.get('imdb_score'):  sc.append(f"IMDb {i['imdb_score']}")
+            if i.get('letterboxd'):  sc.append(f"LB {i['letterboxd']}%")
+            if i.get('trakt_score'): sc.append(f"Trakt {i['trakt_score']}%")
+            providers = ', '.join(p['name'] for p in (i.get('providers') or [])[:2]) or 'Unknown'
+            genres    = ', '.join(i.get('genres') or [])
+            line = f"- {i['title']} ({str(i.get('release',''))[:4]}) [{', '.join(sc)}] on {providers}"
+            if genres:
+                line += f" | {genres}"
+            lines.append(line)
+        return '\n'.join(lines)
+
+    prompt = f"""You are the recommendation engine for StreamFader, a premium streaming guide.
+
+Today's top-rated content across all streaming platforms:
+
+MOVIES:
+{fmt(movies)}
+
+TV SHOWS:
+{fmt(tv)}
+
+Pick the single best thing to watch tonight. Weigh critic scores, audience scores, and broad appeal.
+
+Respond in this exact JSON format:
+{{
+  "title": "exact title from the list",
+  "media_type": "movie or tv",
+  "headline": "one punchy sentence, max 12 words, why this is tonight's must-watch",
+  "reason": "2-3 sentences. Specific — mention scores, what makes it stand out, who it's for.",
+  "watch_if": "one short phrase — e.g. 'you loved Succession' or 'you want a thriller that does not let up'"
+}}
+
+Only return valid JSON. No markdown, no explanation."""
+
+    try:
+        client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+        msg = client.messages.create(
+            model='claude-opus-4-5',
+            max_tokens=400,
+            messages=[{'role': 'user', 'content': prompt}]
+        )
+        raw = msg.content[0].text.strip()
+        raw = re.sub(r'^```(?:json)?\n?', '', raw)
+        raw = re.sub(r'\n?```$', '', raw)
+        pick = json.loads(raw)
+
+        all_items = movies + tv
+        match = next(
+            (i for i in all_items if i['title'].lower() == pick.get('title', '').lower()),
+            None
+        )
+        if match:
+            pick['poster']     = match.get('poster')
+            pick['providers']  = match.get('providers', [])
+            pick['imdb_id']    = match.get('imdb_id')
+            pick['rt_score']   = match.get('rt_score')
+            pick['mc_score']   = match.get('mc_score')
+            pick['imdb_score'] = match.get('imdb_score')
+            pick['letterboxd'] = match.get('letterboxd')
+
+        os.makedirs('data', exist_ok=True)
+        with open(TOPPICK_FILE, 'w') as f:
+            json.dump({'timestamp': time.time(), 'data': pick}, f)
+
+        return pick
+    except Exception:
+        return None
+
+
+# ── Entry point ─────────────────────────────────────────────────────────────────
 
 def get_top_content(force=False):
-    if not OMDB_KEY:
-        return {'movies': [], 'tv': [], 'error': 'missing_keys', 'fetched_at': None}
+    if not TMDB_KEY and not TRAKT_ID:
+        return {'movies': [], 'tv': [], 'top_pick': None,
+                'error': 'missing_keys', 'fetched_at': None}
 
     if not force and os.path.exists(CACHE_FILE):
         try:
             with open(CACHE_FILE) as f:
                 cached = json.load(f)
             if time.time() - cached.get('timestamp', 0) < CACHE_TTL:
-                return cached['data']
+                data = cached['data']
+                if not data.get('top_pick'):
+                    data['top_pick'] = generate_top_pick(data['movies'], data['tv'])
+                return data
         except Exception:
             pass
 
-    tv     = fetch_tv()
     movies = fetch_movies()
+    tv     = fetch_tv()
+    pick   = generate_top_pick(movies, tv)
 
     data = {
-        'movies': movies,
-        'tv': tv,
+        'movies':     movies,
+        'tv':         tv,
+        'top_pick':   pick,
         'fetched_at': datetime.now().isoformat(),
-        'error': None,
+        'error':      None,
     }
 
     os.makedirs('data', exist_ok=True)
