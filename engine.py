@@ -256,8 +256,8 @@ def fetch_movies():
     if TMDB_KEY:
         cutoff = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
 
-        # ── Popular mainstream movies on streaming (last 90 days) ──
-        for page in range(1, 4):
+        # ── Popular mainstream movies on streaming (last year) ──
+        for page in range(1, 6):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
@@ -305,7 +305,7 @@ def fetch_movies():
     for t in trakt_popular_movies(20):
         candidates.append(('trakt_movie', t))
 
-    candidates = candidates[:40]
+    candidates = candidates[:50]
     enriched = []
     with ThreadPoolExecutor(max_workers=8) as ex:
         futures = {ex.submit(_enrich_movie, src, item): (src, item) for src, item in candidates}
@@ -391,12 +391,62 @@ def fetch_tv():
     seen_ids = set()
     candidates = []
 
-    for day_offset in range(0, 14):
+    if TMDB_KEY:
+        # ── Popular shows currently on streaming ──
+        for page in range(1, 4):
+            data = tmdb_get('/discover/tv', {
+                'sort_by': 'popularity.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'vote_count.gte': 100,
+                'popularity.gte': 5,
+                'page': page,
+            })
+            for s in data.get('results', []):
+                sid = str(s.get('id'))
+                if sid and sid not in seen_ids:
+                    seen_ids.add(sid)
+                    candidates.append(('tmdb_tv', s))
+
+        # ── Top-rated shows on streaming (all time) ──
+        for page in range(1, 3):
+            data = tmdb_get('/discover/tv', {
+                'sort_by': 'vote_average.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'vote_count.gte': 500,
+                'vote_average.gte': 8.0,
+                'page': page,
+            })
+            for s in data.get('results', []):
+                sid = str(s.get('id'))
+                if sid and sid not in seen_ids:
+                    seen_ids.add(sid)
+                    candidates.append(('tmdb_tv', s))
+
+        # ── Hidden gem shows: solid rating, less hyped ──
+        data = tmdb_get('/discover/tv', {
+            'sort_by': 'vote_average.desc',
+            'watch_region': 'US',
+            'with_watch_providers': STREAMING_PROVIDER_IDS,
+            'vote_count.gte': 200,
+            'vote_average.gte': 7.5,
+            'popularity.lte': 50,
+            'page': 1,
+        })
+        for s in data.get('results', []):
+            sid = str(s.get('id'))
+            if sid and sid not in seen_ids:
+                seen_ids.add(sid)
+                candidates.append(('tmdb_tv', s))
+
+    # ── TVmaze: what dropped this week on streaming (supplement) ──
+    for day_offset in range(0, 7):
         date_str = (datetime.now() - timedelta(days=day_offset)).strftime('%Y-%m-%d')
         try:
             r = requests.get(
                 f'https://api.tvmaze.com/schedule/web?date={date_str}&country=US',
-                timeout=10
+                timeout=6
             )
             if not r.ok:
                 continue
@@ -404,7 +454,7 @@ def fetch_tv():
                 show = (ep.get('_embedded') or {}).get('show') or {}
                 if not show:
                     continue
-                sid = show.get('id')
+                sid = str(show.get('id', ''))
                 if not sid or sid in seen_ids:
                     continue
                 wc      = show.get('webChannel') or {}
@@ -453,7 +503,30 @@ def fetch_tv():
 
 def _enrich_tv(source, item):
     try:
-        if source == 'tvmaze':
+        if source == 'tmdb_tv':
+            tmdb_id = item.get('id')
+            if not tmdb_id:
+                return None
+            details  = tmdb_get(f'/tv/{tmdb_id}', {'append_to_response': 'external_ids,watch/providers'})
+            imdb_id  = (details.get('external_ids') or {}).get('imdb_id')
+            scores   = best_scores(imdb_id) if imdb_id else {}
+            if not scores.get('critic') and not scores.get('audience'):
+                if item.get('vote_average'):
+                    scores['audience'] = round(item['vote_average'] * 10)
+                else:
+                    return None
+            wp        = (details.get('watch/providers') or {}).get('results', {}).get('US', {})
+            providers = [{'name': p['provider_name'], 'color': channel_color(p['provider_name'])}
+                         for p in wp.get('flatrate', [])]
+            poster    = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
+            title     = details.get('name') or item.get('name', 'Unknown')
+            overview  = (details.get('overview') or item.get('overview') or '')[:240]
+            genres    = [g['name'] for g in (details.get('genres') or [])][:3]
+            release   = details.get('first_air_date') or item.get('first_air_date', '')
+            return _tv_record(imdb_id or str(tmdb_id), imdb_id, title, overview,
+                              poster, release, providers, genres, scores)
+
+        elif source == 'tvmaze':
             show    = item['show']
             channel = item['channel']
             imdb_id = (show.get('externals') or {}).get('imdb')
