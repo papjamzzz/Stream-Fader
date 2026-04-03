@@ -597,6 +597,146 @@
       100% { background-position: -200% 0; }
     }
 
+    /* ── DETAIL MODAL ── */
+    #detail-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(12px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    #detail-overlay.open { display: flex; }
+
+    #detail-modal {
+      background: #0d0f1a;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      max-width: 780px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+      animation: modalIn 0.2s ease;
+    }
+    @keyframes modalIn {
+      from { opacity:0; transform: scale(0.95) translateY(12px); }
+      to   { opacity:1; transform: scale(1) translateY(0); }
+    }
+
+    #detail-close {
+      position: absolute;
+      top: 16px; right: 20px;
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+      z-index: 10;
+    }
+    #detail-close:hover { background: rgba(255,255,255,0.16); }
+
+    .detail-hero {
+      display: flex;
+      gap: 24px;
+      padding: 28px 28px 20px;
+    }
+    .detail-poster {
+      width: 140px;
+      flex-shrink: 0;
+      border-radius: 12px;
+      object-fit: cover;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    }
+    .detail-poster-placeholder {
+      width: 140px; height: 210px;
+      flex-shrink: 0;
+      border-radius: 12px;
+      background: #1a1d2e;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px;
+    }
+    .detail-info { flex: 1; min-width: 0; }
+    .detail-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+      line-height: 1.2;
+    }
+    .detail-meta {
+      font-size: 13px;
+      color: rgba(240,242,255,0.45);
+      margin-bottom: 14px;
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    }
+    .detail-providers {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+    }
+    .detail-scores {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+    .detail-score-chip {
+      padding: 5px 12px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.06);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .detail-overview {
+      font-size: 14px;
+      color: rgba(240,242,255,0.7);
+      line-height: 1.7;
+      padding: 0 28px 20px;
+    }
+    .detail-footer {
+      padding: 16px 28px 24px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .trailer-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #ff0000;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 22px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .trailer-btn:hover { background: #cc0000; transform: translateY(-1px); }
+    .trailer-btn.loading { background: #555; cursor: default; }
+    .trailer-btn.no-trailer { background: #333; cursor: default; }
+    .imdb-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #f5c518;
+      color: #000;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 22px;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .imdb-btn:hover { opacity: 0.85; }
+
     /* ── BOTTOM INFO BAR ── */
     #info-bar {
       position: fixed;
@@ -891,6 +1031,7 @@ let allTV     = [];
 let fader     = 50;
 let activeGenre = 'All';
 let allGenres = new Set();
+window._cardRegistry = [];
 
 // ── Color math ────────────────────────────────────────
 function lerpColor(c1, c2, t) {
@@ -996,8 +1137,11 @@ function renderCard(item, rank) {
   const overview = item.overview
     ? `<div class="card-overview">${item.overview}</div>` : '';
 
+  // Store item in global registry, reference by index
+  const cardIndex = window._cardRegistry.push(item) - 1;
+
   return `
-    <div class="media-card" style="--blend-color:${col}">
+    <div class="media-card" style="--blend-color:${col};cursor:pointer;" onclick="openDetail(${cardIndex})">
       <div class="card-poster-wrap">
         ${posterEl}
         <div class="${rankClass}">${rank}</div>
@@ -1033,6 +1177,7 @@ function renderList(containerId, items, countId) {
 }
 
 function updateCards(animate = true) {
+  window._cardRegistry = []; // reset registry on each render
   const movieList = document.getElementById('movie-list');
   const tvList    = document.getElementById('tv-list');
 
@@ -1197,9 +1342,121 @@ function renderTopPick(pick) {
   });
 }
 
+// ── Detail Modal ─────────────────────────────────────────
+function openDetail(cardIndex) {
+  const item = window._cardRegistry[cardIndex];
+  if (!item) return;
+  const overlay = document.getElementById('detail-overlay');
+  const modal   = document.getElementById('detail-modal');
+
+  // Poster
+  const posterEl = item.poster
+    ? `<img class="detail-poster" src="${item.poster}" alt="${item.title}">`
+    : `<div class="detail-poster-placeholder">${item.media_type === 'movie' ? '🎬' : '📺'}</div>`;
+
+  // Scores
+  const scoreMap = [
+    { label: 'RT',          val: item.rt_score,    unit: '%', color: '#fa320a' },
+    { label: 'RT Audience', val: item.rt_audience, unit: '%', color: '#fca130' },
+    { label: 'Metacritic',  val: item.mc_score,    unit: '',  color: '#ffcc34' },
+    { label: 'IMDb',        val: item.imdb_score,  unit: '',  color: '#f5c518' },
+    { label: 'Letterboxd',  val: item.letterboxd,  unit: '%', color: '#00e054' },
+  ];
+  const scoreChips = scoreMap
+    .filter(s => s.val != null)
+    .map(s => `<div class="detail-score-chip" style="color:${s.color}">${s.label} ${s.val}${s.unit}</div>`)
+    .join('');
+
+  // Providers
+  const providerChips = (item.providers || []).map(p =>
+    `<span class="platform-tag" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44;">${p.name}</span>`
+  ).join('');
+
+  const year = item.release ? item.release.slice(0, 4) : '';
+  const type = item.media_type === 'movie' ? 'Movie' : 'TV Show';
+  const genres = (item.genres || []).join(' · ');
+
+  const imdbLink = item.imdb_id
+    ? `<a class="imdb-btn" href="https://www.imdb.com/title/${item.imdb_id}/" target="_blank">⭐ IMDb Page</a>`
+    : '';
+
+  modal.innerHTML = `
+    <button id="detail-close" onclick="closeDetail()">✕</button>
+    <div class="detail-hero">
+      ${posterEl}
+      <div class="detail-info">
+        <div class="detail-title">${item.title}</div>
+        <div class="detail-meta">
+          ${year ? `<span>${year}</span>` : ''}
+          <span>${type}</span>
+          ${genres ? `<span>${genres}</span>` : ''}
+        </div>
+        <div class="detail-providers">${providerChips}</div>
+        <div class="detail-scores">${scoreChips}</div>
+      </div>
+    </div>
+    ${item.overview ? `<div class="detail-overview">${item.overview}</div>` : ''}
+    <div class="detail-footer">
+      <button class="trailer-btn loading" id="trailer-btn" disabled>⏳ Finding trailer…</button>
+      ${imdbLink}
+    </div>
+  `;
+
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // Fetch trailer
+  const params = new URLSearchParams({
+    imdb_id: item.imdb_id || '',
+    type: item.media_type || 'movie'
+  });
+  fetch(`/api/trailer?${params}`)
+    .then(r => r.json())
+    .then(data => {
+      const btn = document.getElementById('trailer-btn');
+      if (!btn) return;
+      if (data.url) {
+        btn.textContent = '▶ Watch Trailer on YouTube';
+        btn.classList.remove('loading');
+        btn.onclick = () => window.open(data.url, '_blank');
+        btn.disabled = false;
+      } else {
+        btn.textContent = 'No trailer found';
+        btn.classList.remove('loading');
+        btn.classList.add('no-trailer');
+      }
+    })
+    .catch(() => {
+      const btn = document.getElementById('trailer-btn');
+      if (btn) { btn.textContent = 'No trailer found'; btn.classList.add('no-trailer'); }
+    });
+}
+
+function closeDetail() {
+  document.getElementById('detail-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Close on overlay click (outside modal)
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('detail-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('detail-overlay')) closeDetail();
+  });
+  // Close on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeDetail();
+  });
+});
+
 // ── Boot ─────────────────────────────────────────────────
 onFaderMove(50);
 loadContent(false);
 </script>
+
+<!-- ── Detail Modal ── -->
+<div id="detail-overlay">
+  <div id="detail-modal"></div>
+</div>
+
 </body>
 </html>
