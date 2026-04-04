@@ -407,17 +407,23 @@
       margin-bottom: 6px;
     }
 
-    /* ── CARDS — small posters, 3 per column ── */
+    /* ── CARDS — 3 per column, both sides identical ── */
     .card-list {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
+      align-items: start;
+    }
+    /* Force both columns to same width */
+    .content-grid .column {
+      min-width: 0;
+      width: 100%;
     }
     @media (max-width: 1100px) {
       .card-list { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 860px) {
-      .card-list { grid-template-columns: repeat(3, 1fr); }
+      .card-list { grid-template-columns: repeat(2, 1fr); }
       .column { padding: 16px; }
     }
 
@@ -441,11 +447,10 @@
     .card-poster-wrap {
       position: relative;
       width: 100%;
-      aspect-ratio: 2/2.2;
+      aspect-ratio: 2/2.4;
       background: var(--muted);
       overflow: hidden;
       flex-shrink: 0;
-      flex: 0 0 66%;
     }
     .card-poster {
       width: 100%;
@@ -835,7 +840,7 @@
     align-items: center;
     gap: 12px;
   ">
-    <span style="font-size:14px;font-weight:700;letter-spacing:0.5px;color:rgba(240,242,255,0.55);text-align:center;">Some of the sources added to our secret sauce to get you the right watch, now.</span>
+    <span style="font-size:14px;font-weight:700;letter-spacing:0.5px;color:rgba(240,242,255,0.55);text-align:center;">Some of the sources added to our secret sauce to get you the right watch include:</span>
     <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;">
       <img src="/static/sources/RottenTomatoesLogoWhite.png" alt="Rotten Tomatoes" style="height:30px;object-fit:contain;opacity:0.9;" onerror="this.style.display='none'">
       <img src="/static/sources/IMBDLogo.png" alt="IMDb" style="height:30px;object-fit:contain;opacity:0.9;" onerror="this.style.display='none'">
@@ -915,7 +920,7 @@
   <div class="fader-labels">
     <div class="fader-label left">🎭 Critics</div>
     <div class="fader-sweet-label" id="sweet-label">Hmmmmmm?</div>
-    <div class="fader-label right">🍿 Audience</div>
+    <div class="fader-label right">★ Audience</div>
   </div>
 
   <div class="fader-wrap">
@@ -1128,7 +1133,7 @@ function onFaderMove(val) {
     badge.style.borderColor = 'rgba(79,195,247,0.4)';
     document.getElementById('sweet-label').classList.remove('active');
   } else {
-    badge.textContent = '🍿 Audience Mode';
+    badge.textContent = '★ Audience Mode';
     badge.style.color = '#ffb74d';
     badge.style.borderColor = 'rgba(255,183,77,0.4)';
     document.getElementById('sweet-label').classList.remove('active');
@@ -1166,10 +1171,13 @@ function renderCard(item, rank) {
   const year = item.release ? item.release.slice(0, 4) : '';
 
   const scorePills = [];
+  // Always show critic score if available — prefer specific source, fall back to composite
   if (item.rt_score    != null) scorePills.push(`<span class="score-pill rt">RT ${item.rt_score}%</span>`);
+  else if (item.mc_score != null) scorePills.push(`<span class="score-pill rt">MC ${item.mc_score}</span>`);
+  else if (item.critic_score != null) scorePills.push(`<span class="score-pill rt">Critics ${item.critic_score}%</span>`);
+  // Always show audience/IMDb score
   if (item.imdb_score  != null) scorePills.push(`<span class="score-pill imdb">IMDb ${item.imdb_score}</span>`);
-  if (!scorePills.length && item.audience_score != null)
-    scorePills.push(`<span class="score-pill aud">🍿 ${item.audience_score}</span>`);
+  else if (item.audience_score != null) scorePills.push(`<span class="score-pill aud">Audience ${item.audience_score}%</span>`);
 
   const overview = item.overview
     ? `<div class="card-overview">${item.overview}</div>` : '';
