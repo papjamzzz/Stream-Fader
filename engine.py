@@ -18,9 +18,32 @@ MDBLIST_KEY   = os.getenv('MDBLIST_API_KEY', '')
 ANTHROPIC_KEY = os.getenv('ANTHROPIC_API_KEY', '')
 
 CACHE_FILE      = 'data/cache.json'
+SCORE_CACHE_FILE = 'data/score_cache.json'  # per-title score cache — survives content rebuilds
 TOPPICK_FILE    = 'data/toppick.json'
 CACHE_TTL       = 48 * 3600  # 48 hours — large pool, no need to refresh often
 TOPPICK_TTL     = 12 * 3600
+
+# ── Per-title score cache (survives content rebuilds, keyed by IMDb ID) ───────
+_score_cache = {}
+
+def _load_score_cache():
+    global _score_cache
+    try:
+        if os.path.exists(SCORE_CACHE_FILE):
+            with open(SCORE_CACHE_FILE) as f:
+                _score_cache = json.load(f)
+    except Exception:
+        _score_cache = {}
+
+def _save_score_cache():
+    try:
+        os.makedirs('data', exist_ok=True)
+        with open(SCORE_CACHE_FILE, 'w') as f:
+            json.dump(_score_cache, f)
+    except Exception:
+        pass
+
+_load_score_cache()
 
 # ── Colors ─────────────────────────────────────────────────────────────────────
 
@@ -192,6 +215,10 @@ def tmdb_watch_providers(tmdb_id, media='movie'):
 # ── Score aggregation ──────────────────────────────────────────────────────────
 
 def best_scores(imdb_id):
+    # Return cached scores if available — avoids re-hitting rate-limited APIs
+    if imdb_id and imdb_id in _score_cache:
+        return _score_cache[imdb_id]
+
     scores = {
         'rt': None, 'rt_audience': None, 'mc': None,
         'imdb': None, 'imdb_display': None,
@@ -255,6 +282,11 @@ def best_scores(imdb_id):
         scores['audience'] = round(sum(aud_parts) / total_w)
     else:
         scores['audience'] = None
+
+    # Cache scores permanently per IMDb ID — scores don't change daily
+    if imdb_id and (scores['critic'] is not None or scores['audience'] is not None):
+        _score_cache[imdb_id] = scores
+        _save_score_cache()
 
     return scores
 
@@ -393,7 +425,7 @@ def fetch_movies():
 
     candidates = deduped[:1000]
     enriched = []
-    with ThreadPoolExecutor(max_workers=40) as ex:
+    with ThreadPoolExecutor(max_workers=8) as ex:
         futures = {ex.submit(_enrich_movie, src, item): (src, item) for src, item in candidates}
         for future in as_completed(futures):
             result = future.result()
@@ -592,7 +624,7 @@ def fetch_tv():
             candidates.append(('trakt_show', t))
 
     enriched = []
-    with ThreadPoolExecutor(max_workers=40) as ex:
+    with ThreadPoolExecutor(max_workers=8) as ex:
         futures = {ex.submit(_enrich_tv, src, item): (src, item) for src, item in candidates}
         for future in as_completed(futures):
             result = future.result()
