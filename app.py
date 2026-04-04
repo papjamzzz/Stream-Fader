@@ -58,7 +58,7 @@ def content():
 
 @app.route('/api/top10')
 def top10():
-    """Return 5-persona AI consensus Top 10 Movies + Top 10 Series."""
+    """Return 5-persona AI consensus Top 12 Movies + Top 12 Series."""
     cached = get_cached_content()
     if not cached:
         return jsonify({'error': 'no_data'}), 503

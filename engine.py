@@ -748,7 +748,7 @@ No markdown. No explanation. Only valid JSON."""
 
 
 def generate_top10(movies, tv):
-    """5-persona consensus vote → ranked Top 10 Movies + Top 10 Series."""
+    """5-persona consensus vote → ranked Top 12 Movies + Top 12 Series."""
     if not ANTHROPIC_KEY:
         return None
 
@@ -779,7 +779,7 @@ def generate_top10(movies, tv):
 
     all_items = {i['title']: i for i in movies + tv}
 
-    def build_ranked(vote_counter, limit=10):
+    def build_ranked(vote_counter, limit=12):
         ranked = []
         for title, pts in vote_counter.most_common(limit * 2):
             item = all_items.get(title)
@@ -797,8 +797,8 @@ def generate_top10(movies, tv):
                 break
         return ranked
 
-    top_movies = build_ranked(movie_votes, 10)
-    top_tv     = build_ranked(tv_votes, 10)
+    top_movies = build_ranked(movie_votes, 12)
+    top_tv     = build_ranked(tv_votes, 12)
 
     # Now ask one final Claude call to write up the single Tonight's Best Match
     best_title = None

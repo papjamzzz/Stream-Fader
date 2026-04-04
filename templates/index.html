@@ -1049,16 +1049,16 @@
 <div class="top10-section" id="top10-section" style="display:none;">
   <div class="top10-header">
     <div class="eyebrow">5-AI Consensus · Updated every 12 hours</div>
-    <h2>Tonight's Top 10</h2>
+    <h2>Tonight's Top 12</h2>
     <p>Five independent AI perspectives vote on what's worth watching right now</p>
   </div>
   <div class="top10-cols">
     <div class="top10-col movies">
-      <h3>🎬 Top 10 Movies</h3>
+      <h3>🎬 Top 12 Movies</h3>
       <div id="top10-movies"><div class="top10-loading"><div class="spinner"></div><br>Consulting 5 AI critics…</div></div>
     </div>
     <div class="top10-col series">
-      <h3>📺 Top 10 Series</h3>
+      <h3>📺 Top 12 Series</h3>
       <div id="top10-tv"><div class="top10-loading"><div class="spinner"></div><br>Consulting 5 AI critics…</div></div>
     </div>
   </div>
@@ -1553,7 +1553,7 @@ function renderTop10List(containerId, items, type) {
   const el = document.getElementById(containerId);
   if (!items.length) { el.innerHTML = '<div class="top10-loading">No data yet</div>'; return; }
 
-  el.innerHTML = items.slice(0, 10).map((item, i) => {
+  el.innerHTML = items.slice(0, 12).map((item, i) => {
     const rank = i + 1;
     const thumb = item.poster
       ? `<img class="top10-thumb" src="${item.poster}" alt="" loading="lazy">`
