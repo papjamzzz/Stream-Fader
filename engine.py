@@ -381,7 +381,7 @@ def _enrich_movie(source, item):
             poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
             title    = details.get('title') or item.get('title', 'Unknown')
             overview = (details.get('overview') or item.get('overview') or '')[:600]
-            genres   = [g['name'] for g in (details.get('genres') or [])][:3]
+            genres   = [g['name'] for g in (details.get('genres') or []) if g.get('name')][:3]
             return _movie_record(imdb_id or str(tmdb_id), imdb_id, title, overview,
                                  poster, item.get('release_date', ''), providers, genres, scores,
                                  is_doc=item.get('_is_doc', False))
@@ -551,8 +551,9 @@ def _enrich_tv(source, item):
                 return None
 
             # Hard recency gate: last_air_date must be within 18 months
+            # Also reject shows with no air date (likely cancelled/unaired)
             last_air = details.get('last_air_date') or item.get('last_air_date', '')
-            if last_air and last_air < TV_RECENCY_CUTOFF:
+            if not last_air or last_air < TV_RECENCY_CUTOFF:
                 return None
 
             # Require at least 3 episodes

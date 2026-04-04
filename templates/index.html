@@ -1537,7 +1537,11 @@ async function fetchTop10() {
     const res = await fetch('/api/top10');
     if (!res.ok) return;
     const data = await res.json();
-    if (data.error) return;
+    if (data.error) {
+      document.getElementById('top10-movies').innerHTML = '<div class="top10-loading" style="opacity:0.4">AI consensus unavailable</div>';
+      document.getElementById('top10-tv').innerHTML    = '<div class="top10-loading" style="opacity:0.4">AI consensus unavailable</div>';
+      return;
+    }
 
     const section = document.getElementById('top10-section');
     section.style.display = 'block';

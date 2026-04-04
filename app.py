@@ -40,7 +40,8 @@ def content():
         try:
             return jsonify(get_top_content(force=True))
         except Exception as e:
-            return jsonify({'movies': [], 'tv': [], 'error': str(e), 'fetched_at': None}), 500
+            app.logger.error(f"Forced content fetch failed: {e}")
+            return jsonify({'movies': [], 'tv': [], 'error': 'fetch_failed', 'fetched_at': None}), 500
 
     # Stale-while-revalidate: return whatever cache exists immediately,
     # kick off a background refresh if the data is stale.
@@ -54,7 +55,8 @@ def content():
     try:
         return jsonify(get_top_content(force=False))
     except Exception as e:
-        return jsonify({'movies': [], 'tv': [], 'error': str(e), 'fetched_at': None}), 500
+        app.logger.error(f"Content fetch failed: {e}")
+        return jsonify({'movies': [], 'tv': [], 'error': 'fetch_failed', 'fetched_at': None}), 500
 
 @app.route('/api/top10')
 def top10():
@@ -70,7 +72,8 @@ def top10():
             return jsonify(data)
         return jsonify({'error': 'no_anthropic_key'}), 503
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.error(f"Top12 generation failed: {e}")
+        return jsonify({'error': 'generation_failed'}), 500
 
 
 @app.route('/api/trailer')
@@ -78,7 +81,9 @@ def trailer():
     """Return YouTube trailer URL for a given TMDb ID and media type."""
     tmdb_id   = request.args.get('tmdb_id')
     imdb_id   = request.args.get('imdb_id')
-    media     = request.args.get('type', 'movie')  # 'movie' or 'tv'
+    media     = request.args.get('type', 'movie')
+    if media not in ('movie', 'tv'):
+        media = 'movie'  # sanitize — never pass arbitrary strings into TMDb URL
 
     if not TMDB_KEY:
         return jsonify({'url': None})
