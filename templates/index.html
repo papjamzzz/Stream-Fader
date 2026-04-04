@@ -622,6 +622,9 @@
       animation: shimmer 1.4s infinite;
       border-radius: 4px;
     }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
     @keyframes shimmer {
       0% { background-position: 200% 0; }
       100% { background-position: -200% 0; }
@@ -813,6 +816,133 @@
     /* card fade-swap animation */
     .card-list.swapping { opacity: 0; transition: opacity 0.15s; }
     .card-list.swapping-in { opacity: 1; transition: opacity 0.25s; }
+
+    /* ── TOP 10 CONSENSUS LISTS ── */
+    .top10-section {
+      max-width: 1200px;
+      margin: 0 auto 0;
+      padding: 36px 28px 40px;
+    }
+    .top10-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .top10-header .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--sweet);
+      opacity: 0.7;
+      margin-bottom: 8px;
+    }
+    .top10-header h2 {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .top10-header p {
+      font-size: 13px;
+      color: var(--dim);
+      margin-top: 6px;
+    }
+    .top10-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+    @media (max-width: 700px) {
+      .top10-cols { grid-template-columns: 1fr; }
+    }
+    .top10-col h3 {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .top10-col.movies h3 { color: var(--critic); }
+    .top10-col.series h3 { color: var(--audience); }
+
+    .top10-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      cursor: pointer;
+      transition: background 0.15s;
+      border-radius: 8px;
+      padding-left: 6px;
+    }
+    .top10-row:hover { background: rgba(255,255,255,0.04); }
+    .top10-rank {
+      font-size: 22px;
+      font-weight: 900;
+      width: 36px;
+      text-align: right;
+      flex-shrink: 0;
+      opacity: 0.22;
+      font-variant-numeric: tabular-nums;
+    }
+    .top10-row:nth-child(1) .top10-rank { opacity: 1; color: #FFD700; font-size: 26px; }
+    .top10-row:nth-child(2) .top10-rank { opacity: 0.85; color: #C0C0C0; font-size: 24px; }
+    .top10-row:nth-child(3) .top10-rank { opacity: 0.75; color: #CD7F32; font-size: 22px; }
+    .top10-thumb {
+      width: 44px;
+      height: 62px;
+      object-fit: cover;
+      border-radius: 5px;
+      flex-shrink: 0;
+      background: var(--muted);
+    }
+    .top10-info { flex: 1; min-width: 0; }
+    .top10-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .top10-meta {
+      font-size: 11px;
+      color: var(--dim);
+      margin-top: 3px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .top10-score {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--critic);
+    }
+    .top10-platform {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 10px;
+    }
+    .top10-loading {
+      text-align: center;
+      padding: 32px;
+      color: var(--dim);
+      font-size: 13px;
+    }
+    .top10-loading .spinner {
+      display: inline-block;
+      width: 20px; height: 20px;
+      border: 2px solid rgba(198,120,221,0.2);
+      border-top-color: var(--sweet);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
@@ -909,6 +1039,27 @@
         <div id="tp-scores" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
         <div id="tp-watch-if" style="font-size:12px; color:rgba(240,242,255,0.45); font-style:italic;"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     5-AI CONSENSUS TOP 10
+══════════════════════════════════════════════ -->
+<div class="top10-section" id="top10-section" style="display:none;">
+  <div class="top10-header">
+    <div class="eyebrow">5-AI Consensus · Updated every 12 hours</div>
+    <h2>Tonight's Top 10</h2>
+    <p>Five independent AI perspectives vote on what's worth watching right now</p>
+  </div>
+  <div class="top10-cols">
+    <div class="top10-col movies">
+      <h3>🎬 Top 10 Movies</h3>
+      <div id="top10-movies"><div class="top10-loading"><div class="spinner"></div><br>Consulting 5 AI critics…</div></div>
+    </div>
+    <div class="top10-col series">
+      <h3>📺 Top 10 Series</h3>
+      <div id="top10-tv"><div class="top10-loading"><div class="spinner"></div><br>Consulting 5 AI critics…</div></div>
     </div>
   </div>
 </div>
@@ -1316,6 +1467,9 @@ const total = allMovies.length + allTV.length;
       renderTopPick(data.top_pick);
     }
 
+    // ── 5-AI Top 10 (async, non-blocking) ──
+    fetchTop10();
+
   } catch (e) {
     showError();
   }
@@ -1375,6 +1529,66 @@ function renderTopPick(pick) {
     chip.textContent = p.name;
     provEl.appendChild(chip);
   });
+}
+
+// ── Top 10 Consensus Lists ────────────────────────────────
+async function fetchTop10() {
+  try {
+    const res = await fetch('/api/top10');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.error) return;
+
+    const section = document.getElementById('top10-section');
+    section.style.display = 'block';
+
+    renderTop10List('top10-movies', data.movies || [], 'movie');
+    renderTop10List('top10-tv',     data.tv     || [], 'tv');
+  } catch(e) {
+    // silently fail — Top 10 is bonus feature
+  }
+}
+
+function renderTop10List(containerId, items, type) {
+  const el = document.getElementById(containerId);
+  if (!items.length) { el.innerHTML = '<div class="top10-loading">No data yet</div>'; return; }
+
+  el.innerHTML = items.slice(0, 10).map((item, i) => {
+    const rank = i + 1;
+    const thumb = item.poster
+      ? `<img class="top10-thumb" src="${item.poster}" alt="" loading="lazy">`
+      : `<div class="top10-thumb" style="background:var(--muted);"></div>`;
+
+    const scoreStr = item.rt_score != null ? `RT ${item.rt_score}%`
+      : item.mc_score != null ? `MC ${item.mc_score}`
+      : item.imdb_score != null ? `IMDb ${item.imdb_score}`
+      : '';
+
+    const platform = (item.providers || []).slice(0,1).map(p =>
+      `<span class="top10-platform" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44">${p.name}</span>`
+    ).join('');
+
+    const year = (item.year || item.release_date || item.first_air_date || '').toString().slice(0,4);
+    const season = item.season_label ? ` · ${item.season_label}` : '';
+
+    // Register in card registry so clicking opens detail modal
+    const regIdx = (window._cardRegistry || []).length;
+    window._cardRegistry = window._cardRegistry || [];
+    window._cardRegistry.push(item);
+
+    return `<div class="top10-row" onclick="openDetail(${regIdx})">
+      <div class="top10-rank">${rank}</div>
+      ${thumb}
+      <div class="top10-info">
+        <div class="top10-title">${item.title}${season}</div>
+        <div class="top10-meta">
+          ${year ? `<span>${year}</span>` : ''}
+          ${scoreStr ? `<span class="top10-score">${scoreStr}</span>` : ''}
+          ${platform}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── Detail Modal ─────────────────────────────────────────

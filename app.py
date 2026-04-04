@@ -1,6 +1,6 @@
 import threading, os, requests
 from flask import Flask, render_template, jsonify, request
-from engine import get_top_content, get_cached_content
+from engine import get_top_content, get_cached_content, generate_top10
 
 TMDB_KEY = os.getenv('TMDB_API_KEY', '')
 
@@ -55,6 +55,23 @@ def content():
         return jsonify(get_top_content(force=False))
     except Exception as e:
         return jsonify({'movies': [], 'tv': [], 'error': str(e), 'fetched_at': None}), 500
+
+@app.route('/api/top10')
+def top10():
+    """Return 5-persona AI consensus Top 10 Movies + Top 10 Series."""
+    cached = get_cached_content()
+    if not cached:
+        return jsonify({'error': 'no_data'}), 503
+    movies = cached.get('movies', [])
+    tv     = cached.get('tv', [])
+    try:
+        data = generate_top10(movies, tv)
+        if data:
+            return jsonify(data)
+        return jsonify({'error': 'no_anthropic_key'}), 503
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/trailer')
 def trailer():

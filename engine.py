@@ -4,6 +4,7 @@ Sources: TMDb · OMDb (RT/MC/IMDb scores) · TVmaze · Trakt · MDBList
 AI:      Claude Top Pick via Anthropic API
 """
 import os, json, time, requests, re, anthropic
+from collections import Counter
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -203,7 +204,8 @@ def best_scores(imdb_id):
             s = parse_mdblist_scores(mdb)
             scores.update({k: v for k, v in s.items() if v is not None})
 
-    if OMDB_KEY and imdb_id and (scores['rt'] is None or scores['mc'] is None):
+    # Fire OMDb if ANY critic source is missing — not just when both RT AND MC are missing
+    if OMDB_KEY and imdb_id and (scores['rt'] is None or scores['mc'] is None or scores['imdb'] is None):
         omdb = omdb_fetch(imdb_id=imdb_id)
         if omdb and omdb.get('Response') != 'False':
             _, imdb_raw, rt, mc, imdb_disp = parse_omdb_scores(omdb)
@@ -637,94 +639,212 @@ def _tv_record(uid, imdb_id, title, overview, poster, release, providers, genres
     }
 
 
-# ── Claude Top Pick ─────────────────────────────────────────────────────────────
+# ── 5-Persona AI Consensus ──────────────────────────────────────────────────────
 
-def generate_top_pick(movies, tv):
-    if not ANTHROPIC_KEY:
-        return None
+TOP10_FILE = 'data/top10.json'
+TOP10_TTL  = 12 * 3600  # 12 hours
 
-    if os.path.exists(TOPPICK_FILE):
-        try:
-            with open(TOPPICK_FILE) as f:
-                cached = json.load(f)
-            if time.time() - cached.get('timestamp', 0) < TOPPICK_TTL:
-                return cached['data']
-        except Exception:
-            pass
+PERSONAS = [
+    {
+        'name': 'film_critic',
+        'system': 'You are a respected film critic who values artistic merit, direction, writing, and performances. You weight Rotten Tomatoes and Metacritic scores heavily. You prefer prestige dramas, auteur films, and award contenders.',
+    },
+    {
+        'name': 'general_audience',
+        'system': 'You are the average American streaming viewer. You want entertainment, excitement, and emotional engagement. You weight IMDb and audience scores. You prefer crowd-pleasers, thrillers, comedies, and popular dramas.',
+    },
+    {
+        'name': 'cinephile',
+        'system': 'You are a passionate cinephile who uses Letterboxd daily. You value originality, cinematography, and bold storytelling. You actively avoid obvious mainstream picks and champion underrated films.',
+    },
+    {
+        'name': 'casual_viewer',
+        'system': 'You are a casual viewer looking for something easy to watch on a Friday night. You prefer popular, accessible content with broad appeal. You avoid slow burns, foreign films, and anything too heavy.',
+    },
+    {
+        'name': 'hidden_gem_hunter',
+        'system': 'You specialize in finding overlooked gems. You actively penalize overexposed blockbusters. You reward high-quality titles with smaller audiences. You want to surprise people with something they have not seen.',
+    },
+]
 
-    def fmt(items, limit=10):
-        lines = []
-        for i in items[:limit]:
-            sc = []
-            if i.get('rt_score'):    sc.append(f"RT {i['rt_score']}%")
-            if i.get('mc_score'):    sc.append(f"MC {i['mc_score']}")
-            if i.get('imdb_score'):  sc.append(f"IMDb {i['imdb_score']}")
-            if i.get('letterboxd'):  sc.append(f"LB {i['letterboxd']}%")
-            if i.get('trakt_score'): sc.append(f"Trakt {i['trakt_score']}%")
-            providers = ', '.join(p['name'] for p in (i.get('providers') or [])[:2]) or 'Unknown'
-            genres    = ', '.join(i.get('genres') or [])
-            line = f"- {i['title']} ({str(i.get('release',''))[:4]}) [{', '.join(sc)}] on {providers}"
-            if genres:
-                line += f" | {genres}"
-            lines.append(line)
-        return '\n'.join(lines)
+def _fmt_candidates(items, limit=20):
+    lines = []
+    for i in items[:limit]:
+        sc = []
+        if i.get('rt_score'):     sc.append(f"RT {i['rt_score']}%")
+        if i.get('mc_score'):     sc.append(f"MC {i['mc_score']}")
+        if i.get('imdb_score'):   sc.append(f"IMDb {i['imdb_score']}")
+        if i.get('letterboxd'):   sc.append(f"LB {i['letterboxd']}%")
+        if i.get('critic_score'): sc.append(f"Critics {i['critic_score']}%")
+        providers = ', '.join(p['name'] for p in (i.get('providers') or [])[:2]) or 'Unknown'
+        genres    = ', '.join((i.get('genres') or [])[:2])
+        score_str = ', '.join(sc) if sc else 'No scores'
+        line = f"- {i['title']} ({str(i.get('release',''))[:4]}) [{score_str}] on {providers}"
+        if genres:
+            line += f" | {genres}"
+        lines.append(line)
+    return '\n'.join(lines)
 
-    prompt = f"""You are the recommendation engine for StreamFader, a premium streaming guide.
 
-Today's top-rated content across all streaming platforms:
+def _ask_persona(persona, movies, tv):
+    """Ask one persona to rank top 5 movies and top 5 series. Returns lists of titles."""
+    prompt = f"""You are helping power StreamFader, a streaming recommendation engine.
 
-MOVIES:
-{fmt(movies)}
+CANDIDATE MOVIES (last 12 months, on streaming now):
+{_fmt_candidates(movies, 20)}
 
-TV SHOWS:
-{fmt(tv)}
+CANDIDATE TV SERIES (currently airing, on streaming now):
+{_fmt_candidates(tv, 20)}
 
-Pick the single best thing to watch tonight. Weigh critic scores, audience scores, and broad appeal.
+From your perspective as described, pick the best 5 MOVIES and best 5 TV SERIES.
 
-Respond in this exact JSON format:
+Respond ONLY in this exact JSON format — use exact titles from the lists:
 {{
-  "title": "exact title from the list",
-  "media_type": "movie or tv",
-  "headline": "one punchy sentence, max 12 words, why this is tonight's must-watch",
-  "reason": "2-3 sentences. Specific — mention scores, what makes it stand out, who it's for.",
-  "watch_if": "one short phrase — e.g. 'you loved Succession' or 'you want a thriller that does not let up'"
+  "movies": ["Title 1", "Title 2", "Title 3", "Title 4", "Title 5"],
+  "tv": ["Title 1", "Title 2", "Title 3", "Title 4", "Title 5"]
 }}
 
-Only return valid JSON. No markdown, no explanation."""
+No markdown. No explanation. Only valid JSON."""
 
     try:
         client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
         msg = client.messages.create(
-            model='claude-opus-4-5',
-            max_tokens=400,
+            model='claude-haiku-4-5',  # fast + cheap for 5 parallel calls
+            max_tokens=300,
+            system=persona['system'],
             messages=[{'role': 'user', 'content': prompt}]
         )
         raw = msg.content[0].text.strip()
         raw = re.sub(r'^```(?:json)?\n?', '', raw)
         raw = re.sub(r'\n?```$', '', raw)
-        pick = json.loads(raw)
-
-        all_items = movies + tv
-        match = next(
-            (i for i in all_items if i['title'].lower() == pick.get('title', '').lower()),
-            None
-        )
-        if match:
-            pick['poster']     = match.get('poster')
-            pick['providers']  = match.get('providers', [])
-            pick['imdb_id']    = match.get('imdb_id')
-            pick['rt_score']   = match.get('rt_score')
-            pick['mc_score']   = match.get('mc_score')
-            pick['imdb_score'] = match.get('imdb_score')
-            pick['letterboxd'] = match.get('letterboxd')
-
-        os.makedirs('data', exist_ok=True)
-        with open(TOPPICK_FILE, 'w') as f:
-            json.dump({'timestamp': time.time(), 'data': pick}, f)
-
-        return pick
+        result = json.loads(raw)
+        return result.get('movies', []), result.get('tv', [])
     except Exception:
+        return [], []
+
+
+def generate_top10(movies, tv):
+    """5-persona consensus vote → ranked Top 10 Movies + Top 10 Series."""
+    if not ANTHROPIC_KEY:
         return None
+
+    if os.path.exists(TOP10_FILE):
+        try:
+            with open(TOP10_FILE) as f:
+                cached = json.load(f)
+            if time.time() - cached.get('timestamp', 0) < TOP10_TTL:
+                return cached['data']
+        except Exception:
+            pass
+
+    # Run all 5 personas in parallel
+    movie_votes = Counter()
+    tv_votes    = Counter()
+
+    with ThreadPoolExecutor(max_workers=5) as ex:
+        futures = {ex.submit(_ask_persona, p, movies, tv): p for p in PERSONAS}
+        for future in as_completed(futures):
+            m_picks, t_picks = future.result()
+            # Points: 1st=5pts, 2nd=4pts, 3rd=3pts, 4th=2pts, 5th=1pt
+            for rank, title in enumerate(m_picks[:5]):
+                if title:
+                    movie_votes[title] += (5 - rank)
+            for rank, title in enumerate(t_picks[:5]):
+                if title:
+                    tv_votes[title] += (5 - rank)
+
+    all_items = {i['title']: i for i in movies + tv}
+
+    def build_ranked(vote_counter, limit=10):
+        ranked = []
+        for title, pts in vote_counter.most_common(limit * 2):
+            item = all_items.get(title)
+            if not item:
+                # fuzzy match — title might be slightly different
+                for k, v in all_items.items():
+                    if title.lower() in k.lower() or k.lower() in title.lower():
+                        item = v
+                        break
+            if item:
+                entry = dict(item)
+                entry['consensus_pts'] = pts
+                ranked.append(entry)
+            if len(ranked) >= limit:
+                break
+        return ranked
+
+    top_movies = build_ranked(movie_votes, 10)
+    top_tv     = build_ranked(tv_votes, 10)
+
+    # Now ask one final Claude call to write up the single Tonight's Best Match
+    best_title = None
+    best_item  = None
+    if movie_votes or tv_votes:
+        all_votes = Counter()
+        all_votes.update(movie_votes)
+        all_votes.update(tv_votes)
+        best_title = all_votes.most_common(1)[0][0] if all_votes else None
+        if best_title:
+            best_item = all_items.get(best_title)
+
+    tonight = None
+    if best_item and ANTHROPIC_KEY:
+        sc = []
+        if best_item.get('rt_score'):   sc.append(f"RT {best_item['rt_score']}%")
+        if best_item.get('mc_score'):   sc.append(f"MC {best_item['mc_score']}")
+        if best_item.get('imdb_score'): sc.append(f"IMDb {best_item['imdb_score']}")
+        score_str = ', '.join(sc) or 'Strong consensus pick'
+        providers = ', '.join(p['name'] for p in (best_item.get('providers') or [])[:2]) or 'Streaming now'
+        try:
+            client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+            msg = client.messages.create(
+                model='claude-opus-4-5',
+                max_tokens=300,
+                messages=[{'role': 'user', 'content': f"""Write a Tonight's Best Match card for StreamFader.
+
+Title: {best_item['title']}
+Type: {'Movie' if best_item['media_type'] == 'movie' else 'TV Series'}
+Scores: {score_str}
+Where to watch: {providers}
+Overview: {(best_item.get('overview') or '')[:300]}
+
+This title was chosen by 5 different AI personas as the strongest consensus pick tonight.
+
+Respond ONLY in this exact JSON:
+{{
+  "headline": "one punchy sentence, max 12 words",
+  "reason": "2 sentences. Specific. Mention scores and who it's for.",
+  "watch_if": "one short phrase"
+}}
+
+Only valid JSON. No markdown."""}]
+            )
+            raw = msg.content[0].text.strip()
+            raw = re.sub(r'^```(?:json)?\n?', '', raw)
+            raw = re.sub(r'\n?```$', '', raw)
+            writeup = json.loads(raw)
+            tonight = {**best_item, **writeup}
+        except Exception:
+            tonight = best_item
+
+    data = {
+        'movies':  top_movies,
+        'tv':      top_tv,
+        'tonight': tonight,
+        'generated_at': time.strftime('%Y-%m-%dT%H:%M:%S'),
+    }
+
+    os.makedirs('data', exist_ok=True)
+    with open(TOP10_FILE, 'w') as f:
+        json.dump({'timestamp': time.time(), 'data': data}, f)
+
+    return data
+
+
+def generate_top_pick(movies, tv):
+    """Legacy single-pick — delegates to consensus tonight pick."""
+    result = generate_top10(movies, tv)
+    return result.get('tonight') if result else None
 
 
 # ── Stale cache accessor ─────────────────────────────────────────────────────────
