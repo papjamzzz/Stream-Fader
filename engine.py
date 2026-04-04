@@ -364,6 +364,34 @@ def fetch_movies():
             for m in data.get('results', []):
                 candidates.append(('tmdb_movie', m))
 
+        # ── Award winners & critically acclaimed — on streaming, high vote_average, 5yr window ──
+        cutoff_5yr = (datetime.now() - timedelta(days=1825)).strftime('%Y-%m-%d')
+        for page in range(1, 5):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'vote_average.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'primary_release_date.gte': cutoff_5yr,
+                'vote_count.gte': 500,
+                'vote_average.gte': 7.5,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
+        # ── All-time acclaimed classics on streaming — Oscar bait, prestige dramas ──
+        for page in range(1, 3):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'vote_average.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'vote_count.gte': 5000,
+                'vote_average.gte': 8.0,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
     for t in trakt_trending_movies(50):
         candidates.append(('trakt_movie', t))
 
@@ -379,7 +407,7 @@ def fetch_movies():
             seen_cand.add(cid)
             deduped.append((src, item))
 
-    candidates = deduped[:200]
+    candidates = deduped[:300]
     enriched = []
     with ThreadPoolExecutor(max_workers=10) as ex:
         futures = {ex.submit(_enrich_movie, src, item): (src, item) for src, item in candidates}
