@@ -40,7 +40,8 @@ CHANNEL_COLORS = {
 }
 
 STREAMING_NAMES = list(CHANNEL_COLORS.keys())
-STREAMING_PROVIDER_IDS = '8|119|350|337|15|531|1899|386'
+# Netflix|Prime|Apple TV+|Disney+|Hulu|Paramount+|Max|Peacock|Mubi|Shudder|AMC+|Tubi|Criterion
+STREAMING_PROVIDER_IDS = '8|119|350|337|15|531|1899|386|190|99|526|73|258'
 
 
 def channel_color(name):
@@ -228,9 +229,9 @@ def best_scores(imdb_id):
 
 # ── Movies ─────────────────────────────────────────────────────────────────────
 
-MIN_VOTES       = 200    # minimum TMDb vote count — filters out small/limited releases
-MIN_POPULARITY  = 10     # TMDb popularity floor — removes truly obscure titles
-MIN_SCORE       = 60     # combined critic+audience floor — only quality content
+MIN_VOTES       = 150    # minimum TMDb vote count — filters out small/limited releases
+MIN_POPULARITY  = 8      # TMDb popularity floor — removes truly obscure titles
+MIN_SCORE       = 55     # combined critic+audience floor — only quality content
 DOC_GENRE_ID    = 99     # TMDb genre ID for Documentary
 
 # TMDb TV genre IDs to exclude — News, Reality, Soap, Talk
@@ -268,15 +269,16 @@ def fetch_movies():
     candidates = []
 
     if TMDB_KEY:
-        cutoff = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
+        cutoff_1yr  = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
+        cutoff_2yr  = (datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d')
 
-        # ── Popular mainstream movies on streaming (last year) ──
-        for page in range(1, 6):
+        # ── Popular movies on streaming — last 2 years, 8 pages ──
+        for page in range(1, 9):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'primary_release_date.gte': cutoff,
+                'primary_release_date.gte': cutoff_2yr,
                 'vote_count.gte': MIN_VOTES,
                 'popularity.gte': MIN_POPULARITY,
                 'page': page,
@@ -285,43 +287,89 @@ def fetch_movies():
                 if _passes_filters(m):
                     candidates.append(('tmdb_movie', m))
 
-        # ── Hidden gems: older high-rated films now streaming ──
-        # Sort by rating instead of popularity — surfaces excellent older titles
-        data = tmdb_get('/discover/movie', {
-            'sort_by': 'vote_average.desc',
-            'watch_region': 'US',
-            'with_watch_providers': STREAMING_PROVIDER_IDS,
-            'vote_count.gte': 1000,       # needs real vote base to trust the rating
-            'vote_average.gte': 7.5,
-            'popularity.gte': MIN_POPULARITY,
-            'page': 1,
-        })
-        for m in data.get('results', []):
-            candidates.append(('tmdb_movie', m))
+        # ── Top-rated classics now on streaming (no date gate, high vote floor) ──
+        for page in range(1, 4):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'vote_average.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'vote_count.gte': 2000,
+                'vote_average.gte': 7.8,
+                'popularity.gte': MIN_POPULARITY,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
+        # ── Most voted (most culturally discussed) on streaming ──
+        for page in range(1, 3):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'vote_count.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'vote_average.gte': 6.5,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
+        # ── Recent high-rated (last year, strong scores) ──
+        for page in range(1, 3):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'vote_average.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'primary_release_date.gte': cutoff_1yr,
+                'vote_count.gte': MIN_VOTES,
+                'vote_average.gte': 7.0,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
 
         # ── Top documentaries on streaming ──
-        data = tmdb_get('/discover/movie', {
-            'sort_by': 'vote_average.desc',
-            'watch_region': 'US',
-            'with_watch_providers': STREAMING_PROVIDER_IDS,
-            'with_genres': DOC_GENRE_ID,
-            'vote_count.gte': 200,
-            'vote_average.gte': 7.0,
-            'page': 1,
-        })
-        for m in data.get('results', []):
-            m['_is_doc'] = True
-            candidates.append(('tmdb_movie', m))
+        for page in range(1, 3):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'vote_average.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'with_genres': DOC_GENRE_ID,
+                'vote_count.gte': 150,
+                'vote_average.gte': 7.0,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                m['_is_doc'] = True
+                candidates.append(('tmdb_movie', m))
 
-    for t in trakt_trending_movies(30):
+        # ── Now playing in theaters — some will be on streaming already ──
+        for page in range(1, 3):
+            data = tmdb_get('/movie/now_playing', {
+                'region': 'US',
+                'page': page,
+            })
+            for m in data.get('results', []):
+                if _passes_filters(m):
+                    candidates.append(('tmdb_movie', m))
+
+    for t in trakt_trending_movies(40):
         candidates.append(('trakt_movie', t))
 
-    for t in trakt_popular_movies(20):
+    for t in trakt_popular_movies(30):
         candidates.append(('trakt_movie', t))
 
-    candidates = candidates[:50]
+    # Deduplicate candidates by TMDb/Trakt ID before enrichment
+    seen_cand = set()
+    deduped = []
+    for src, item in candidates:
+        cid = str(item.get('id') or item.get('ids', {}).get('tmdb') or item.get('ids', {}).get('trakt', ''))
+        if cid and cid not in seen_cand:
+            seen_cand.add(cid)
+            deduped.append((src, item))
+
+    candidates = deduped[:150]
     enriched = []
-    with ThreadPoolExecutor(max_workers=8) as ex:
+    with ThreadPoolExecutor(max_workers=12) as ex:
         futures = {ex.submit(_enrich_movie, src, item): (src, item) for src, item in candidates}
         for future in as_completed(futures):
             result = future.result()
@@ -334,7 +382,7 @@ def fetch_movies():
     enriched.sort(key=lambda x: (
         ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
     ), reverse=True)
-    return enriched[:35]
+    return enriched[:60]
 
 
 def _enrich_movie(source, item):
@@ -490,7 +538,7 @@ def fetch_tv():
             candidates.append(('trakt_show', t))
 
     enriched = []
-    with ThreadPoolExecutor(max_workers=8) as ex:
+    with ThreadPoolExecutor(max_workers=12) as ex:
         futures = {ex.submit(_enrich_tv, src, item): (src, item) for src, item in candidates}
         for future in as_completed(futures):
             result = future.result()
@@ -510,7 +558,7 @@ def fetch_tv():
     deduped.sort(key=lambda x: (
         ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
     ), reverse=True)
-    return deduped[:30]
+    return deduped[:50]
 
 
 def _enrich_tv(source, item):
