@@ -218,23 +218,41 @@ def best_scores(imdb_id):
                 scores['imdb'] = imdb_raw
                 scores['imdb_display'] = imdb_disp
 
-    # Critic pole: RT Tomatometer only (pure professional press)
-    # Fallback to Metacritic if RT unavailable
+    # ── CRITIC POLE: RT Tomatometer 50% + Metacritic 50% ──────────────────────
+    # Pure professional critic panels only — no user scores
+    critic_parts = []
+    critic_weights = []
     if scores['rt'] is not None:
-        scores['critic'] = scores['rt']
-    elif scores['mc'] is not None:
-        scores['critic'] = scores['mc']
+        critic_parts.append(scores['rt'] * 0.50)
+        critic_weights.append(0.50)
+    if scores['mc'] is not None:
+        critic_parts.append(scores['mc'] * 0.50)
+        critic_weights.append(0.50)
+    if critic_parts:
+        total_w = sum(critic_weights)
+        scores['critic'] = round(sum(critic_parts) / total_w)
     else:
         scores['critic'] = None
 
-    # Audience pole: IMDb only (millions of general viewers — genuine audience signal)
-    # Fallback to RT Audience or Trakt if IMDb unavailable
+    # ── AUDIENCE POLE: RT Audience 50% + IMDb 25% + Letterboxd 15% + Trakt 10% ──
+    # Pure viewer/user scores only — no critic panels
+    aud_parts = []
+    aud_weights = []
+    if scores['rt_audience'] is not None:
+        aud_parts.append(scores['rt_audience'] * 0.50)
+        aud_weights.append(0.50)
     if scores['imdb'] is not None:
-        scores['audience'] = scores['imdb']
-    elif scores['rt_audience'] is not None:
-        scores['audience'] = scores['rt_audience']
-    elif scores['trakt'] is not None:
-        scores['audience'] = scores['trakt']
+        aud_parts.append(scores['imdb'] * 0.25)
+        aud_weights.append(0.25)
+    if scores['letterboxd'] is not None:
+        aud_parts.append(scores['letterboxd'] * 0.15)
+        aud_weights.append(0.15)
+    if scores['trakt'] is not None:
+        aud_parts.append(scores['trakt'] * 0.10)
+        aud_weights.append(0.10)
+    if aud_parts:
+        total_w = sum(aud_weights)
+        scores['audience'] = round(sum(aud_parts) / total_w)
     else:
         scores['audience'] = None
 
@@ -286,107 +304,73 @@ def fetch_movies():
         cutoff_1yr  = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
         cutoff_2yr  = (datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d')
 
-        # ── Popular movies on streaming — last 2 years ──
-        for page in range(1, 7):
+        # ALL POOLS: strictly last 2 years only
+        # ── POOL 1: Popular on streaming — broad recent titles ──
+        for page in range(1, 6):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'primary_release_date.gte': cutoff_2yr,
                 'vote_count.gte': MIN_VOTES,
-                'popularity.gte': MIN_POPULARITY,
-                'page': page,
-            })
-            for m in data.get('results', []):
-                if _passes_filters(m):
-                    candidates.append(('tmdb_movie', m))
-
-        # ── Top-rated classics now on streaming (high vote base, all time) ──
-        for page in range(1, 3):
-            data = tmdb_get('/discover/movie', {
-                'sort_by': 'vote_average.desc',
-                'watch_region': 'US',
-                'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'vote_count.gte': 2000,
-                'vote_average.gte': 7.8,
-                'popularity.gte': MIN_POPULARITY,
                 'page': page,
             })
             for m in data.get('results', []):
                 candidates.append(('tmdb_movie', m))
 
-        # ── Recent high-rated (last year, strong scores) ──
-        data = tmdb_get('/discover/movie', {
-            'sort_by': 'vote_average.desc',
-            'watch_region': 'US',
-            'with_watch_providers': STREAMING_PROVIDER_IDS,
-            'primary_release_date.gte': cutoff_1yr,
-            'vote_count.gte': MIN_VOTES,
-            'vote_average.gte': 7.2,
-            'page': 1,
-        })
-        for m in data.get('results', []):
-            candidates.append(('tmdb_movie', m))
-
-        # ── Top documentaries on streaming ──
-        data = tmdb_get('/discover/movie', {
-            'sort_by': 'vote_average.desc',
-            'watch_region': 'US',
-            'with_watch_providers': STREAMING_PROVIDER_IDS,
-            'with_genres': DOC_GENRE_ID,
-            'vote_count.gte': 150,
-            'vote_average.gte': 7.0,
-            'page': 1,
-        })
-        for m in data.get('results', []):
-            m['_is_doc'] = True
-            candidates.append(('tmdb_movie', m))
-
-        # ── Critic darlings — Drama/Thriller, high vote_average (A24/indie/festival type) ──
-        for page in range(1, 4):
-            data = tmdb_get('/discover/movie', {
-                'sort_by': 'vote_average.desc',
-                'with_genres': '18,53',
-                'vote_count.gte': 100,
-                'page': page,
-            })
-            for m in data.get('results', []):
-                candidates.append(('tmdb_movie', m))
-
-        # ── Audience favorites — Action/Horror/Comedy/Animation, high popularity ──
-        for page in range(1, 4):
-            data = tmdb_get('/discover/movie', {
-                'sort_by': 'popularity.desc',
-                'with_genres': '28,27,35,16',
-                'vote_count.gte': 100,
-                'page': page,
-            })
-            for m in data.get('results', []):
-                candidates.append(('tmdb_movie', m))
-
-        # ── Award winners & critically acclaimed — on streaming, high vote_average, 5yr window ──
-        cutoff_5yr = (datetime.now() - timedelta(days=1825)).strftime('%Y-%m-%d')
+        # ── POOL 2: Critic darlings — high RT/MC score, Drama/Thriller/Indie, last 2yr on streaming ──
         for page in range(1, 5):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'vote_average.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'primary_release_date.gte': cutoff_5yr,
-                'vote_count.gte': 500,
-                'vote_average.gte': 7.5,
+                'primary_release_date.gte': cutoff_2yr,
+                'vote_count.gte': 100,
+                'vote_average.gte': 7.0,
+                'with_genres': '18,53,36,10752',  # Drama, Thriller, History, War
                 'page': page,
             })
             for m in data.get('results', []):
                 candidates.append(('tmdb_movie', m))
 
-        # ── All-time acclaimed classics on streaming — Oscar bait, prestige dramas ──
+        # ── POOL 3: Documentaries — critic-leaning, last 2yr on streaming ──
         for page in range(1, 3):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'vote_average.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'vote_count.gte': 5000,
-                'vote_average.gte': 8.0,
+                'primary_release_date.gte': cutoff_2yr,
+                'with_genres': str(DOC_GENRE_ID),
+                'vote_count.gte': 50,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                m['_is_doc'] = True
+                candidates.append(('tmdb_movie', m))
+
+        # ── POOL 4: Audience favorites — Action/Horror/Comedy/Animation, last 2yr ──
+        for page in range(1, 5):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'popularity.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'primary_release_date.gte': cutoff_2yr,
+                'vote_count.gte': 100,
+                'with_genres': '28,27,35,16,878',  # Action, Horror, Comedy, Animation, Sci-Fi
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
+        # ── POOL 5: Award season — high vote_average last 2yr, any genre on streaming ──
+        for page in range(1, 4):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'vote_average.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'primary_release_date.gte': cutoff_2yr,
+                'vote_count.gte': 200,
+                'vote_average.gte': 7.5,
                 'page': page,
             })
             for m in data.get('results', []):
