@@ -472,35 +472,51 @@
       position: absolute;
       top: 7px;
       left: 7px;
-      background: rgba(8,9,13,0.88);
-      color: rgba(240,242,255,0.55);
-      font-size: 12px;
+      background: rgba(8,9,13,0.82);
+      color: rgba(240,242,255,0.9);
+      font-size: 18px;
       font-weight: 900;
-      width: 24px;
-      height: 24px;
+      min-width: 32px;
+      height: 32px;
+      padding: 0 6px;
       border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-variant-numeric: tabular-nums;
       backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.15);
     }
     .card-rank-overlay.top {
       color: var(--sweet);
       text-shadow: 0 0 12px rgba(198,120,221,0.9);
     }
     .card-blend-overlay {
-      position: absolute;
-      bottom: 8px;
-      right: 10px;
+      display: none;
+    }
+    .sf-score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(139,92,246,0.15);
+      border: 1px solid rgba(139,92,246,0.4);
+      border-radius: 20px;
+      padding: 4px 14px;
+      margin-bottom: 2px;
+    }
+    .sf-score-badge .sf-score-num {
       font-size: 28px;
       font-weight: 900;
       line-height: 1;
       font-variant-numeric: tabular-nums;
-      letter-spacing: -1px;
-      text-shadow: 0 2px 10px rgba(0,0,0,1), 0 0 20px rgba(0,0,0,0.8);
-      filter: drop-shadow(0 0 8px currentColor);
       transition: color 0.3s;
+    }
+    .sf-score-badge .sf-score-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(139,92,246,0.8);
     }
     .doc-badge {
       position: absolute;
@@ -586,7 +602,10 @@
       font-size: 12px;
       color: rgba(240,242,255,0.82);
       line-height: 1.55;
-      overflow: visible;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
 
     /* ── EMPTY / ERROR / LOADING ── */
@@ -950,47 +969,58 @@
 <!-- ═══════════════════ HEADER ═══════════════════ -->
 <header class="header" style="flex-direction:column;padding:0;gap:0;">
   <!-- Brand row — centered -->
-  <div style="display:flex;align-items:center;justify-content:center;width:100%;padding:22px 32px 16px;position:relative;">
+  <div style="display:flex;align-items:center;justify-content:center;width:100%;padding:16px 32px 0;position:relative;">
     <div style="text-align:center;">
-      <div style="font-size:clamp(80px,16vw,220px);font-weight:900;letter-spacing:-0.04em;line-height:0.92;">
-        <span style="color:#ffffff;">Stream</span><span style="background:linear-gradient(90deg,var(--critic) 0%,var(--sweet) 50%,var(--audience) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Fader</span>
+      <div style="font-size:clamp(36px,6vw,72px);font-weight:900;letter-spacing:-0.04em;line-height:1;max-height:80px;overflow:hidden;">
+        <span style="color:#ffffff;">Stream</span><span style="color:#8b5cf6;">Fader</span>
       </div>
-    </div>
-    <div style="position:absolute;right:32px;display:flex;align-items:center;gap:10px;">
-    </div>
-  </div>
-  <!-- Source logos strip — centered -->
-  <div style="
-    width:100%;
-    border-top: 1px solid rgba(255,255,255,0.07);
-    background: rgba(0,0,0,0.35);
-    padding: 14px 32px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-  ">
-    <span style="font-size:14px;font-weight:700;letter-spacing:0.5px;color:rgba(240,242,255,0.55);text-align:center;">Some of the sources added to our secret sauce to get you the right watch include:</span>
-    <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;">
-      <img src="/static/sources/RottenTomatoesLogoWhite.png" alt="Rotten Tomatoes" style="height:30px;object-fit:contain;opacity:0.9;" onerror="this.style.display='none'">
-      <img src="/static/sources/IMBDLogo.png" alt="IMDb" style="height:30px;object-fit:contain;opacity:0.9;" onerror="this.style.display='none'">
-      <img src="/static/sources/LetterboxedLogo.png" alt="Letterboxd" style="height:30px;object-fit:contain;opacity:0.9;" onerror="this.style.display='none'">
-      <img src="/static/sources/TMDBLogo.png" alt="TMDb" style="height:30px;object-fit:contain;opacity:0.9;" onerror="this.style.display='none'">
-      <img src="/static/sources/AllMovieLogo.png" alt="AllMovie" style="height:30px;object-fit:contain;opacity:0.9;" onerror="this.style.display='none'">
-      <img src="/static/sources/FlickMetrixLogo.png" alt="FlickMetrix" style="height:30px;object-fit:contain;opacity:0.9;" onerror="this.style.display='none'">
     </div>
   </div>
 </header>
 
 <!-- ═══════════════════ HERO INTRO ═══════════════════ -->
-<div class="hero-intro">
-  <h1 class="hero-headline">Move that fader to blend critic and audience scores. Watch the right movie or series now!</h1>
+<div class="hero-intro" style="padding:12px 40px 0;">
+  <p style="font-size:15px;color:rgba(240,242,255,0.7);line-height:1.6;max-width:640px;margin:0 auto 20px;text-align:center;">The right movie or show, right now. We blend critic and audience scores so you don't have to guess.</p>
 </div>
 
+<!-- ══════════════════════════════════════════════
+     THE FADER — moved above genre pills
+══════════════════════════════════════════════ -->
+<section class="fader-section" style="padding:28px 48px 24px;">
+  <div class="fader-labels">
+    <div class="fader-label left">Critics</div>
+    <div class="fader-sweet-label" id="sweet-label">Hmmmmmm?</div>
+    <div class="fader-label right">Audience</div>
+  </div>
+
+  <div class="fader-wrap">
+    <div class="fader-ticks">
+      <div class="tick major"></div>
+      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+      <div class="tick major"></div>
+      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+      <div class="tick major"></div>
+      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+      <div class="tick major"></div>
+      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+      <div class="tick major"></div>
+    </div>
+    <input type="range" id="blend-fader" min="0" max="100" value="50"
+           oninput="onFaderMove(this.value)">
+  </div>
+
+  <div class="fader-readout">
+    <div class="readout-side left" id="critic-pct">50% Critics</div>
+    <div id="blend-badge">Hmmmmmm?</div>
+    <div class="readout-side right" id="audience-pct">50% Audience</div>
+  </div>
+</section>
+
 <!-- ═══════════════════ GENRE FILTER ═══════════════════ -->
-<div class="genre-bar" id="genre-bar">
+<div class="genre-bar" id="genre-bar" style="border-bottom:1px solid rgba(255,255,255,0.08);">
   <button class="genre-pill active" data-genre="All" onclick="setGenre('All',this)">All</button>
 </div>
+<div id="results-anchor"></div>
 
 <!-- ══════════════════════════════════════════════
      CLAUDE TOP PICK
@@ -1064,38 +1094,6 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
-     THE FADER — HERO
-══════════════════════════════════════════════ -->
-<section class="fader-section">
-  <div class="fader-labels">
-    <div class="fader-label left">🎭 Critics</div>
-    <div class="fader-sweet-label" id="sweet-label">Hmmmmmm?</div>
-    <div class="fader-label right">★ Audience</div>
-  </div>
-
-  <div class="fader-wrap">
-    <div class="fader-ticks">
-      <div class="tick major"></div>
-      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
-      <div class="tick major"></div>
-      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
-      <div class="tick major"></div>
-      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
-      <div class="tick major"></div>
-      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
-      <div class="tick major"></div>
-    </div>
-    <input type="range" id="blend-fader" min="0" max="100" value="50"
-           oninput="onFaderMove(this.value)">
-  </div>
-
-  <div class="fader-readout">
-    <div class="readout-side left" id="critic-pct">50% Critics</div>
-    <div id="blend-badge">Hmmmmmm?</div>
-    <div class="readout-side right" id="audience-pct">50% Audience</div>
-  </div>
-</section>
 
 <!-- ═══════════════════ CONTENT ═══════════════════ -->
 <div class="content-grid">
@@ -1212,11 +1210,8 @@
 
 <!-- ═══════════════════ INFO BAR ═══════════════════ -->
 <div id="info-bar">
-  <img src="/static/streamfader_badge_color.svg" onerror="this.style.display='none'">
-  <span id="info-label">STREAMFADER</span>
-  <span id="info-sep">│</span>
-  <span id="info-text">Slide to blend critic and audience scores — find the right watch for tonight.</span>
-  <span id="data-info">Loading…</span>
+  <span id="info-text" style="font-size:11px;color:rgba(240,242,255,0.4);">Slide to blend critic and audience scores — find the right watch for tonight.</span>
+  <span id="data-info" style="font-size:11px;color:rgba(240,242,255,0.3);margin-left:auto;">Loading…</span>
 </div>
 
 <script>
@@ -1316,9 +1311,12 @@ function renderCard(item, rank) {
   const isTop = rank <= 2;
   const rankClass = isTop ? 'card-rank-overlay top' : 'card-rank-overlay';
 
-  const providers = (item.providers || []).slice(0, 2).map(p =>
+  const rawProviders = item.providers || [];
+  const shownProviders = rawProviders.slice(0, 2).map(p =>
     `<span class="platform-tag" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44;">${p.name}</span>`
-  ).join('');
+  );
+  if (rawProviders.length > 2) shownProviders.push(`<span class="platform-tag" style="background:rgba(255,255,255,0.06);color:rgba(240,242,255,0.5);border:1px solid rgba(255,255,255,0.1);">+${rawProviders.length - 2}</span>`);
+  const providers = shownProviders.join('');
 
   const genres = (item.genres || []).slice(0, 2).map(g =>
     `<span class="genre-tag">${g}</span>`
@@ -1356,6 +1354,10 @@ function renderCard(item, rank) {
       </div>
       <div class="card-body">
         <div class="card-title">${item.title}</div>
+        <div class="sf-score-badge">
+          <span class="sf-score-num" style="color:${col}">${item.blend}</span>
+          <span class="sf-score-label">SF Score</span>
+        </div>
         ${year ? `<div class="card-year">${year}</div>` : ''}
         <div class="card-meta">${providers}${genres}</div>
         <div class="card-score-row">${scorePills.join('')}</div>
@@ -1444,6 +1446,8 @@ function setGenre(genre, btn) {
   document.querySelectorAll('.genre-pill').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   updateCards(true);
+  const anchor = document.getElementById('results-anchor');
+  if (anchor) setTimeout(() => anchor.scrollIntoView({ behavior: 'smooth', block: 'start' }), 160);
 }
 
 // ── Data load ────────────────────────────────────────────
