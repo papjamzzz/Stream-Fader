@@ -156,15 +156,15 @@ def trakt_fetch(path, limit=30):
         return []
 
 
-def trakt_trending_movies(limit=30):
+def trakt_trending_movies(limit=50):
     return [i.get('movie', {}) for i in trakt_fetch('/movies/trending', limit) if i.get('movie')]
 
 
-def trakt_popular_movies(limit=20):
+def trakt_popular_movies(limit=50):
     return trakt_fetch('/movies/popular', limit)
 
 
-def trakt_trending_shows(limit=30):
+def trakt_trending_shows(limit=50):
     return [i.get('show', {}) for i in trakt_fetch('/shows/trending', limit) if i.get('show')]
 
 
@@ -218,10 +218,13 @@ def best_scores(imdb_id):
                 scores['imdb'] = imdb_raw
                 scores['imdb_display'] = imdb_disp
 
-    critics = [s for s in [scores['rt'], scores['mc'], scores['letterboxd']] if s is not None]
-    scores['critic'] = round(sum(critics) / len(critics)) if critics else None
+    # Pure critic sources: RT Tomatometer + Metacritic only
+    critic_sources = [s for s in [scores['rt'], scores['mc']] if s is not None]
+    scores['critic'] = round(sum(critic_sources) / len(critic_sources)) if critic_sources else None
 
-    audience_sources = [s for s in [scores['rt_audience'], scores['trakt'], scores['imdb']] if s is not None]
+    # Pure audience sources: RT Audience + Trakt only (IMDb excluded — too noisy/hybrid)
+    audience_sources = [s for s in [scores['rt_audience'], scores['trakt']] if s is not None]
+    # Fallback to IMDb only if we have zero audience sources
     scores['audience'] = round(sum(audience_sources) / len(audience_sources)) if audience_sources else scores['imdb']
 
     return scores
@@ -328,10 +331,10 @@ def fetch_movies():
             m['_is_doc'] = True
             candidates.append(('tmdb_movie', m))
 
-    for t in trakt_trending_movies(30):
+    for t in trakt_trending_movies(50):
         candidates.append(('trakt_movie', t))
 
-    for t in trakt_popular_movies(20):
+    for t in trakt_popular_movies(50):
         candidates.append(('trakt_movie', t))
 
     # Deduplicate by TMDb ID before enrichment
@@ -343,7 +346,7 @@ def fetch_movies():
             seen_cand.add(cid)
             deduped.append((src, item))
 
-    candidates = deduped[:80]
+    candidates = deduped[:150]
     enriched = []
     with ThreadPoolExecutor(max_workers=10) as ex:
         futures = {ex.submit(_enrich_movie, src, item): (src, item) for src, item in candidates}
@@ -507,7 +510,7 @@ def fetch_tv():
         except Exception:
             continue
 
-    for t in trakt_trending_shows(30):
+    for t in trakt_trending_shows(50):
         imdb_id = (t.get('ids') or {}).get('imdb')
         if imdb_id and imdb_id not in seen_ids:
             seen_ids.add(imdb_id)
