@@ -709,7 +709,7 @@ No markdown. No explanation. Only valid JSON."""
     try:
         client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
         msg = client.messages.create(
-            model='claude-haiku-4-5',  # fast + cheap for 5 parallel calls
+            model='claude-haiku-4-5-20251001',  # fast + cheap for 5 parallel calls
             max_tokens=300,
             system=persona['system'],
             messages=[{'role': 'user', 'content': prompt}]
@@ -798,7 +798,7 @@ def generate_top10(movies, tv):
         try:
             client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
             msg = client.messages.create(
-                model='claude-opus-4-5',
+                model='claude-3-5-sonnet-20241022',
                 max_tokens=300,
                 messages=[{'role': 'user', 'content': f"""Write a Tonight's Best Match card for StreamFader.
 
