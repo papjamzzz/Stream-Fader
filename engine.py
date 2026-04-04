@@ -452,7 +452,12 @@ def _enrich_movie(source, item):
             scores = best_scores(imdb_id) if imdb_id else {}
             if not scores.get('critic') and not scores.get('audience'):
                 if item.get('vote_average'):
-                    scores['audience'] = round(item['vote_average'] * 10)
+                    # TMDb fallback: vote_average used for both poles as bridge until real scores load
+                    tmdb_scaled = round(item['vote_average'] * 10)
+                    pop = item.get('popularity', 50)
+                    pop_scaled = min(100, round(50 + (pop / 20)))  # popularity → audience nudge
+                    scores['critic'] = tmdb_scaled
+                    scores['audience'] = min(100, round((tmdb_scaled + pop_scaled) / 2))
                 else:
                     return None
             wp = (details.get('watch/providers') or {}).get('results', {}).get('US', {})
@@ -473,7 +478,9 @@ def _enrich_movie(source, item):
             scores = best_scores(imdb_id) if imdb_id else {}
             if not scores.get('critic') and not scores.get('audience'):
                 if item.get('rating'):
-                    scores['audience'] = round(float(item['rating']) * 10)
+                    tmdb_scaled = round(float(item['rating']) * 10)
+                    scores['critic'] = tmdb_scaled
+                    scores['audience'] = tmdb_scaled
                 else:
                     return None
             providers = tmdb_watch_providers(tmdb_id, 'movie') if tmdb_id and TMDB_KEY else []
@@ -686,7 +693,11 @@ def _enrich_tv(source, item):
             scores   = best_scores(imdb_id) if imdb_id else {}
             if not scores.get('critic') and not scores.get('audience'):
                 if item.get('vote_average'):
-                    scores['audience'] = round(item['vote_average'] * 10)
+                    tmdb_scaled = round(item['vote_average'] * 10)
+                    pop = item.get('popularity', 50)
+                    pop_scaled = min(100, round(50 + (pop / 20)))
+                    scores['critic'] = tmdb_scaled
+                    scores['audience'] = min(100, round((tmdb_scaled + pop_scaled) / 2))
                 else:
                     return None
 
@@ -743,7 +754,9 @@ def _enrich_tv(source, item):
             scores  = best_scores(imdb_id) if imdb_id else {}
             if not scores.get('critic') and not scores.get('audience'):
                 if item.get('rating'):
-                    scores['audience'] = round(float(item['rating']) * 10)
+                    tmdb_scaled = round(float(item['rating']) * 10)
+                    scores['critic'] = tmdb_scaled
+                    scores['audience'] = tmdb_scaled
                 else:
                     return None
             providers = tmdb_watch_providers(tmdb_id, 'tv') if tmdb_id and TMDB_KEY else []
