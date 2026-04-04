@@ -357,12 +357,21 @@
     /* ── TWO-COLUMN LAYOUT ── */
     .two-col {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 32px;
+      grid-template-columns: 1fr 3px 1fr;
+      gap: 0;
       padding-top: 24px;
+      column-gap: 0;
+    }
+    .col-divider {
+      background: linear-gradient(180deg, transparent 0%, rgba(79,195,247,0.15) 15%, rgba(79,195,247,0.25) 50%, rgba(79,195,247,0.15) 85%, transparent 100%);
+      width: 3px;
+      margin: 0 28px;
+      border-radius: 2px;
+      min-height: 400px;
     }
     @media (max-width: 900px) {
       .two-col { grid-template-columns: 1fr; }
+      .col-divider { display: none; }
     }
 
     .col-header {
@@ -1149,6 +1158,9 @@
       </div>
       <button id="movie-list-more-btn" onclick="loadMoreMovies()" style="display:none;width:100%;margin-top:16px;padding:14px;background:#1a1815;border:1px solid #2a2520;border-radius:10px;color:#d4a855;font-family:Inter,sans-serif;font-size:13px;letter-spacing:0.08em;cursor:pointer;">🎬 I like movies. Show Me More.</button>
     </div>
+
+    <!-- DIVIDER -->
+    <div class="col-divider"></div>
 
     <!-- TV COLUMN -->
     <div>
