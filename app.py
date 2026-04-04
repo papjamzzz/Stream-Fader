@@ -124,5 +124,43 @@ def trailer():
     return jsonify({'url': None})
 
 
+@app.route('/api/score-debug')
+def score_debug():
+    """Show score distribution to find the fader sweet spot."""
+    cached = get_cached_content()
+    if not cached:
+        return jsonify({'error': 'no data'}), 503
+
+    def analyze(items):
+        results = []
+        for i in items:
+            c = i.get('critic_score')
+            a = i.get('audience_score')
+            if c is None or a is None:
+                gap = None
+            else:
+                gap = abs(c - a)
+            results.append({
+                'title': i.get('title') or i.get('name'),
+                'critic': c,
+                'audience': a,
+                'gap': gap,
+            })
+        results.sort(key=lambda x: (x['gap'] or 0), reverse=True)
+        gaps = [r['gap'] for r in results if r['gap'] is not None]
+        return {
+            'count': len(results),
+            'polarized_15plus': sum(1 for g in gaps if g >= 15),
+            'polarized_25plus': sum(1 for g in gaps if g >= 25),
+            'avg_gap': round(sum(gaps) / len(gaps), 1) if gaps else 0,
+            'titles': results
+        }
+
+    return jsonify({
+        'movies': analyze(cached.get('movies', [])),
+        'tv': analyze(cached.get('tv', [])),
+    })
+
+
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5556, debug=False)
