@@ -19,7 +19,7 @@ ANTHROPIC_KEY = os.getenv('ANTHROPIC_API_KEY', '')
 
 CACHE_FILE      = 'data/cache.json'
 TOPPICK_FILE    = 'data/toppick.json'
-CACHE_TTL       = 6 * 3600
+CACHE_TTL       = 48 * 3600  # 48 hours — large pool, no need to refresh often
 TOPPICK_TTL     = 12 * 3600
 
 # ── Colors ─────────────────────────────────────────────────────────────────────
@@ -306,7 +306,7 @@ def fetch_movies():
 
         # ALL POOLS: strictly last 2 years only
         # ── POOL 1: Popular on streaming — broad recent titles ──
-        for page in range(1, 6):
+        for page in range(1, 12):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
@@ -319,7 +319,7 @@ def fetch_movies():
                 candidates.append(('tmdb_movie', m))
 
         # ── POOL 2: Critic darlings — high RT/MC score, Drama/Thriller/Indie, last 2yr on streaming ──
-        for page in range(1, 5):
+        for page in range(1, 10):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'vote_average.desc',
                 'watch_region': 'US',
@@ -334,7 +334,7 @@ def fetch_movies():
                 candidates.append(('tmdb_movie', m))
 
         # ── POOL 3: Documentaries — critic-leaning, last 2yr on streaming ──
-        for page in range(1, 3):
+        for page in range(1, 6):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'vote_average.desc',
                 'watch_region': 'US',
@@ -349,7 +349,7 @@ def fetch_movies():
                 candidates.append(('tmdb_movie', m))
 
         # ── POOL 4: Audience favorites — Action/Horror/Comedy/Animation, last 2yr ──
-        for page in range(1, 5):
+        for page in range(1, 10):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
@@ -363,7 +363,7 @@ def fetch_movies():
                 candidates.append(('tmdb_movie', m))
 
         # ── POOL 5: Award season — high vote_average last 2yr, any genre on streaming ──
-        for page in range(1, 4):
+        for page in range(1, 8):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'vote_average.desc',
                 'watch_region': 'US',
@@ -391,9 +391,9 @@ def fetch_movies():
             seen_cand.add(cid)
             deduped.append((src, item))
 
-    candidates = deduped[:300]
+    candidates = deduped[:1000]
     enriched = []
-    with ThreadPoolExecutor(max_workers=10) as ex:
+    with ThreadPoolExecutor(max_workers=40) as ex:
         futures = {ex.submit(_enrich_movie, src, item): (src, item) for src, item in candidates}
         for future in as_completed(futures):
             result = future.result()
@@ -406,7 +406,7 @@ def fetch_movies():
     enriched.sort(key=lambda x: (
         ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
     ), reverse=True)
-    return enriched[:50]
+    return enriched[:300]  # return top 300 to frontend for fader to work with
 
 
 def _enrich_movie(source, item):
@@ -482,7 +482,7 @@ def fetch_tv():
 
     if TMDB_KEY:
         # ── Currently airing popular shows — MUST have aired a new episode in last 18 months ──
-        for page in range(1, 5):
+        for page in range(1, 12):
             data = tmdb_get('/discover/tv', {
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
@@ -500,7 +500,7 @@ def fetch_tv():
                     candidates.append(('tmdb_tv', s))
 
         # ── Top-rated shows with RECENT episodes — high bar, still active ──
-        for page in range(1, 3):
+        for page in range(1, 8):
             data = tmdb_get('/discover/tv', {
                 'sort_by': 'vote_average.desc',
                 'watch_region': 'US',
@@ -518,7 +518,7 @@ def fetch_tv():
                     candidates.append(('tmdb_tv', s))
 
         # ── Critic darling TV — Drama/Thriller, high vote_average ──
-        for page in range(1, 3):
+        for page in range(1, 8):
             data = tmdb_get('/discover/tv', {
                 'sort_by': 'vote_average.desc',
                 'with_genres': '18,9648',
@@ -533,7 +533,7 @@ def fetch_tv():
                     candidates.append(('tmdb_tv', s))
 
         # ── Audience favorite TV — Action/Comedy/Animation/Horror, high popularity ──
-        for page in range(1, 3):
+        for page in range(1, 8):
             data = tmdb_get('/discover/tv', {
                 'sort_by': 'popularity.desc',
                 'with_genres': '10759,35,16,27',
@@ -592,7 +592,7 @@ def fetch_tv():
             candidates.append(('trakt_show', t))
 
     enriched = []
-    with ThreadPoolExecutor(max_workers=12) as ex:
+    with ThreadPoolExecutor(max_workers=40) as ex:
         futures = {ex.submit(_enrich_tv, src, item): (src, item) for src, item in candidates}
         for future in as_completed(futures):
             result = future.result()
@@ -612,7 +612,7 @@ def fetch_tv():
     deduped.sort(key=lambda x: (
         ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
     ), reverse=True)
-    return deduped[:50]
+    return deduped[:300]  # return top 300 TV to frontend
 
 
 def _enrich_tv(source, item):
