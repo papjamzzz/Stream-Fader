@@ -769,6 +769,107 @@
     .card-list.swapping { opacity: 0; transition: opacity 0.15s; }
     .card-list.swapping-in { opacity: 1; transition: opacity 0.25s; }
 
+    /* ── DISMISS BUTTONS ── */
+    .dismiss-bar {
+      display: flex;
+      gap: 4px;
+      padding: 6px 6px 0;
+      flex-shrink: 0;
+    }
+    .dismiss-btn {
+      flex: 1;
+      padding: 5px 4px;
+      border: none;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.02em;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .dismiss-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .dismiss-seen {
+      background: rgba(102,187,106,0.15);
+      color: #66bb6a;
+      border: 1px solid rgba(102,187,106,0.35);
+    }
+    .dismiss-nope {
+      background: rgba(239,83,80,0.15);
+      color: #ef5350;
+      border: 1px solid rgba(239,83,80,0.35);
+    }
+
+    /* card dismiss fade-out */
+    .title-row.dismissing {
+      opacity: 0;
+      transform: scale(0.95);
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+    }
+
+    /* ── UNDO TOAST ── */
+    #sf-toast {
+      position: fixed;
+      bottom: 48px;
+      left: 16px;
+      background: #1a1d2e;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #f0f2ff;
+      font-size: 12px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      max-width: 280px;
+    }
+    #sf-toast.visible { display: flex; }
+    #sf-toast-undo {
+      color: #c678dd;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      text-decoration: underline;
+    }
+    #sf-toast-undo:hover { color: #fff; }
+
+    /* ── SOCIAL FOOTER ── */
+    .social-footer {
+      background: #05060e;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 16px 24px 52px;
+      text-align: center;
+    }
+    .social-footer-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(240,242,255,0.3);
+      margin-bottom: 10px;
+    }
+    .social-links {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+    }
+    .social-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: rgba(240,242,255,0.35);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 600;
+      transition: color 0.15s;
+    }
+    .social-link:hover { color: rgba(240,242,255,0.8); }
+    .social-link svg { flex-shrink: 0; }
+
     /* ── TOP 10 CONSENSUS LISTS ── */
     .top10-section {
       max-width: 1200px;
@@ -1069,6 +1170,31 @@
   </div>
 </div>
 
+<!-- ═══════════════════ SOCIAL FOOTER ═══════════════════ -->
+<div class="social-footer">
+  <div class="social-footer-label">Creative Konsoles</div>
+  <div class="social-links">
+    <a class="social-link" href="https://www.linkedin.com/in/jeremiahsmith3335/" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452H17.2v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.964V9h3.102v1.561h.046c.432-.82 1.49-1.684 3.065-1.684 3.276 0 3.88 2.156 3.88 4.959v6.616zM5.337 7.433a1.8 1.8 0 1 1 0-3.6 1.8 1.8 0 0 1 0 3.6zM6.97 20.452H3.699V9H6.97v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      LinkedIn
+    </a>
+    <a class="social-link" href="https://x.com/RealRealEyes" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      X / Twitter
+    </a>
+    <a class="social-link" href="https://www.facebook.com/profile.php?id=61576497442325" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+      Facebook
+    </a>
+  </div>
+</div>
+
+<!-- ═══════════════════ UNDO TOAST ═══════════════════ -->
+<div id="sf-toast">
+  <span id="sf-toast-msg"></span>
+  <span id="sf-toast-undo" onclick="undoDismiss()">Undo</span>
+</div>
+
 <!-- ═══════════════════ INFO BAR ═══════════════════ -->
 <div id="info-bar">
   <span id="info-text" style="font-size:11px;color:rgba(240,242,255,0.4);">Slide to blend critic and audience scores — find the right watch for tonight.</span>
@@ -1118,7 +1244,9 @@ let tvPage = 1;
 const PAGE_SIZE = 12;
 
 function topN(items, f, n) {
+  const dismissed = getDismissedIds();
   return filterByGenre(items)
+    .filter(i => !dismissed.has(i.id))
     .map(i => ({ ...i, blend: blendScore(i, f) }))
     .sort((a, b) => b.blend - a.blend)
     .slice(0, n);
@@ -1188,12 +1316,17 @@ function renderCard(item, rank) {
   const metaStr = [year, genres].filter(Boolean).join(' · ');
 
   const cardIndex = window._cardRegistry.push(item) - 1;
+  const safeTitle = item.title.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
   return `
-    <div class="title-row" onclick="openDetail(${cardIndex})">
+    <div class="title-row" id="card-${item.id}" onclick="openDetail(${cardIndex})">
       <div class="card-poster-wrap">
         ${posterEl}
         <div class="${rankClass}">${rank}</div>
+      </div>
+      <div class="dismiss-bar" onclick="event.stopPropagation()">
+        <button class="dismiss-btn dismiss-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen')">✅ I've Seen It</button>
+        <button class="dismiss-btn dismiss-nope" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'nope')">👎 No Thank You</button>
       </div>
       <div class="card-body">
         <div class="row-title">${item.title}</div>
@@ -1575,6 +1708,70 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') closeDetail();
   });
 });
+
+// ── Dismiss / Taste Memory ───────────────────────────────
+const DISMISS_KEY = 'sf_dismissed';
+const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+
+function getDismissed() {
+  let raw = [];
+  try { raw = JSON.parse(localStorage.getItem(DISMISS_KEY) || '[]'); } catch {}
+  const now = Date.now();
+  const active = raw.filter(e => (now - e.timestamp) < THIRTY_DAYS);
+  if (active.length !== raw.length) {
+    localStorage.setItem(DISMISS_KEY, JSON.stringify(active));
+  }
+  return active;
+}
+
+function getDismissedIds() {
+  return new Set(getDismissed().map(e => e.id));
+}
+
+function dismissTitle(item, reason) {
+  const entries = getDismissed();
+  entries.push({
+    id: item.id,
+    title: item.title,
+    reason,
+    timestamp: Date.now(),
+    genres: item.genres || [],
+    providers: item.providers || []
+  });
+  localStorage.setItem(DISMISS_KEY, JSON.stringify(entries));
+  showToast(item.title, item.id);
+  updateCards(false);
+}
+
+// ── Undo Toast ────────────────────────────────────────────
+let _toastTimer = null;
+let _lastDismissedId = null;
+
+function showToast(title, id) {
+  _lastDismissedId = id;
+  const toast = document.getElementById('sf-toast');
+  const msg   = document.getElementById('sf-toast-msg');
+  const short = title.length > 30 ? title.slice(0, 28) + '…' : title;
+  msg.textContent = `"${short}" dismissed —`;
+  toast.classList.add('visible');
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(hideToast, 5000);
+}
+
+function hideToast() {
+  document.getElementById('sf-toast').classList.remove('visible');
+  _lastDismissedId = null;
+}
+
+function undoDismiss() {
+  if (!_lastDismissedId) return;
+  const id = _lastDismissedId;
+  const entries = getDismissed().filter(e => e.id !== id);
+  localStorage.setItem(DISMISS_KEY, JSON.stringify(entries));
+  hideToast();
+  if (_toastTimer) clearTimeout(_toastTimer);
+  updateCards(false);
+}
 
 // ── Boot ─────────────────────────────────────────────────
 onFaderMove(50);
