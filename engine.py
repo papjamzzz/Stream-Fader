@@ -218,14 +218,13 @@ def best_scores(imdb_id):
                 scores['imdb'] = imdb_raw
                 scores['imdb_display'] = imdb_disp
 
-    # Pure critic sources: RT Tomatometer + Metacritic only
-    critic_sources = [s for s in [scores['rt'], scores['mc']] if s is not None]
+    # Critic sources: RT Tomatometer + Metacritic + IMDb (IMDb as shared anchor)
+    critic_sources = [s for s in [scores['rt'], scores['mc'], scores['imdb']] if s is not None]
     scores['critic'] = round(sum(critic_sources) / len(critic_sources)) if critic_sources else None
 
-    # Pure audience sources: RT Audience + Trakt only (IMDb excluded — too noisy/hybrid)
-    audience_sources = [s for s in [scores['rt_audience'], scores['trakt']] if s is not None]
-    # Fallback to IMDb only if we have zero audience sources
-    scores['audience'] = round(sum(audience_sources) / len(audience_sources)) if audience_sources else scores['imdb']
+    # Audience sources: RT Audience + Trakt + IMDb (IMDb as shared anchor)
+    audience_sources = [s for s in [scores['rt_audience'], scores['trakt'], scores['imdb']] if s is not None]
+    scores['audience'] = round(sum(audience_sources) / len(audience_sources)) if audience_sources else None
 
     return scores
 
