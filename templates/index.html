@@ -1152,6 +1152,7 @@
         </div>
       </div>
     </div>
+    <button id="movie-list-more-btn" onclick="loadMoreMovies()" style="display:none;width:100%;margin-top:16px;padding:14px;background:#1a1815;border:1px solid #2a2520;border-radius:10px;color:#d4a855;font-family:Inter,sans-serif;font-size:13px;letter-spacing:0.08em;cursor:pointer;">🎬 I like movies. Show Me More.</button>
   </div>
 
   <!-- TV -->
@@ -1205,6 +1206,7 @@
         </div>
       </div>
     </div>
+    <button id="tv-list-more-btn" onclick="loadMoreTV()" style="display:none;width:100%;margin-top:16px;padding:14px;background:#1a1815;border:1px solid #2a2520;border-radius:10px;color:#d4a855;font-family:Inter,sans-serif;font-size:13px;letter-spacing:0.08em;cursor:pointer;">📺 I like TV. Show Me More.</button>
   </div>
 </div>
 
@@ -1255,11 +1257,19 @@ function filterByGenre(items) {
   return items.filter(i => i.genres && i.genres.includes(activeGenre));
 }
 
-function top12(items, f) {
+let moviePage = 1;
+let tvPage = 1;
+const PAGE_SIZE = 12;
+
+function topN(items, f, n) {
   return filterByGenre(items)
     .map(i => ({ ...i, blend: blendScore(i, f) }))
     .sort((a, b) => b.blend - a.blend)
-    .slice(0, 12);
+    .slice(0, n);
+}
+
+function top12(items, f) {
+  return topN(items, f, PAGE_SIZE);
 }
 
 // ── Fader UI ──────────────────────────────────────────
@@ -1354,22 +1364,38 @@ function renderCard(item, rank) {
     </div>`;
 }
 
-function renderList(containerId, items, countId) {
+function renderList(containerId, items, countId, page) {
   const el = document.getElementById(containerId);
   const count = document.getElementById(countId);
-  const top = top12(items, fader);
+  const all = topN(items, fader, items.length);
+  const shown = all.slice(0, page * PAGE_SIZE);
 
-  count.textContent = `${top.length} shown`;
+  count.textContent = `${shown.length} shown`;
 
-  if (top.length === 0) {
+  if (shown.length === 0) {
     el.innerHTML = `<div class="empty-state">
       <div class="icon">🎬</div>
       <h3>No matches</h3>
       <p>Try a different genre or move the fader.</p>
     </div>`;
+    const btn = document.getElementById(containerId + '-more-btn');
+    if (btn) btn.style.display = 'none';
     return;
   }
-  el.innerHTML = top.map((item, i) => renderCard(item, i + 1)).join('');
+  el.innerHTML = shown.map((item, i) => renderCard(item, i + 1)).join('');
+
+  const btn = document.getElementById(containerId + '-more-btn');
+  if (btn) btn.style.display = shown.length < all.length ? 'block' : 'none';
+}
+
+function loadMoreMovies() {
+  moviePage++;
+  renderList('movie-list', allMovies, 'movie-count', moviePage);
+}
+
+function loadMoreTV() {
+  tvPage++;
+  renderList('tv-list', allTV, 'tv-count', tvPage);
 }
 
 function updateCards(animate = true) {
@@ -1381,8 +1407,9 @@ function updateCards(animate = true) {
     movieList.classList.add('swapping');
     tvList.classList.add('swapping');
     setTimeout(() => {
-      renderList('movie-list', allMovies, 'movie-count');
-      renderList('tv-list', allTV, 'tv-count');
+      moviePage = 1; tvPage = 1;
+      renderList('movie-list', allMovies, 'movie-count', moviePage);
+      renderList('tv-list', allTV, 'tv-count', tvPage);
       movieList.classList.remove('swapping');
       tvList.classList.remove('swapping');
       movieList.classList.add('swapping-in');
@@ -1393,8 +1420,9 @@ function updateCards(animate = true) {
       }, 250);
     }, 150);
   } else {
-    renderList('movie-list', allMovies, 'movie-count');
-    renderList('tv-list', allTV, 'tv-count');
+    moviePage = 1; tvPage = 1;
+    renderList('movie-list', allMovies, 'movie-count', moviePage);
+    renderList('tv-list', allTV, 'tv-count', tvPage);
   }
 }
 
