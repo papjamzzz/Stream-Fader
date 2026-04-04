@@ -330,6 +330,28 @@ def fetch_movies():
             m['_is_doc'] = True
             candidates.append(('tmdb_movie', m))
 
+        # ── Critic darlings — Drama/Thriller, high vote_average (A24/indie/festival type) ──
+        for page in range(1, 4):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'vote_average.desc',
+                'with_genres': '18,53',
+                'vote_count.gte': 100,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
+        # ── Audience favorites — Action/Horror/Comedy/Animation, high popularity ──
+        for page in range(1, 4):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'popularity.desc',
+                'with_genres': '28,27,35,16',
+                'vote_count.gte': 100,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
     for t in trakt_trending_movies(50):
         candidates.append(('trakt_movie', t))
 
@@ -345,7 +367,7 @@ def fetch_movies():
             seen_cand.add(cid)
             deduped.append((src, item))
 
-    candidates = deduped[:150]
+    candidates = deduped[:200]
     enriched = []
     with ThreadPoolExecutor(max_workers=10) as ex:
         futures = {ex.submit(_enrich_movie, src, item): (src, item) for src, item in candidates}
@@ -463,6 +485,36 @@ def fetch_tv():
                 'air_date.gte': TV_RECENCY_CUTOFF,
                 'vote_count.gte': 100,
                 'vote_average.gte': 7.8,
+                'page': page,
+            })
+            for s in data.get('results', []):
+                sid = str(s.get('id'))
+                if sid and sid not in seen_ids:
+                    seen_ids.add(sid)
+                    candidates.append(('tmdb_tv', s))
+
+        # ── Critic darling TV — Drama/Thriller, high vote_average ──
+        for page in range(1, 3):
+            data = tmdb_get('/discover/tv', {
+                'sort_by': 'vote_average.desc',
+                'with_genres': '18,9648',
+                'without_genres': TV_EXCLUDED_GENRES,
+                'vote_count.gte': 100,
+                'page': page,
+            })
+            for s in data.get('results', []):
+                sid = str(s.get('id'))
+                if sid and sid not in seen_ids:
+                    seen_ids.add(sid)
+                    candidates.append(('tmdb_tv', s))
+
+        # ── Audience favorite TV — Action/Comedy/Animation/Horror, high popularity ──
+        for page in range(1, 3):
+            data = tmdb_get('/discover/tv', {
+                'sort_by': 'popularity.desc',
+                'with_genres': '10759,35,16,27',
+                'without_genres': TV_EXCLUDED_GENRES,
+                'vote_count.gte': 30,
                 'page': page,
             })
             for s in data.get('results', []):
