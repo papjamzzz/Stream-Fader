@@ -747,7 +747,7 @@
     }
     .dismiss-btn {
       flex: 1;
-      padding: 6px 4px 5px;
+      padding: 9px 6px 8px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
@@ -760,15 +760,15 @@
     }
     .dismiss-btn:hover { opacity: 0.85; transform: translateY(-1px); }
     .dismiss-label {
-      font-size: 10px;
+      font-size: 15px;
       font-weight: 700;
       letter-spacing: 0.02em;
       line-height: 1.2;
     }
     .dismiss-sub {
-      font-size: 8px;
+      font-size: 12px;
       font-weight: 500;
-      opacity: 0.65;
+      opacity: 0.85;
       letter-spacing: 0.01em;
       line-height: 1.2;
     }
@@ -831,7 +831,7 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: rgba(240,242,255,0.3);
+      color: rgba(240,242,255,0.55);
       margin-bottom: 10px;
     }
     .social-links {
@@ -844,9 +844,9 @@
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      color: rgba(240,242,255,0.35);
+      color: rgba(240,242,255,0.65);
       text-decoration: none;
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 600;
       transition: color 0.15s;
     }
@@ -989,7 +989,7 @@
   <div style="display:flex;align-items:center;justify-content:center;width:100%;padding:16px 32px 0;position:relative;">
     <div style="text-align:center;">
       <div style="font-size:clamp(36px,6vw,72px);font-weight:900;letter-spacing:-0.04em;line-height:1;max-height:80px;overflow:hidden;">
-        <span style="color:#ffffff;">Stream</span><span style="color:#8b5cf6;">Fader</span>
+        <span style="color:#ffffff;">Stream</span><span style="background:linear-gradient(90deg,#4fc3f7 0%,#c678dd 50%,#ffb74d 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Fader</span>
       </div>
     </div>
   </div>
@@ -997,7 +997,7 @@
 
 <!-- ═══════════════════ HERO INTRO ═══════════════════ -->
 <div class="hero-intro" style="padding:12px 40px 0;">
-  <p style="font-size:15px;color:rgba(240,242,255,0.7);line-height:1.6;max-width:640px;margin:0 auto 20px;text-align:center;">The right movie or show, right now. We blend critic and audience scores so you don't have to guess.</p>
+  <p style="font-size:15px;color:rgba(240,242,255,0.92);line-height:1.6;max-width:640px;margin:0 auto 20px;text-align:center;">The right movie or show, right now. We blend critic and audience scores so you don't have to guess.</p>
 </div>
 
 <!-- ══════════════════════════════════════════════
@@ -1006,7 +1006,7 @@
 <section class="fader-section" style="padding:28px 48px 24px;">
   <div class="fader-labels">
     <div class="fader-label left">Critics</div>
-    <div class="fader-sweet-label" id="sweet-label">Teach StreamFader Your Taste</div>
+    <div class="fader-sweet-label" id="sweet-label"></div>
     <div class="fader-label right">Audience</div>
   </div>
 
@@ -1113,8 +1113,8 @@
   <div class="two-col">
 
     <!-- TASTE HELPER -->
-    <div style="grid-column:1/-1;text-align:center;padding:0 0 18px;color:#555;font-size:12px;letter-spacing:0.04em;">
-      Tap <span style="color:#4ade80;font-weight:600;">Seen it</span> for more like this &nbsp;·&nbsp; Tap <span style="color:#f87171;font-weight:600;">No thanks</span> for less like this
+    <div style="grid-column:1/-1;text-align:center;padding:0 0 18px;color:rgba(240,242,255,0.65);font-size:22px;letter-spacing:0.02em;font-weight:500;">
+      Tap <span style="color:#4ade80;font-weight:700;">Seen it</span> for more like this &nbsp;·&nbsp; Tap <span style="color:#f87171;font-weight:700;">No thanks</span> for less like this
     </div>
 
     <!-- MOVIES COLUMN -->
@@ -1207,8 +1207,8 @@
 
 <!-- ═══════════════════ INFO BAR ═══════════════════ -->
 <div id="info-bar">
-  <span id="info-text" style="font-size:11px;color:rgba(240,242,255,0.4);">Slide to blend critic and audience scores — find the right watch for tonight.</span>
-  <span id="data-info" style="font-size:11px;color:rgba(240,242,255,0.3);margin-left:auto;">Loading…</span>
+  <span id="info-text" style="font-size:11px;color:rgba(240,242,255,0.65);">Slide to blend critic and audience scores — find the right watch for tonight.</span>
+  <span id="data-info" style="font-size:11px;color:rgba(240,242,255,0.5);margin-left:auto;">Loading…</span>
 </div>
 
 <script>
