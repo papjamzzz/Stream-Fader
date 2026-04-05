@@ -1245,20 +1245,22 @@ function genreAffinityScore(cardGenres) {
 }
 
 async function sendPreference(imdbId, title, genres, signal) {
-    await fetch('/api/preference', {
+    // Fire-and-forget — don't await, don't re-render (dismissTitle already did)
+    fetch('/api/preference', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({imdb_id: imdbId, title, genres, signal})
+    }).catch(() => {}); // silently ignore network errors
+
+    // Refresh genre affinity weights in background, re-sort without resetting pages
+    loadPreferences().then(() => {
+        // Only re-sort scores — card is already gone from dismissTitle's updateCards
+        // Defer slightly so dismissTitle's animation + re-render finishes first
+        setTimeout(() => {
+            renderList('movie-list', allMovies, 'movie-count', moviePage);
+            renderList('tv-list',    allTV,    'tv-count',    tvPage);
+        }, 300);
     });
-    // Visual feedback
-    const btn = document.querySelector(`[data-pref-btn="${imdbId}-${signal}"]`);
-    if (btn) {
-        btn.style.opacity = '0.4';
-        btn.textContent = signal === 'seen' ? '✓ Logged' : '✗ Hidden';
-        btn.disabled = true;
-    }
-    // Re-sort with updated preferences
-    loadPreferences().then(() => renderCards());
 }
 
 function renderCards() {
@@ -1297,9 +1299,14 @@ let tvPage = 1;
 const PAGE_SIZE = 12;
 
 function topN(items, f, n) {
-  const dismissed = getDismissedIds();
+  const dismissed = getDismissedIds();  // Set of {id, imdb_id} values
   return items
-    .filter(i => !dismissed.has(i.id))
+    .filter(i => {
+      // Check both id and imdb_id — guards against ID changes across cache refreshes
+      if (i.id && dismissed.has(i.id)) return false;
+      if (i.imdb_id && dismissed.has(i.imdb_id)) return false;
+      return true;
+    })
     .map(i => ({ ...i, blend: blendScore(i, f) }))
     .sort((a, b) => b.blend - a.blend)
     .slice(0, n);
@@ -1823,22 +1830,44 @@ function getDismissed() {
 }
 
 function getDismissedIds() {
-  return new Set(getDismissed().map(e => e.id));
+  const entries = getDismissed();
+  const ids = new Set();
+  entries.forEach(e => {
+    if (e.id)      ids.add(e.id);
+    if (e.imdb_id) ids.add(e.imdb_id);
+  });
+  return ids;
 }
 
 function dismissTitle(item, reason) {
+  if (!item || (!item.id && !item.imdb_id)) return; // guard: no stable ID
+
   const entries = getDismissed();
-  entries.push({
-    id: item.id,
-    title: item.title,
+  // Avoid duplicates — remove any existing entry for this item first
+  const cleanEntries = entries.filter(e =>
+    e.id !== item.id && e.imdb_id !== item.imdb_id
+  );
+  cleanEntries.push({
+    id:      item.id      || null,
+    imdb_id: item.imdb_id || null,
+    title:   item.title,
     reason,
     timestamp: Date.now(),
-    genres: item.genres || [],
-    providers: item.providers || []
+    genres:    item.genres    || [],
+    providers: item.providers || [],
   });
-  localStorage.setItem(DISMISS_KEY, JSON.stringify(entries));
-  showToast(item.title, item.id);
-  updateCards(false);
+  localStorage.setItem(DISMISS_KEY, JSON.stringify(cleanEntries));
+
+  // Fade the card out, THEN re-render — makes the action feel real
+  const cardEl = document.getElementById('card-' + item.id);
+  if (cardEl) {
+    cardEl.classList.add('dismissing');
+    setTimeout(() => updateCards(false), 260); // matches transition duration
+  } else {
+    updateCards(false);
+  }
+
+  showToast(item.title, item.id || item.imdb_id);
 }
 
 // ── Undo Toast ────────────────────────────────────────────
@@ -1864,7 +1893,7 @@ function hideToast() {
 function undoDismiss() {
   if (!_lastDismissedId) return;
   const id = _lastDismissedId;
-  const entries = getDismissed().filter(e => e.id !== id);
+  const entries = getDismissed().filter(e => e.id !== id && e.imdb_id !== id);
   localStorage.setItem(DISMISS_KEY, JSON.stringify(entries));
   hideToast();
   if (_toastTimer) clearTimeout(_toastTimer);
