@@ -1611,11 +1611,18 @@ async function fetchTop10() {
       return;
     }
 
+    const movies = data.movies || [];
+    const tv = data.tv || [];
+    if (!movies.length && !tv.length) {
+      _top10PollTimer = setTimeout(fetchTop10, 30000);
+      return;
+    }
+
     const section = document.getElementById('top10-section');
     section.style.display = 'block';
 
-    renderTop10List('top10-movies', data.movies || [], 'movie');
-    renderTop10List('top10-tv',     data.tv     || [], 'tv');
+    renderTop10List('top10-movies', movies, 'movie');
+    renderTop10List('top10-tv',     tv,     'tv');
 
     // If still generating AI consensus, poll again in 45s to get the real picks
     if (data.generating || data.fallback) {
