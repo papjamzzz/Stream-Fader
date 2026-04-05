@@ -1594,14 +1594,20 @@ function renderTopPick(pick) {
 }
 
 // ── Top 10 Consensus Lists ────────────────────────────────
+let _top10PollTimer = null;
+
 async function fetchTop10() {
   try {
     const res = await fetch('/api/top10');
-    if (!res.ok) return;
+    if (!res.ok) {
+      // Retry in 30s if server not ready
+      _top10PollTimer = setTimeout(fetchTop10, 30000);
+      return;
+    }
     const data = await res.json();
-    if (data.error) {
-      document.getElementById('top10-movies').innerHTML = '<div class="top10-loading" style="opacity:0.4">AI consensus unavailable</div>';
-      document.getElementById('top10-tv').innerHTML    = '<div class="top10-loading" style="opacity:0.4">AI consensus unavailable</div>';
+
+    if (data.error && !data.movies) {
+      _top10PollTimer = setTimeout(fetchTop10, 30000);
       return;
     }
 
@@ -1610,8 +1616,14 @@ async function fetchTop10() {
 
     renderTop10List('top10-movies', data.movies || [], 'movie');
     renderTop10List('top10-tv',     data.tv     || [], 'tv');
+
+    // If still generating AI consensus, poll again in 45s to get the real picks
+    if (data.generating || data.fallback) {
+      _top10PollTimer = setTimeout(fetchTop10, 45000);
+    }
   } catch(e) {
     // silently fail — Top 10 is bonus feature
+    _top10PollTimer = setTimeout(fetchTop10, 30000);
   }
 }
 

@@ -24,8 +24,34 @@ def _background_refresh():
         finally:
             _refreshing = False
 
+_top10_generating = False
+_top10_lock = threading.Lock()
+
+def _background_top10():
+    global _top10_generating
+    if _top10_generating:
+        return
+    with _top10_lock:
+        _top10_generating = True
+        try:
+            cached = get_cached_content()
+            if cached:
+                movies = cached.get('movies', [])
+                tv     = cached.get('tv', [])
+                if movies or tv:
+                    generate_top10(movies, tv)
+        except Exception:
+            pass
+        finally:
+            _top10_generating = False
+
+def _startup():
+    """Warm content cache, then generate Top 12 once content is ready."""
+    get_top_content(force=False)
+    _background_top10()
+
 # Pre-warm cache on startup so the first real user never hits a cold fetch
-threading.Thread(target=_background_refresh, daemon=True).start()
+threading.Thread(target=_startup, daemon=True).start()
 
 # ── Routes ───────────────────────────────────────────────────────────────────
 
@@ -64,17 +90,32 @@ def top10():
     """Return 5-persona AI consensus Top 12 Movies + Top 12 Series."""
     cached = get_cached_content()
     if not cached:
-        return jsonify({'error': 'no_data'}), 503
+        return jsonify({'error': 'no_data', 'generating': False}), 503
     movies = cached.get('movies', [])
     tv     = cached.get('tv', [])
     try:
         data = generate_top10(movies, tv)
         if data:
             return jsonify(data)
-        return jsonify({'error': 'no_anthropic_key'}), 503
+        # No Anthropic key — return top items from cache directly
+        return jsonify({
+            'movies': movies[:12],
+            'tv': tv[:12],
+            'tonight': None,
+            'generated_at': None,
+            'fallback': True,
+        })
     except Exception as e:
         app.logger.error(f"Top12 generation failed: {e}")
-        return jsonify({'error': 'generation_failed'}), 500
+        # Kick off background generation and return cache fallback
+        threading.Thread(target=_background_top10, daemon=True).start()
+        return jsonify({
+            'movies': movies[:12],
+            'tv': tv[:12],
+            'tonight': None,
+            'generated_at': None,
+            'generating': True,
+        })
 
 
 @app.route('/api/trailer')

@@ -297,13 +297,16 @@ def best_scores(imdb_id):
 
 # ── Movies ─────────────────────────────────────────────────────────────────────
 
-MIN_VOTES       = 150    # minimum TMDb vote count — filters out small/limited releases
-MIN_POPULARITY  = 8      # TMDb popularity floor — removes truly obscure titles
-MIN_SCORE       = 50     # combined critic+audience floor — only quality content
+MIN_VOTES       = 300    # minimum TMDb vote count — filters out small/limited releases
+MIN_POPULARITY  = 10     # TMDb popularity floor — removes truly obscure titles
+MIN_SCORE       = 55     # combined critic+audience floor — only quality content
 DOC_GENRE_ID    = 99     # TMDb genre ID for Documentary
 
-# TMDb TV genre IDs to exclude — News, Reality, Soap, Talk
-TV_EXCLUDED_GENRES = '10763,10764,10766,10767'
+# TMDb movie genre IDs to exclude — Music videos, concerts
+MOVIE_EXCLUDED_GENRES = '10402'  # Music
+
+# TMDb TV genre IDs to exclude — News, Reality, Soap, Talk, Music
+TV_EXCLUDED_GENRES = '10763,10764,10766,10767,10402'
 
 # TMDb show types to keep — scripted fiction and limited series only
 TV_ALLOWED_TYPES = {'Scripted', 'Miniseries'}
@@ -347,6 +350,7 @@ def fetch_movies():
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'without_genres': MOVIE_EXCLUDED_GENRES,
                 'primary_release_date.gte': cutoff_2yr,
                 'vote_count.gte': MIN_VOTES,
                 'page': page,
@@ -360,8 +364,9 @@ def fetch_movies():
                 'sort_by': 'vote_average.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'without_genres': MOVIE_EXCLUDED_GENRES,
                 'primary_release_date.gte': cutoff_2yr,
-                'vote_count.gte': 100,
+                'vote_count.gte': 200,
                 'vote_average.gte': 7.0,
                 'with_genres': '18,53,36,10752',  # Drama, Thriller, History, War
                 'page': page,
@@ -375,9 +380,10 @@ def fetch_movies():
                 'sort_by': 'vote_average.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'without_genres': MOVIE_EXCLUDED_GENRES,
                 'primary_release_date.gte': cutoff_2yr,
                 'with_genres': str(DOC_GENRE_ID),
-                'vote_count.gte': 50,
+                'vote_count.gte': 100,
                 'page': page,
             })
             for m in data.get('results', []):
@@ -390,8 +396,9 @@ def fetch_movies():
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'without_genres': MOVIE_EXCLUDED_GENRES,
                 'primary_release_date.gte': cutoff_2yr,
-                'vote_count.gte': 100,
+                'vote_count.gte': 200,
                 'with_genres': '28,27,35,16,878',  # Action, Horror, Comedy, Animation, Sci-Fi
                 'page': page,
             })
@@ -404,8 +411,9 @@ def fetch_movies():
                 'sort_by': 'vote_average.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'without_genres': MOVIE_EXCLUDED_GENRES,
                 'primary_release_date.gte': cutoff_2yr,
-                'vote_count.gte': 200,
+                'vote_count.gte': 300,
                 'vote_average.gte': 7.5,
                 'page': page,
             })
