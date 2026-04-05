@@ -20,7 +20,7 @@ ANTHROPIC_KEY = os.getenv('ANTHROPIC_API_KEY', '')
 CACHE_FILE      = 'data/cache.json'
 SCORE_CACHE_FILE = 'data/score_cache.json'  # per-title score cache — survives content rebuilds
 TOPPICK_FILE    = 'data/toppick.json'
-CACHE_TTL       = 48 * 3600  # 48 hours — large pool, no need to refresh often
+CACHE_TTL       = 6 * 3600   # 6 hours — refresh frequently for fresher data
 TOPPICK_TTL     = 12 * 3600
 
 # ── Per-title score cache (survives content rebuilds, keyed by IMDb ID) ───────
@@ -261,6 +261,10 @@ def best_scores(imdb_id):
     else:
         scores['critic'] = None
 
+    # Fallback: if no critic sources but IMDb is available, use IMDb as critic proxy
+    if scores['critic'] is None and scores['imdb'] is not None:
+        scores['critic'] = scores['imdb']
+
     # ── AUDIENCE POLE: RT Audience 50% + IMDb 25% + Letterboxd 15% + Trakt 10% ──
     # Pure viewer/user scores only — no critic panels
     aud_parts = []
@@ -295,7 +299,7 @@ def best_scores(imdb_id):
 
 MIN_VOTES       = 150    # minimum TMDb vote count — filters out small/limited releases
 MIN_POPULARITY  = 8      # TMDb popularity floor — removes truly obscure titles
-MIN_SCORE       = 55     # combined critic+audience floor — only quality content
+MIN_SCORE       = 50     # combined critic+audience floor — only quality content
 DOC_GENRE_ID    = 99     # TMDb genre ID for Documentary
 
 # TMDb TV genre IDs to exclude — News, Reality, Soap, Talk

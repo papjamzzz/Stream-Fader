@@ -1,4 +1,5 @@
-import threading, os, requests
+import threading, os, requests, json
+from datetime import datetime
 from flask import Flask, render_template, jsonify, request
 from engine import get_top_content, get_cached_content, generate_top10
 
@@ -160,6 +161,47 @@ def score_debug():
         'movies': analyze(cached.get('movies', [])),
         'tv': analyze(cached.get('tv', [])),
     })
+
+
+PREFS_FILE = 'data/preferences.json'
+
+def _load_prefs():
+    try:
+        if os.path.exists(PREFS_FILE):
+            with open(PREFS_FILE) as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return []
+
+def _save_prefs(prefs):
+    os.makedirs('data', exist_ok=True)
+    with open(PREFS_FILE, 'w') as f:
+        json.dump(prefs, f)
+
+@app.route('/api/preference', methods=['POST'])
+def preference():
+    body = request.get_json(force=True)
+    imdb_id = body.get('imdb_id')
+    signal  = body.get('signal')  # "seen" or "skip"
+    if not imdb_id or signal not in ('seen', 'skip'):
+        return jsonify({'error': 'bad_request'}), 400
+    prefs = _load_prefs()
+    # Remove any existing signal for this title
+    prefs = [p for p in prefs if p.get('imdb_id') != imdb_id]
+    prefs.append({
+        'imdb_id': imdb_id,
+        'title': body.get('title', ''),
+        'genres': body.get('genres', []),
+        'signal': signal,
+        'timestamp': datetime.utcnow().isoformat(),
+    })
+    _save_prefs(prefs)
+    return jsonify({'ok': True})
+
+@app.route('/api/preferences')
+def get_preferences():
+    return jsonify(_load_prefs())
 
 
 if __name__ == '__main__':

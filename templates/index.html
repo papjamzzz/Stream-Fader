@@ -136,46 +136,6 @@
       border-radius: 4px;
     }
 
-    /* ── GENRE FILTER ── */
-    .genre-bar {
-      padding: 20px 32px;
-      display: flex;
-      gap: 12px;
-      overflow-x: auto;
-      border-bottom: 1px solid var(--border);
-      background: #05060e;
-    }
-    .genre-bar::-webkit-scrollbar { height: 3px; }
-    .genre-pill {
-      flex-shrink: 0;
-      padding: 12px 28px;
-      border-radius: 8px;
-      border: 2px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.04);
-      color: rgba(255,255,255,0.9);
-      font-size: 16px;
-      font-weight: 900;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: 'Inter', sans-serif;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      text-shadow: 0 0 12px rgba(255,255,255,0.3);
-    }
-    .genre-pill:hover {
-      border-color: var(--sweet);
-      color: #fff;
-      background: rgba(198,120,221,0.12);
-      text-shadow: 0 0 20px rgba(198,120,221,0.8);
-    }
-    .genre-pill.active {
-      background: var(--sweet);
-      border-color: var(--sweet);
-      color: #000;
-      text-shadow: none;
-      box-shadow: 0 0 24px rgba(198,120,221,0.6);
-    }
-
     /* ══════════════════════════════════════════════
        THE FADER — HERO SECTION  (THE GIMMICK)
     ══════════════════════════════════════════════ */
@@ -413,7 +373,7 @@
       border: 1px solid var(--border);
       border-radius: 10px;
       cursor: pointer;
-      transition: border-color 0.15s, transform 0.12s;
+      transition: border-color 0.15s, transform 0.4s ease, opacity 0.3s ease;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -1059,10 +1019,6 @@
   </div>
 </section>
 
-<!-- ═══════════════════ GENRE FILTER ═══════════════════ -->
-<div class="genre-bar" id="genre-bar" style="border-bottom:1px solid rgba(255,255,255,0.08);">
-  <button class="genre-pill active" data-genre="All" onclick="setGenre('All',this)">All</button>
-</div>
 <div id="results-anchor"></div>
 
 <!-- ══════════════════════════════════════════════
@@ -1201,6 +1157,29 @@
   </div>
 </div>
 
+<!-- ═══════════════════ HELP BUTTON + MODAL ═══════════════════ -->
+<button id="helpBtn" title="How it works" style="position:fixed;top:16px;right:16px;z-index:200;background:#1a1a1a;border:1px solid #333;color:#888;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">?</button>
+
+<div id="helpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;align-items:center;justify-content:center;">
+  <div style="background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:40px;max-width:520px;width:90%;position:relative;color:#ccc;line-height:1.7;">
+    <button id="helpClose" style="position:absolute;top:16px;right:16px;background:none;border:none;color:#555;font-size:22px;cursor:pointer;">✕</button>
+    <h2 style="color:#fff;margin:0 0 24px;font-size:22px;">How StreamFader Works</h2>
+    <div style="margin-bottom:18px;">
+      <strong style="color:#7b8cde;">🎚 The Fader</strong><br>
+      Slide left to rank by <span style="color:#7b8cde;">critic scores</span> (Rotten Tomatoes, Metacritic). Slide right for <span style="color:#e8a838;">audience scores</span> (IMDb, Letterboxd). The middle is the sweet spot where both agree.
+    </div>
+    <div style="margin-bottom:18px;">
+      <strong style="color:#22c55e;">✓ I've Seen It</strong><br>
+      Tells StreamFader you've watched and liked this type of content. It boosts similar genres in your feed over time.
+    </div>
+    <div style="margin-bottom:18px;">
+      <strong style="color:#ef4444;">✗ No Thank You</strong><br>
+      Hides this style from your feed. StreamFader learns which genres to suppress so they appear less often.
+    </div>
+    <div style="color:#555;font-size:13px;">The more you use it, the smarter it gets.</div>
+  </div>
+</div>
+
 <!-- ═══════════════════ UNDO TOAST ═══════════════════ -->
 <div id="sf-toast">
   <span id="sf-toast-msg"></span>
@@ -1218,9 +1197,56 @@
 let allMovies = [];
 let allTV     = [];
 let fader     = 50;
-let activeGenre = 'All';
 let allGenres = new Set();
 window._cardRegistry = [];
+
+// ── Preferences ─────────────────────────────────────
+let userPrefs = [];
+
+async function loadPreferences() {
+    try {
+        const r = await fetch('/api/preferences');
+        userPrefs = await r.json();
+    } catch(e) { userPrefs = []; }
+}
+
+function genreAffinityScore(cardGenres) {
+    const seenGenres = new Set(
+        userPrefs.filter(p => p.signal === 'seen').flatMap(p => p.genres)
+    );
+    const skipGenres = new Set(
+        userPrefs.filter(p => p.signal === 'skip').flatMap(p => p.genres)
+    );
+    let boost = 0;
+    for (const g of (cardGenres || [])) {
+        if (seenGenres.has(g)) boost += 8;
+        if (skipGenres.has(g)) boost -= 12;
+    }
+    return boost;
+}
+
+async function sendPreference(imdbId, title, genres, signal) {
+    await fetch('/api/preference', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({imdb_id: imdbId, title, genres, signal})
+    });
+    // Visual feedback
+    const btn = document.querySelector(`[data-pref-btn="${imdbId}-${signal}"]`);
+    if (btn) {
+        btn.style.opacity = '0.4';
+        btn.textContent = signal === 'seen' ? '✓ Logged' : '✗ Hidden';
+        btn.disabled = true;
+    }
+    // Re-sort with updated preferences
+    loadPreferences().then(() => renderCards());
+}
+
+function renderCards() {
+    window._cardRegistry = [];
+    renderList('movie-list', allMovies, 'movie-count', moviePage);
+    renderList('tv-list', allTV, 'tv-count', tvPage);
+}
 
 // ── Color math ────────────────────────────────────────
 function lerpColor(c1, c2, t) {
@@ -1243,12 +1269,8 @@ function blendScore(item, f) {
   const c = item.critic_score   ?? 50;
   const a = item.audience_score ?? 50;
   const ratio = f / 100;
-  return Math.round(c * (1 - ratio) + a * ratio);
-}
-
-function filterByGenre(items) {
-  if (activeGenre === 'All') return items;
-  return items.filter(i => i.genres && i.genres.includes(activeGenre));
+  const base = c * (1 - ratio) + a * ratio;
+  return Math.round(base + genreAffinityScore(item.genres || []));
 }
 
 let moviePage = 1;
@@ -1257,7 +1279,7 @@ const PAGE_SIZE = 12;
 
 function topN(items, f, n) {
   const dismissed = getDismissedIds();
-  return filterByGenre(items)
+  return items
     .filter(i => !dismissed.has(i.id))
     .map(i => ({ ...i, blend: blendScore(i, f) }))
     .sort((a, b) => b.blend - a.blend)
@@ -1330,15 +1352,18 @@ function renderCard(item, rank) {
   const cardIndex = window._cardRegistry.push(item) - 1;
   const safeTitle = item.title.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
+  const safeGenres = JSON.stringify(item.genres || []).replace(/'/g, "\\'");
+  const safeImdbId = (item.imdb_id || '').replace(/"/g, '');
+
   return `
-    <div class="title-row" id="card-${item.id}" onclick="openDetail(${cardIndex})">
+    <div class="title-row" id="card-${item.id}" data-id="${item.id}" onclick="openDetail(${cardIndex})">
       <div class="card-poster-wrap">
         ${posterEl}
         <div class="${rankClass}">${rank}</div>
       </div>
       <div class="dismiss-bar" onclick="event.stopPropagation()">
-        <button class="dismiss-btn dismiss-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen')">✅ I've Seen It</button>
-        <button class="dismiss-btn dismiss-nope" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'nope')">👎 No Thank You</button>
+        <button class="dismiss-btn dismiss-seen" data-pref-btn="${safeImdbId}-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'seen')">✓ Seen it</button>
+        <button class="dismiss-btn dismiss-nope" data-pref-btn="${safeImdbId}-skip" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'nope');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'skip')">✗ Skip</button>
       </div>
       <div class="card-body">
         <div class="row-title">${item.title}</div>
@@ -1352,6 +1377,40 @@ function renderCard(item, rank) {
         </div>
       </div>
     </div>`;
+}
+
+function flipSort(container, sortedItems, renderFn) {
+  // First: record positions
+  const cards = Array.from(container.children);
+  const firstPos = {};
+  cards.forEach(card => {
+    const id = card.dataset.id;
+    if (id) firstPos[id] = card.getBoundingClientRect().top;
+  });
+
+  // Clear and re-render in new order
+  container.innerHTML = '';
+  sortedItems.forEach(item => {
+    const div = document.createElement('div');
+    div.innerHTML = renderFn(item);
+    const node = div.firstElementChild;
+    if (node) container.appendChild(node);
+  });
+
+  // Last + Invert + Play
+  Array.from(container.children).forEach(card => {
+    const id = card.dataset.id;
+    if (id && firstPos[id] !== undefined) {
+      const newPos = card.getBoundingClientRect().top;
+      const delta = firstPos[id] - newPos;
+      card.style.transform = `translateY(${delta}px)`;
+      card.style.transition = 'none';
+      requestAnimationFrame(() => {
+        card.style.transition = 'transform 0.4s ease';
+        card.style.transform = 'none';
+      });
+    }
+  });
 }
 
 function renderList(containerId, items, countId, page) {
@@ -1372,7 +1431,17 @@ function renderList(containerId, items, countId, page) {
     if (btn) btn.style.display = 'none';
     return;
   }
-  el.innerHTML = shown.map((item, i) => renderCard(item, i + 1)).join('');
+
+  // Use FLIP animation for re-sorts when cards already exist
+  const existingCards = Array.from(el.children).filter(c => c.dataset.id);
+  if (existingCards.length > 0) {
+    flipSort(el, shown, (item) => {
+      const rank = shown.indexOf(item) + 1;
+      return renderCard(item, rank);
+    });
+  } else {
+    el.innerHTML = shown.map((item, i) => renderCard(item, i + 1)).join('');
+  }
 
   const btn = document.getElementById(containerId + '-more-btn');
   if (btn) btn.style.display = shown.length < all.length ? 'block' : 'none';
@@ -1416,28 +1485,6 @@ function updateCards(animate = true) {
   }
 }
 
-// ── Genre pills ────────────────────────────────────────
-const EXCLUDED_GENRES = new Set(['Sci-Fi & Fantasy', 'Science Fiction', 'Fantasy', 'Adventure']);
-
-function buildGenrePills() {
-  const bar = document.getElementById('genre-bar');
-  const genres = [...allGenres].filter(g => !EXCLUDED_GENRES.has(g)).sort();
-  bar.innerHTML = `<button class="genre-pill${activeGenre === 'All' ? ' active' : ''}" data-genre="All" onclick="setGenre('All',this)">All</button>`;
-  genres.forEach(g => {
-    const active = activeGenre === g ? ' active' : '';
-    bar.innerHTML += `<button class="genre-pill${active}" data-genre="${g}" onclick="setGenre('${g}',this)">${g}</button>`;
-  });
-}
-
-function setGenre(genre, btn) {
-  activeGenre = genre;
-  document.querySelectorAll('.genre-pill').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  updateCards(true);
-  const anchor = document.getElementById('results-anchor');
-  if (anchor) setTimeout(() => anchor.scrollIntoView({ behavior: 'smooth', block: 'start' }), 160);
-}
-
 // ── Data load ────────────────────────────────────────────
 function showError(msg) {
   const err = `<div class="empty-state">
@@ -1467,11 +1514,6 @@ async function loadContent(force = false) {
 
     allMovies = data.movies || [];
     allTV     = data.tv     || [];
-
-    // collect genres
-    allGenres = new Set();
-    [...allMovies, ...allTV].forEach(i => (i.genres || []).forEach(g => allGenres.add(g)));
-    buildGenrePills();
 
     updateCards(true);
 
@@ -1785,15 +1827,36 @@ function undoDismiss() {
   updateCards(false);
 }
 
+// ── Help Modal ────────────────────────────────────────────
+document.getElementById('helpBtn').onclick = () => {
+    document.getElementById('helpModal').style.display = 'flex';
+};
+document.getElementById('helpClose').onclick = () => {
+    document.getElementById('helpModal').style.display = 'none';
+};
+document.getElementById('helpModal').onclick = (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.style.display = 'none';
+};
+
 // ── Boot ─────────────────────────────────────────────────
 onFaderMove(50);
-loadContent(false);
+loadPreferences().then(() => loadContent(false));
 </script>
 
 <!-- ── Detail Modal ── -->
 <div id="detail-overlay">
   <div id="detail-modal"></div>
 </div>
+
+<footer style="margin-top:60px;padding:32px 24px;border-top:1px solid #1a1a1a;text-align:center;color:#333;font-size:13px;">
+  <div style="margin-bottom:12px;">
+    <a href="https://creativekonsoles.com" target="_blank" style="color:#555;text-decoration:none;margin:0 12px;">Creative Konsoles</a>
+    <a href="https://x.com/creativekonsole" target="_blank" style="color:#555;text-decoration:none;margin:0 12px;">𝕏 @creativekonsole</a>
+    <a href="https://www.linkedin.com/in/jeremiahsmith3335/" target="_blank" style="color:#555;text-decoration:none;margin:0 12px;">LinkedIn</a>
+    <a href="https://www.facebook.com/profile.php?id=61576497442325" target="_blank" style="color:#555;text-decoration:none;margin:0 12px;">Facebook</a>
+  </div>
+  <div style="color:#222;font-size:11px;">© 2025 Creative Konsoles · StreamFader</div>
+</footer>
 
 </body>
 </html>
