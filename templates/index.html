@@ -1452,9 +1452,7 @@ function renderList(containerId, items, countId, page) {
 
   if (shown.length === 0) {
     el.innerHTML = `<div class="empty-state">
-      <div class="icon">🎬</div>
-      <h3>No matches</h3>
-      <p>Try a different genre or move the fader.</p>
+      <p>You've seen everything here — move the fader or check back tomorrow.</p>
     </div>`;
     const btn = document.getElementById(containerId + '-more-btn');
     if (btn) btn.style.display = 'none';
