@@ -747,17 +747,31 @@
     }
     .dismiss-btn {
       flex: 1;
-      padding: 5px 4px;
+      padding: 6px 4px 5px;
       border: none;
       border-radius: 6px;
-      font-size: 10px;
-      font-weight: 700;
       cursor: pointer;
       font-family: 'Inter', sans-serif;
-      letter-spacing: 0.02em;
       transition: opacity 0.15s, transform 0.1s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
     }
     .dismiss-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .dismiss-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+    }
+    .dismiss-sub {
+      font-size: 8px;
+      font-weight: 500;
+      opacity: 0.65;
+      letter-spacing: 0.01em;
+      line-height: 1.2;
+    }
     .dismiss-seen {
       background: rgba(102,187,106,0.15);
       color: #66bb6a;
@@ -992,7 +1006,7 @@
 <section class="fader-section" style="padding:28px 48px 24px;">
   <div class="fader-labels">
     <div class="fader-label left">Critics</div>
-    <div class="fader-sweet-label" id="sweet-label">Hmmmmmm?</div>
+    <div class="fader-sweet-label" id="sweet-label">Teach StreamFader Your Taste</div>
     <div class="fader-label right">Audience</div>
   </div>
 
@@ -1014,7 +1028,7 @@
 
   <div class="fader-readout">
     <div class="readout-side left" id="critic-pct">50% Critics</div>
-    <div id="blend-badge">Hmmmmmm?</div>
+    <div id="blend-badge">Teach StreamFader Your Taste</div>
     <div class="readout-side right" id="audience-pct">50% Audience</div>
   </div>
 </section>
@@ -1097,6 +1111,11 @@
 <!-- ═══════════════════ CONTENT ═══════════════════ -->
 <div class="content-area">
   <div class="two-col">
+
+    <!-- TASTE HELPER -->
+    <div style="grid-column:1/-1;text-align:center;padding:0 0 18px;color:#555;font-size:12px;letter-spacing:0.04em;">
+      Tap <span style="color:#4ade80;font-weight:600;">Seen it</span> for more like this &nbsp;·&nbsp; Tap <span style="color:#f87171;font-weight:600;">No thanks</span> for less like this
+    </div>
 
     <!-- MOVIES COLUMN -->
     <div>
@@ -1302,7 +1321,7 @@ function onFaderMove(val) {
 
   const badge = document.getElementById('blend-badge');
   if (Math.abs(fader - 50) < 8) {
-    badge.textContent = 'Hmmmmmm?';
+    badge.textContent = 'Teach StreamFader Your Taste';
     badge.style.color = '#c678dd';
     badge.style.borderColor = 'rgba(198,120,221,0.4)';
     document.getElementById('sweet-label').classList.add('active');
@@ -1362,8 +1381,14 @@ function renderCard(item, rank) {
         <div class="${rankClass}">${rank}</div>
       </div>
       <div class="dismiss-bar" onclick="event.stopPropagation()">
-        <button class="dismiss-btn dismiss-seen" data-pref-btn="${safeImdbId}-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'seen')">✓ Seen it</button>
-        <button class="dismiss-btn dismiss-nope" data-pref-btn="${safeImdbId}-skip" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'nope');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'skip')">✗ Skip</button>
+        <button class="dismiss-btn dismiss-seen" data-pref-btn="${safeImdbId}-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'seen')">
+          <span class="dismiss-label">✓ Seen it</span>
+          <span class="dismiss-sub">More like this</span>
+        </button>
+        <button class="dismiss-btn dismiss-nope" data-pref-btn="${safeImdbId}-skip" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'nope');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'skip')">
+          <span class="dismiss-label">✗ No thanks</span>
+          <span class="dismiss-sub">Less like this</span>
+        </button>
       </div>
       <div class="card-body">
         <div class="row-title">${item.title}</div>
