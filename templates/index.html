@@ -1299,11 +1299,12 @@ let tvPage = 1;
 const PAGE_SIZE = 12;
 
 function topN(items, f, n) {
-  const dismissed = getDismissedIds();  // Set of {id, imdb_id} values
+  const dismissed = getDismissedIds(); // flat Set of all stored id + imdb_id values
   return items
     .filter(i => {
-      // Check both id and imdb_id — guards against ID changes across cache refreshes
-      if (i.id && dismissed.has(i.id)) return false;
+      if (!i) return false;
+      // Both axes checked: a title stays hidden even if its id field changed across refreshes
+      if (i.id      && dismissed.has(i.id))      return false;
       if (i.imdb_id && dismissed.has(i.imdb_id)) return false;
       return true;
     })
@@ -1816,53 +1817,134 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── Dismiss / Taste Memory ───────────────────────────────
 const DISMISS_KEY = 'sf_dismissed';
-const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+/*
+  Dismissed entry shape (v2):
+  {
+    id:           string | null   — item.id at time of dismiss (tmdb or imdb string)
+    imdb_id:      string | null   — item.imdb_id (stable IMDb tt-id when available)
+    media_type:   string | null   — "movie" | "tv"
+    title:        string
+    reason:       "seen" | "nope"
+    dismissed_at: number          — Date.now() ms timestamp
+    expires_at:   number          — dismissed_at + 30 days ms
+  }
+
+  Matching: a title is dismissed if item.id OR item.imdb_id matches any stored id or imdb_id.
+  Both fields checked on both sides — guards against ID changes across cache refreshes
+  (e.g. first load used tmdb id "12345", later load resolved imdb id "tt0123456").
+*/
 
 function getDismissed() {
   let raw = [];
-  try { raw = JSON.parse(localStorage.getItem(DISMISS_KEY) || '[]'); } catch {}
+  try {
+    const stored = localStorage.getItem(DISMISS_KEY);
+    raw = stored ? JSON.parse(stored) : [];
+    if (!Array.isArray(raw)) raw = [];
+  } catch (err) {
+    // Malformed data — reset silently
+    console.warn('[SF] Dismiss store parse error, resetting:', err);
+    localStorage.removeItem(DISMISS_KEY);
+    return [];
+  }
+
   const now = Date.now();
-  const active = raw.filter(e => (now - e.timestamp) < THIRTY_DAYS);
+  // Support both old shape (timestamp) and new shape (expires_at) during migration
+  const active = raw.filter(e => {
+    if (!e || typeof e !== 'object') return false;     // malformed entry
+    const expiry = e.expires_at || (e.timestamp ? e.timestamp + THIRTY_DAYS_MS : 0);
+    return expiry > now;
+  });
+
   if (active.length !== raw.length) {
-    localStorage.setItem(DISMISS_KEY, JSON.stringify(active));
+    // Evict expired entries and migrate any old-shape entries to new shape
+    const migrated = active.map(e => _migrateEntry(e));
+    try { localStorage.setItem(DISMISS_KEY, JSON.stringify(migrated)); } catch (_) {}
+    return migrated;
   }
   return active;
 }
 
+function _migrateEntry(e) {
+  // Upgrade old entries that only have `timestamp` to new shape with `expires_at`
+  if (e.expires_at) return e;
+  return {
+    id:           e.id           || null,
+    imdb_id:      e.imdb_id      || null,
+    media_type:   e.media_type   || null,
+    title:        e.title        || '',
+    reason:       e.reason       || 'nope',
+    dismissed_at: e.timestamp    || Date.now(),
+    expires_at:   (e.timestamp   || Date.now()) + THIRTY_DAYS_MS,
+  };
+}
+
 function getDismissedIds() {
-  const entries = getDismissed();
+  // Returns a flat Set of every id and imdb_id value currently dismissed.
+  // O(1) lookup in topN filter.
   const ids = new Set();
-  entries.forEach(e => {
+  getDismissed().forEach(e => {
     if (e.id)      ids.add(e.id);
     if (e.imdb_id) ids.add(e.imdb_id);
   });
   return ids;
 }
 
+function _isSameTitle(entry, item) {
+  // True if entry and item refer to the same title, checking both id axes.
+  // Skips null-vs-null matches — two items with no id are NOT the same title.
+  if (entry.id && item.id && entry.id === item.id)           return true;
+  if (entry.imdb_id && item.imdb_id && entry.imdb_id === item.imdb_id) return true;
+  if (entry.id && item.imdb_id && entry.id === item.imdb_id) return true;
+  if (entry.imdb_id && item.id && entry.imdb_id === item.id) return true;
+  return false;
+}
+
 function dismissTitle(item, reason) {
-  if (!item || (!item.id && !item.imdb_id)) return; // guard: no stable ID
+  // Guard: need at least one stable identifier
+  if (!item || (!item.id && !item.imdb_id)) {
+    console.warn('[SF] dismissTitle: item has no stable id, skipping', item);
+    return;
+  }
 
-  const entries = getDismissed();
-  // Avoid duplicates — remove any existing entry for this item first
-  const cleanEntries = entries.filter(e =>
-    e.id !== item.id && e.imdb_id !== item.imdb_id
-  );
-  cleanEntries.push({
-    id:      item.id      || null,
-    imdb_id: item.imdb_id || null,
-    title:   item.title,
+  const now      = Date.now();
+  const expiry   = now + THIRTY_DAYS_MS;
+  const existing = getDismissed();
+
+  // Dedup: remove any prior entry for this same title before inserting
+  const cleaned = existing.filter(e => !_isSameTitle(e, item));
+
+  const entry = {
+    id:           item.id         || null,
+    imdb_id:      item.imdb_id    || null,
+    media_type:   item.media_type || null,
+    title:        item.title      || '',
     reason,
-    timestamp: Date.now(),
-    genres:    item.genres    || [],
-    providers: item.providers || [],
-  });
-  localStorage.setItem(DISMISS_KEY, JSON.stringify(cleanEntries));
+    dismissed_at: now,
+    expires_at:   expiry,
+  };
+  cleaned.push(entry);
 
-  // Fade the card out, THEN re-render — makes the action feel real
+  try {
+    localStorage.setItem(DISMISS_KEY, JSON.stringify(cleaned));
+  } catch (err) {
+    console.error('[SF] Could not write dismiss to localStorage:', err);
+    return;
+  }
+
+  // Dev trace: shows the before/after identifier story so you can verify
+  // cross-id matching works (e.g. dismissed as tmdb "12345", stays dismissed as imdb "tt0099685")
+  console.debug(
+    `[SF] Dismissed "${entry.title}" | id: ${entry.id} | imdb_id: ${entry.imdb_id}` +
+    ` | media: ${entry.media_type} | expires: ${new Date(expiry).toLocaleDateString()}`
+  );
+
+  // Fade the card out FIRST — then re-render once transition completes
   const cardEl = document.getElementById('card-' + item.id);
   if (cardEl) {
     cardEl.classList.add('dismissing');
-    setTimeout(() => updateCards(false), 260); // matches transition duration
+    setTimeout(() => updateCards(false), 270); // matches .dismissing transition (0.25s + buffer)
   } else {
     updateCards(false);
   }
@@ -1893,8 +1975,11 @@ function hideToast() {
 function undoDismiss() {
   if (!_lastDismissedId) return;
   const id = _lastDismissedId;
-  const entries = getDismissed().filter(e => e.id !== id && e.imdb_id !== id);
-  localStorage.setItem(DISMISS_KEY, JSON.stringify(entries));
+  // Match by either stored axis — same cross-id logic as dismissTitle
+  const entries = getDismissed().filter(e =>
+    !(( e.id && e.id === id) || (e.imdb_id && e.imdb_id === id))
+  );
+  try { localStorage.setItem(DISMISS_KEY, JSON.stringify(entries)); } catch (_) {}
   hideToast();
   if (_toastTimer) clearTimeout(_toastTimer);
   updateCards(false);
