@@ -1245,22 +1245,18 @@ function genreAffinityScore(cardGenres) {
 }
 
 async function sendPreference(imdbId, title, genres, signal) {
-    // Fire-and-forget — don't await, don't re-render (dismissTitle already did)
+    // Fire-and-forget — dismissTitle already handled the re-render.
+    // No second render here: calling renderList without resetting _cardRegistry
+    // first would cause index drift on the second pass.
+    // Affinity weights update in background; they apply on the next natural
+    // re-render (fader move, load more, or page reload).
     fetch('/api/preference', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({imdb_id: imdbId, title, genres, signal})
-    }).catch(() => {}); // silently ignore network errors
+    }).catch(() => {});
 
-    // Refresh genre affinity weights in background, re-sort without resetting pages
-    loadPreferences().then(() => {
-        // Only re-sort scores — card is already gone from dismissTitle's updateCards
-        // Defer slightly so dismissTitle's animation + re-render finishes first
-        setTimeout(() => {
-            renderList('movie-list', allMovies, 'movie-count', moviePage);
-            renderList('tv-list',    allTV,    'tv-count',    tvPage);
-        }, 300);
-    });
+    loadPreferences(); // update userPrefs in memory for next render, no re-render triggered
 }
 
 function renderCards() {
