@@ -836,6 +836,123 @@
     }
     #sf-toast-undo:hover { color: #fff; }
 
+    /* ── WANNA SEE SAVE BAR ── */
+    .save-bar {
+      background: linear-gradient(90deg, #f5c400 0%, #f0a800 100%);
+      color: #1a1200;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 8px;
+      text-align: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      border-radius: 6px 6px 0 0;
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .save-bar:hover { background: linear-gradient(90deg, #ffe033 0%, #f5c400 100%); }
+    .save-bar.saved {
+      background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+      color: #fff;
+    }
+
+    /* ── WATCHLIST PANEL ── */
+    #watchlist-panel {
+      display: none;
+      background: #0a0b14;
+      border-bottom: 1px solid rgba(245,196,0,0.25);
+      padding: 20px 28px 24px;
+    }
+    #watchlist-panel.has-items { display: block; }
+    .watchlist-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .watchlist-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #f5c400;
+    }
+    .watchlist-count {
+      background: rgba(245,196,0,0.15);
+      color: #f5c400;
+      border: 1px solid rgba(245,196,0,0.3);
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 7px;
+    }
+    .watchlist-rows { display: flex; flex-direction: column; gap: 8px; }
+    .watchlist-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      padding: 8px 12px;
+      transition: background 0.15s;
+    }
+    .watchlist-row:hover { background: rgba(255,255,255,0.06); }
+    .watchlist-poster {
+      width: 36px;
+      height: 54px;
+      border-radius: 5px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: #1a1d2e;
+    }
+    .watchlist-emoji {
+      font-size: 28px;
+      width: 36px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .watchlist-info { flex: 1; min-width: 0; }
+    .watchlist-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #f0f2ff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .watchlist-meta {
+      font-size: 11px;
+      color: var(--dim);
+      margin-top: 2px;
+    }
+    .watchlist-link {
+      font-size: 11px;
+      font-weight: 700;
+      color: #f5c400;
+      text-decoration: none;
+      background: rgba(245,196,0,0.1);
+      border: 1px solid rgba(245,196,0,0.25);
+      border-radius: 6px;
+      padding: 4px 10px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .watchlist-link:hover { background: rgba(245,196,0,0.2); }
+    .watchlist-remove {
+      font-size: 16px;
+      color: rgba(255,255,255,0.2);
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 4px;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+    .watchlist-remove:hover { color: #ef5350; }
+
     /* ── SOCIAL FOOTER ── */
     .social-footer {
       background: #05060e;
@@ -1099,6 +1216,18 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     WANNA SEE WATCHLIST
+══════════════════════════════════════════════ -->
+<div id="watchlist-panel">
+  <div class="watchlist-header">
+    <span style="font-size:22px;">🎯</span>
+    <span class="watchlist-title">I Wanna See</span>
+    <span class="watchlist-count" id="watchlist-count">0</span>
+  </div>
+  <div class="watchlist-rows" id="watchlist-rows"></div>
 </div>
 
 <!-- ══════════════════════════════════════════════
@@ -1398,8 +1527,12 @@ function renderCard(item, rank) {
   const safeGenres = JSON.stringify(item.genres || []).replace(/"/g, '&quot;');
   const safeImdbId = (item.imdb_id || '').replace(/"/g, '');
 
+  const isSaved = isWannaSee(item.id || item.imdb_id);
   return `
     <div class="title-row" id="card-${item.id}" data-id="${item.id}" onclick="openDetail(${cardIndex})">
+      <div class="save-bar ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleWannaSee(window._cardRegistry[${cardIndex}],this)">
+        ${isSaved ? '✅ Saved!' : '🌟 I Wanna See — SAVE!'}
+      </div>
       <div class="card-poster-wrap">
         ${posterEl}
         <div class="${rankClass}">${rank}</div>
@@ -2020,6 +2153,81 @@ const _faderEl = document.getElementById('blend-fader');
 if (_faderEl) { _faderEl.value = fader; onFaderMove(fader); }
 
 loadPreferences().then(() => loadContent(false));
+
+/* ═══════════════════════════════════════════════════════
+   WANNA SEE WATCHLIST
+═══════════════════════════════════════════════════════ */
+const WATCHLIST_KEY = 'sf_watchlist';
+
+function getWatchlist() {
+  try { return JSON.parse(localStorage.getItem(WATCHLIST_KEY) || '[]'); } catch { return []; }
+}
+
+function saveWatchlist(list) {
+  localStorage.setItem(WATCHLIST_KEY, JSON.stringify(list));
+}
+
+function isWannaSee(id) {
+  return getWatchlist().some(i => i.id === id || i.imdb_id === id);
+}
+
+function toggleWannaSee(item, barEl) {
+  const id = item.id || item.imdb_id;
+  let list = getWatchlist();
+  const idx = list.findIndex(i => i.id === id || i.imdb_id === id);
+  if (idx >= 0) {
+    list.splice(idx, 1);
+    if (barEl) { barEl.textContent = '🌟 I Wanna See — SAVE!'; barEl.classList.remove('saved'); }
+  } else {
+    list.push({ id: item.id, imdb_id: item.imdb_id, title: item.title, poster: item.poster || null, release: item.release || '', media_type: item.media_type || 'movie', providers: item.providers || [] });
+    if (barEl) { barEl.textContent = '✅ Saved!'; barEl.classList.add('saved'); }
+  }
+  saveWatchlist(list);
+  renderWatchlist();
+}
+
+function removeFromWatchlist(id) {
+  const list = getWatchlist().filter(i => i.id !== id && i.imdb_id !== id);
+  saveWatchlist(list);
+  renderWatchlist();
+  updateCards(false);
+}
+
+function renderWatchlist() {
+  const list = getWatchlist();
+  const panel = document.getElementById('watchlist-panel');
+  const rowsEl = document.getElementById('watchlist-rows');
+  const countEl = document.getElementById('watchlist-count');
+  if (!panel || !rowsEl) return;
+
+  countEl.textContent = list.length;
+  if (!list.length) { panel.classList.remove('has-items'); return; }
+  panel.classList.add('has-items');
+
+  rowsEl.innerHTML = list.map(item => {
+    const year = item.release ? item.release.slice(0, 4) : '';
+    const type = item.media_type === 'tv' ? '📺' : '🎬';
+    const platforms = (item.providers || []).slice(0, 2).map(p =>
+      `<span style="color:${p.color};font-size:10px;font-weight:700;">${p.name}</span>`
+    ).join(' · ');
+    const searchId = item.imdb_id || item.id || '';
+    const jwUrl = `https://www.justwatch.com/us/search?q=${encodeURIComponent(item.title)}`;
+    const posterHtml = item.poster
+      ? `<img class="watchlist-poster" src="${item.poster}" alt="" onerror="this.outerHTML='<div class=\\'watchlist-emoji\\'>${type}</div>'">`
+      : `<div class="watchlist-emoji">${type}</div>`;
+    return `<div class="watchlist-row">
+      ${posterHtml}
+      <div class="watchlist-info">
+        <div class="watchlist-name">${item.title}</div>
+        <div class="watchlist-meta">${[year, platforms].filter(Boolean).join(' · ')}</div>
+      </div>
+      <a class="watchlist-link" href="${jwUrl}" target="_blank" rel="noopener">▶ Find It</a>
+      <span class="watchlist-remove" onclick="removeFromWatchlist('${searchId}')" title="Remove">✕</span>
+    </div>`;
+  }).join('');
+}
+
+renderWatchlist();
 </script>
 
 <!-- ── Detail Modal ── -->
