@@ -1,4 +1,4 @@
-import threading, os, requests, json
+import threading, os, requests, json, hashlib
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request
 from engine import get_top_content, get_cached_content, generate_top10
@@ -275,6 +275,69 @@ def watchlist_save():
 @app.route('/api/watchlist')
 def watchlist_get():
     return jsonify(_load_json(WATCH_FILE))
+
+
+# ── Engagement Tracking ──────────────────────────────────────────────────────
+EVENTS_FILE = os.path.join(DATA_DIR, 'events.jsonl')
+
+def _get_fingerprint():
+    """Stable anonymous fingerprint from IP + user agent."""
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr or '').split(',')[0].strip()
+    ua = request.headers.get('User-Agent', '')
+    raw = f"{ip}|{ua}"
+    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+def _append_event(event: dict):
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(EVENTS_FILE, 'a') as f:
+        f.write(json.dumps(event) + '\n')
+
+@app.route('/api/track', methods=['POST'])
+def track():
+    body       = request.get_json(force=True, silent=True) or {}
+    event_type = body.get('event')  # 'swipe','save','fader','session_end','page_view'
+    if not event_type:
+        return jsonify({'error': 'missing event'}), 400
+
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr or '').split(',')[0].strip()
+    event = {
+        'ts':         datetime.utcnow().isoformat(),
+        'event':      event_type,
+        'session_id': body.get('session_id', ''),
+        'fingerprint': _get_fingerprint(),
+        'ip':         ip,
+        'ua':         request.headers.get('User-Agent', '')[:120],
+        'fader':      body.get('fader'),
+        'signal':     body.get('signal'),       # seen / skip / save / unsave
+        'imdb_id':    body.get('imdb_id', ''),
+        'title':      body.get('title', ''),
+        'media_type': body.get('media_type', ''),
+        'genres':     body.get('genres', []),
+        'session_duration_s': body.get('session_duration_s'),
+        'swipe_count': body.get('swipe_count'),
+        'country':    body.get('country', ''),
+    }
+    _append_event(event)
+    return jsonify({'ok': True})
+
+@app.route('/api/stats')
+def stats():
+    """Quick engagement summary — unique sessions, swipes, saves."""
+    if not os.path.exists(EVENTS_FILE):
+        return jsonify({'sessions': 0, 'swipes': 0, 'saves': 0, 'events': 0})
+    sessions, swipes, saves = set(), 0, 0
+    total = 0
+    with open(EVENTS_FILE) as f:
+        for line in f:
+            try:
+                e = json.loads(line)
+                total += 1
+                if e.get('session_id'): sessions.add(e['session_id'])
+                if e.get('event') == 'swipe': swipes += 1
+                if e.get('event') == 'save' and e.get('signal') == 'save': saves += 1
+            except Exception:
+                pass
+    return jsonify({'sessions': len(sessions), 'swipes': swipes, 'saves': saves, 'events': total})
 
 
 if __name__ == '__main__':

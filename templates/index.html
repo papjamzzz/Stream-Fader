@@ -1641,10 +1641,43 @@
 </div>
 
 <script>
+// ── Session + Engagement Tracking ────────────────────
+(function() {
+  let sid = localStorage.getItem('sf_session_id');
+  if (!sid) { sid = 'sf_' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('sf_session_id', sid); }
+  window._sfSession = { id: sid, start: Date.now(), swipes: 0, faderMoves: 0 };
+})();
+
+function _track(event, extra) {
+  const s = window._sfSession;
+  fetch('/api/track', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(Object.assign({
+      event,
+      session_id: s.id,
+      fader: window._sfFader || 50,
+      swipe_count: s.swipes,
+      session_duration_s: Math.round((Date.now() - s.start) / 1000),
+    }, extra || {}))
+  }).catch(() => {});
+}
+
+// Page view on load
+window.addEventListener('DOMContentLoaded', () => _track('page_view'));
+
+// Session end — fires on tab close / navigate away
+window.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    _track('session_end', { session_duration_s: Math.round((Date.now() - window._sfSession.start) / 1000) });
+  }
+});
+
 // ── State ────────────────────────────────────────────
 let allMovies = [];
 let allTV     = [];
 let fader     = parseInt(localStorage.getItem('sf_fader') || '50');
+window._sfFader = fader;
 let allGenres = new Set();
 window._cardRegistry = [];
 
@@ -1673,19 +1706,15 @@ function genreAffinityScore(cardGenres) {
     return boost;
 }
 
-async function sendPreference(imdbId, title, genres, signal) {
-    // Fire-and-forget — dismissTitle already handled the re-render.
-    // No second render here: calling renderList without resetting _cardRegistry
-    // first would cause index drift on the second pass.
-    // Affinity weights update in background; they apply on the next natural
-    // re-render (fader move, load more, or page reload).
+async function sendPreference(imdbId, title, genres, signal, mediaType) {
+    window._sfSession.swipes++;
     fetch('/api/preference', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({imdb_id: imdbId, title, genres, signal})
     }).catch(() => {});
-
-    loadPreferences(); // update userPrefs in memory for next render, no re-render triggered
+    _track('swipe', { imdb_id: imdbId, title, genres, signal, media_type: mediaType || '' });
+    loadPreferences();
 }
 
 function renderCards() {
@@ -1788,6 +1817,9 @@ function top12(items, f) {
 // ── Fader UI ──────────────────────────────────────────
 function onFaderMove(val) {
   fader = parseInt(val);
+  window._sfFader = fader;
+  window._sfSession.faderMoves++;
+  if (window._sfSession.faderMoves % 5 === 0) _track('fader', { fader });
   try { localStorage.setItem('sf_fader', fader); } catch (_) {}
   const col = blendColor(fader);
   const criticPct  = 100 - fader;
@@ -1862,10 +1894,10 @@ function renderCard(item, rank) {
         </div>
       </div>
       <div class="dismiss-bar" onclick="event.stopPropagation()">
-        <button class="dismiss-btn dismiss-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'seen')">
+        <button class="dismiss-btn dismiss-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'seen','${item.media_type||'movie'}')">
           <span class="dismiss-label">✓ Seen it</span>
         </button>
-        <button class="dismiss-btn dismiss-nope" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'nope');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'skip')">
+        <button class="dismiss-btn dismiss-nope" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'nope');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'skip','${item.media_type||'movie'}')">
           <span class="dismiss-label">✗ No thanks</span>
         </button>
       </div>
@@ -2520,6 +2552,7 @@ function toggleWannaSee(item, barEl) {
       providers:  item.providers || [],
     })
   }).catch(() => {});
+  _track('save', { imdb_id: item.imdb_id || item.id || '', title: item.title, signal: removing ? 'unsave' : 'save', media_type: item.media_type || 'movie', genres: item.genres || [] });
 }
 
 function removeFromWatchlist(id) {
@@ -2547,7 +2580,7 @@ function renderWatchlist() {
       `<span style="color:${p.color};font-size: 12px;font-weight:700;">${p.name}</span>`
     ).join(' · ');
     const searchId = item.imdb_id || item.id || '';
-    const jwUrl = `https://www.justwatch.com/us/search?q=${encodeURIComponent(item.title)}`;
+    const jwUrl = `https://www.justwatch.com/us/search?q=${encodeURIComponent(item.title)}&utm_source=streamfader&utm_medium=watchlist&utm_campaign=sf_affiliate`;
     const posterHtml = item.poster
       ? `<img class="watchlist-poster" src="${item.poster}" alt="" onerror="this.outerHTML='<div class=\\'watchlist-emoji\\'>${type}</div>'">`
       : `<div class="watchlist-emoji">${type}</div>`;
