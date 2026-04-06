@@ -297,8 +297,8 @@ def best_scores(imdb_id):
 
 # ── Movies ─────────────────────────────────────────────────────────────────────
 
-MIN_VOTES       = 300    # minimum TMDb vote count — filters out small/limited releases
-MIN_POPULARITY  = 10     # TMDb popularity floor — removes truly obscure titles
+MIN_VOTES       = 1500   # raised — ensures titles have genuine mainstream audience
+MIN_POPULARITY  = 30     # raised — removes obscure/indie/anime with tiny followings
 MIN_SCORE       = 55     # combined critic+audience floor — only quality content
 DOC_GENRE_ID    = 99     # TMDb genre ID for Documentary
 
@@ -447,14 +447,18 @@ def fetch_movies():
                     seen_imdb.add(key)
                     enriched.append(result)
 
-    # Tag items with RT presence before sorting
     for x in enriched:
         x['rt_boost'] = 20 if x.get('rt_score') is not None else 0
+        # Popularity score: capped log scale so blockbusters lead but don't completely dominate
+        pop = x.get('popularity', 0)
+        x['pop_score'] = min(30, round((pop ** 0.45)))  # e.g. pop=500→~17, pop=5000→~26
 
     enriched.sort(key=lambda x: (
-        ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2 + x['rt_boost']
+        ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
+        + x['rt_boost']
+        + x['pop_score']
     ), reverse=True)
-    return enriched[:300]  # return top 300 to frontend for fader to work with
+    return enriched[:300]
 
 
 def _enrich_movie(source, item):
@@ -485,7 +489,8 @@ def _enrich_movie(source, item):
             genres   = [g['name'] for g in (details.get('genres') or []) if g.get('name')][:3]
             return _movie_record(imdb_id or str(tmdb_id), imdb_id, title, overview,
                                  poster, item.get('release_date', ''), providers, genres, scores,
-                                 is_doc=item.get('_is_doc', False))
+                                 is_doc=item.get('_is_doc', False),
+                                 popularity=item.get('popularity', 0))
 
         elif source == 'trakt_movie':
             ids = item.get('ids') or {}
@@ -513,11 +518,11 @@ def _enrich_movie(source, item):
         return None
 
 
-def _movie_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores, is_doc=False):
+def _movie_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores, is_doc=False, popularity=0):
     return {
         'id': uid, 'imdb_id': imdb_id, 'title': title, 'overview': overview,
         'poster': poster, 'release': release, 'media_type': 'movie',
-        'is_doc': is_doc,
+        'is_doc': is_doc, 'popularity': popularity,
         'providers': providers, 'genres': genres,
         'critic_score': scores.get('critic'), 'audience_score': scores.get('audience'),
         'rt_score': scores.get('rt'), 'rt_audience': scores.get('rt_audience'),
@@ -664,14 +669,17 @@ def fetch_tv():
             seen_final.add(key)
             deduped.append(item)
 
-    # Tag items with RT presence before sorting
     for x in deduped:
         x['rt_boost'] = 20 if x.get('rt_score') is not None else 0
+        pop = x.get('popularity', 0)
+        x['pop_score'] = min(30, round((pop ** 0.45)))
 
     deduped.sort(key=lambda x: (
-        ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2 + x['rt_boost']
+        ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
+        + x['rt_boost']
+        + x['pop_score']
     ), reverse=True)
-    return deduped[:300]  # return top 300 TV to frontend
+    return deduped[:300]
 
 
 def _enrich_tv(source, item):
@@ -795,10 +803,11 @@ def _enrich_tv(source, item):
         return None
 
 
-def _tv_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores):
+def _tv_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores, popularity=0):
     return {
         'id': uid, 'imdb_id': imdb_id, 'title': title, 'overview': overview,
         'poster': poster, 'release': release, 'media_type': 'tv',
+        'popularity': popularity,
         'providers': providers, 'genres': genres,
         'critic_score': scores.get('critic'), 'audience_score': scores.get('audience'),
         'rt_score': scores.get('rt'), 'rt_audience': scores.get('rt_audience'),
