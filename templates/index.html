@@ -836,6 +836,35 @@
     }
     #sf-toast-undo:hover { color: #fff; }
 
+    /* ── SCORE BADGES ── */
+    .score-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 5px;
+    }
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.09);
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .score-badge .sb-emoji { font-size: 9px; }
+    .score-badge .sb-val { color: rgba(240,242,255,0.85); }
+    .score-sf {
+      background: rgba(247,37,133,0.12);
+      border-color: rgba(247,37,133,0.3);
+    }
+    .score-sf .sb-label { color: #ff4db8; font-weight: 900; letter-spacing: 0.04em; }
+    .score-sf .sb-val   { color: #c77dff; font-size: 12px; font-weight: 900; }
+
     /* ── WANNA SEE SAVE BAR ── */
     .save-bar {
       background: linear-gradient(90deg, #f5c400 0%, #f0a800 100%);
@@ -1549,9 +1578,13 @@ function renderCard(item, rank) {
       </div>
       <div class="card-body">
         <div class="row-title">${item.title}</div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span class="row-score" style="color:${col}">${item.blend}</span>
-          <span style="font-size:9px;color:var(--dim);font-weight:600;">SF</span>
+        <div class="score-row">
+          <span class="score-badge score-sf"><span class="sb-label">SF</span><span class="sb-val">${item.blend ?? '—'}</span></span>
+          ${item.rt_score    != null ? `<span class="score-badge"><span class="sb-emoji">🍅</span><span class="sb-val">${item.rt_score}</span></span>` : ''}
+          ${item.rt_audience != null ? `<span class="score-badge"><span class="sb-emoji">🍿</span><span class="sb-val">${item.rt_audience}</span></span>` : ''}
+          ${item.mc_score    != null ? `<span class="score-badge"><span class="sb-emoji">🎯</span><span class="sb-val">${item.mc_score}</span></span>` : ''}
+          ${item.imdb_score  != null ? `<span class="score-badge"><span class="sb-emoji">⭐</span><span class="sb-val">${item.imdb_score}</span></span>` : ''}
+          ${item.letterboxd  != null ? `<span class="score-badge"><span class="sb-emoji">🎞️</span><span class="sb-val">${item.letterboxd}</span></span>` : ''}
         </div>
         <div class="card-meta-row">
           ${metaStr ? `<span class="row-year">${metaStr}</span>` : ''}
