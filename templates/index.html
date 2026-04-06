@@ -1641,6 +1641,48 @@
 </div>
 
 <script>
+// ── Streaming Platform URLs ───────────────────────────
+const PLATFORM_URLS = {
+  'netflix':    'https://www.netflix.com',
+  'hulu':       'https://www.hulu.com',
+  'amazon':     'https://www.amazon.com/primevideo',
+  'prime':      'https://www.amazon.com/primevideo',
+  'apple tv':   'https://tv.apple.com',
+  'apple':      'https://tv.apple.com',
+  'disney+':    'https://www.disneyplus.com',
+  'disney':     'https://www.disneyplus.com',
+  'max':        'https://www.max.com',
+  'hbo':        'https://www.max.com',
+  'paramount':  'https://www.paramountplus.com',
+  'peacock':    'https://www.peacocktv.com',
+  'showtime':   'https://www.showtime.com',
+  'amc':        'https://www.amcplus.com',
+  'mubi':       'https://mubi.com',
+  'shudder':    'https://www.shudder.com',
+  'tubi':       'https://tubitv.com',
+  'criterion':  'https://www.criterionchannel.com',
+  'starz':      'https://www.starz.com',
+  'mgm':        'https://www.mgmplus.com',
+  'fubo':       'https://www.fubo.tv',
+};
+
+function platformUrl(name) {
+  const key = (name || '').toLowerCase();
+  for (const [k, url] of Object.entries(PLATFORM_URLS)) {
+    if (key.includes(k)) return url;
+  }
+  return null;
+}
+
+function platformTag(p, extraStyle) {
+  const url = platformUrl(p.name);
+  const style = `background:${p.color}22;color:${p.color};border:1px solid ${p.color}44;${extraStyle||''}`;
+  if (url) {
+    return `<a class="platform-tag" href="${url}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="${style};text-decoration:none;">${p.name}</a>`;
+  }
+  return `<span class="platform-tag" style="${style}">${p.name}</span>`;
+}
+
 // ── Session + Engagement Tracking ────────────────────
 (function() {
   let sid = localStorage.getItem('sf_session_id');
@@ -1864,9 +1906,7 @@ function renderCard(item, rank) {
   const rankClass = rank === 1 ? 'row-rank top1' : rank === 2 ? 'row-rank top2' : rank === 3 ? 'row-rank top3' : 'row-rank';
 
   const rawProviders = item.providers || [];
-  const providers = rawProviders.slice(0, 2).map(p =>
-    `<span class="platform-tag" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44;">${p.name}</span>`
-  ).join('');
+  const providers = rawProviders.slice(0, 2).map(p => platformTag(p)).join('');
   const extraProviders = rawProviders.length > 2
     ? `<span class="platform-tag" style="background:rgba(255,255,255,0.06);color:rgba(240,242,255,0.4);border:1px solid rgba(255,255,255,0.1);">+${rawProviders.length - 2}</span>`
     : '';
@@ -2233,9 +2273,7 @@ function openDetail(cardIndex) {
     .join('');
 
   // Providers
-  const providerChips = (item.providers || []).map(p =>
-    `<span class="platform-tag" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44;">${p.name}</span>`
-  ).join('');
+  const providerChips = (item.providers || []).map(p => platformTag(p)).join('');
 
   const year = item.release ? item.release.slice(0, 4) : '';
   const type = item.media_type === 'movie' ? 'Movie' : 'TV Show';
@@ -2578,9 +2616,7 @@ function renderWatchlist() {
   rowsEl.innerHTML = list.map(item => {
     const year = item.release ? item.release.slice(0, 4) : '';
     const type = item.media_type === 'tv' ? '📺' : '🎬';
-    const platforms = (item.providers || []).slice(0, 2).map(p =>
-      `<span style="color:${p.color};font-size: 12px;font-weight:700;">${p.name}</span>`
-    ).join(' · ');
+    const platforms = (item.providers || []).slice(0, 2).map(p => platformTag(p, 'font-size:12px;')).join(' ');
     const searchId = item.imdb_id || item.id || '';
     const jwUrl = `https://www.justwatch.com/us/search?q=${encodeURIComponent(item.title)}&utm_source=streamfader&utm_medium=watchlist&utm_campaign=sf_affiliate`;
     const posterHtml = item.poster
