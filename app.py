@@ -204,21 +204,26 @@ def score_debug():
     })
 
 
-PREFS_FILE = 'data/preferences.json'
+DATA_DIR   = os.getenv('DATA_DIR', 'data')
+PREFS_FILE = os.path.join(DATA_DIR, 'preferences.json')
+WATCH_FILE = os.path.join(DATA_DIR, 'watchlist.json')
 
-def _load_prefs():
+def _load_json(path):
     try:
-        if os.path.exists(PREFS_FILE):
-            with open(PREFS_FILE) as f:
+        if os.path.exists(path):
+            with open(path) as f:
                 return json.load(f)
     except Exception:
         pass
     return []
 
-def _save_prefs(prefs):
-    os.makedirs('data', exist_ok=True)
-    with open(PREFS_FILE, 'w') as f:
-        json.dump(prefs, f)
+def _save_json(path, data):
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(path, 'w') as f:
+        json.dump(data, f)
+
+def _load_prefs():  return _load_json(PREFS_FILE)
+def _save_prefs(p): _save_json(PREFS_FILE, p)
 
 @app.route('/api/preference', methods=['POST'])
 def preference():
@@ -243,6 +248,33 @@ def preference():
 @app.route('/api/preferences')
 def get_preferences():
     return jsonify(_load_prefs())
+
+
+@app.route('/api/watchlist', methods=['POST'])
+def watchlist_save():
+    body    = request.get_json(force=True)
+    imdb_id = body.get('imdb_id')
+    action  = body.get('action')  # 'add' or 'remove'
+    if not imdb_id or action not in ('add', 'remove'):
+        return jsonify({'error': 'bad_request'}), 400
+    items = _load_json(WATCH_FILE)
+    items = [i for i in items if i.get('imdb_id') != imdb_id]
+    if action == 'add':
+        items.append({
+            'imdb_id':    imdb_id,
+            'title':      body.get('title', ''),
+            'genres':     body.get('genres', []),
+            'media_type': body.get('media_type', 'movie'),
+            'poster':     body.get('poster', ''),
+            'providers':  body.get('providers', []),
+            'saved_at':   datetime.utcnow().isoformat(),
+        })
+    _save_json(WATCH_FILE, items)
+    return jsonify({'ok': True, 'count': len(items)})
+
+@app.route('/api/watchlist')
+def watchlist_get():
+    return jsonify(_load_json(WATCH_FILE))
 
 
 if __name__ == '__main__':

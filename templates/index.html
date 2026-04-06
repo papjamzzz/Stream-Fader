@@ -2496,15 +2496,30 @@ function toggleWannaSee(item, barEl) {
   const id = item.id || item.imdb_id;
   let list = getWatchlist();
   const idx = list.findIndex(i => i.id === id || i.imdb_id === id);
-  if (idx >= 0) {
+  const removing = idx >= 0;
+  if (removing) {
     list.splice(idx, 1);
-    if (barEl) { barEl.textContent = '🌟 I Wanna See — SAVE!'; barEl.classList.remove('saved'); }
+    if (barEl) { barEl.textContent = '🌟 Wanna See'; barEl.classList.remove('saved'); }
   } else {
     list.push({ id: item.id, imdb_id: item.imdb_id, title: item.title, poster: item.poster || null, release: item.release || '', media_type: item.media_type || 'movie', providers: item.providers || [] });
     if (barEl) { barEl.textContent = '✅ Saved!'; barEl.classList.add('saved'); }
   }
   saveWatchlist(list);
   renderWatchlist();
+  // Mirror to server — fire and forget
+  fetch('/api/watchlist', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      imdb_id:    item.imdb_id || item.id || '',
+      action:     removing ? 'remove' : 'add',
+      title:      item.title,
+      genres:     item.genres || [],
+      media_type: item.media_type || 'movie',
+      poster:     item.poster || '',
+      providers:  item.providers || [],
+    })
+  }).catch(() => {});
 }
 
 function removeFromWatchlist(id) {
