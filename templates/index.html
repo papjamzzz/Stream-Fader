@@ -1962,20 +1962,32 @@ function dismissTitle(item, reason) {
     ` | media: ${entry.media_type} | expires: ${new Date(expiry).toLocaleDateString()}`
   );
 
-  // Animate card out — thumbs flash on body then card flies
+  // Animate card out — clone escapes overflow:hidden containers, thumb on top
   const cardEl = document.getElementById('card-' + item.id);
   if (cardEl) {
     const rect = cardEl.getBoundingClientRect();
+
+    // Clone at fixed position so no parent clips it
+    const clone = cardEl.cloneNode(true);
+    clone.style.cssText = `position:fixed;top:${rect.top}px;left:${rect.left}px;width:${rect.width}px;height:${rect.height}px;margin:0;z-index:9999;pointer-events:none;border-radius:10px;overflow:hidden;`;
+    document.body.appendChild(clone);
+
+    // Hide original immediately
+    cardEl.style.visibility = 'hidden';
+
+    // Thumb over the clone
     const thumb = document.createElement('div');
     thumb.className = 'dismiss-thumb';
     thumb.textContent = reason === 'seen' ? '👍' : '👎';
     thumb.style.cssText = `position:fixed;left:${rect.left + rect.width/2}px;top:${rect.top + rect.height/2}px;`;
     document.body.appendChild(thumb);
     setTimeout(() => thumb.remove(), 520);
+
+    // Fly the clone
     setTimeout(() => {
-      cardEl.classList.add(reason === 'seen' ? 'dismissing-up' : 'dismissing-down');
-      setTimeout(() => updateCards(false), 650);
-    }, 260);
+      clone.classList.add(reason === 'seen' ? 'dismissing-up' : 'dismissing-down');
+      setTimeout(() => { clone.remove(); updateCards(false); }, 650);
+    }, 280);
   } else {
     updateCards(false);
   }
