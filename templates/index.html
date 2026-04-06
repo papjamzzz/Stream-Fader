@@ -1006,25 +1006,30 @@
 
     /* ── WANNA SEE SAVE BAR ── */
     .save-bar {
-      background: linear-gradient(90deg, #f5c400 0%, #f0a800 100%);
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: linear-gradient(90deg, rgba(245,196,0,0.92) 0%, rgba(240,168,0,0.92) 100%);
+      backdrop-filter: blur(4px);
       color: #1a1200;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 800;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      padding: 6px 8px;
+      padding: 7px 8px;
       text-align: center;
       cursor: pointer;
-      flex-shrink: 0;
-      border-radius: 6px 6px 0 0;
-      transition: background 0.15s;
+      z-index: 3;
+      transition: background 0.15s, opacity 0.15s;
       user-select: none;
+      opacity: 0;
     }
-    .save-bar:hover { background: linear-gradient(90deg, #ffe033 0%, #f5c400 100%); }
+    .title-row:hover .save-bar { opacity: 1; }
     .save-bar.saved {
-      background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+      background: linear-gradient(90deg, rgba(34,197,94,0.92) 0%, rgba(22,163,74,0.92) 100%);
       color: #fff;
+      opacity: 1;
     }
+    .save-bar:hover { opacity: 1 !important; filter: brightness(1.1); }
 
     /* ── WATCHLIST PANEL ── */
     #watchlist-panel {
@@ -1824,12 +1829,12 @@ function renderCard(item, rank) {
   const isSaved = isWannaSee(item.id || item.imdb_id);
   return `
     <div class="title-row" id="card-${item.id}" data-id="${item.id}" onclick="openDetail(${cardIndex})">
-      <div class="save-bar ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleWannaSee(window._cardRegistry[${cardIndex}],this)">
-        ${isSaved ? '✅ Saved!' : '🌟 I Wanna See — SAVE!'}
-      </div>
       <div class="card-poster-wrap">
         ${posterEl}
         <div class="${rankClass}">${rank}</div>
+        <div class="save-bar ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleWannaSee(window._cardRegistry[${cardIndex}],this)">
+          ${isSaved ? '✅ Saved!' : '🌟 Wanna See'}
+        </div>
       </div>
       <div class="dismiss-bar" onclick="event.stopPropagation()">
         <button class="dismiss-btn dismiss-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'seen')">
