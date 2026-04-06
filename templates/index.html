@@ -1962,18 +1962,20 @@ function dismissTitle(item, reason) {
     ` | media: ${entry.media_type} | expires: ${new Date(expiry).toLocaleDateString()}`
   );
 
-  // Animate card out — thumbs flash then fly
+  // Animate card out — thumbs flash on body then card flies
   const cardEl = document.getElementById('card-' + item.id);
   if (cardEl) {
+    const rect = cardEl.getBoundingClientRect();
     const thumb = document.createElement('div');
     thumb.className = 'dismiss-thumb';
     thumb.textContent = reason === 'seen' ? '👍' : '👎';
-    cardEl.style.position = 'relative';
-    cardEl.appendChild(thumb);
+    thumb.style.cssText = `position:fixed;left:${rect.left + rect.width/2}px;top:${rect.top + rect.height/2}px;`;
+    document.body.appendChild(thumb);
+    setTimeout(() => thumb.remove(), 520);
     setTimeout(() => {
       cardEl.classList.add(reason === 'seen' ? 'dismissing-up' : 'dismissing-down');
-      setTimeout(() => updateCards(false), 620);
-    }, 280);
+      setTimeout(() => updateCards(false), 650);
+    }, 260);
   } else {
     updateCards(false);
   }
