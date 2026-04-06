@@ -491,13 +491,17 @@
     .row-rank.top2 { color: #C0C0C0; }
     .row-rank.top3 { color: #CD7F32; }
 
-    /* Card body — fixed height, no variable content */
+    /* Card body — flex:1 so it fills all remaining space; meters anchor to bottom */
     .card-body {
-      padding: 10px 10px 10px;
+      padding: 10px 10px 12px;
       display: flex;
       flex-direction: column;
       gap: 5px;
-      flex-shrink: 0;
+      flex: 1;          /* fills remaining height so all cards stretch equally */
+    }
+    /* Title pushes meters to the bottom of the body */
+    .card-body .row-title {
+      flex: 1;          /* title area absorbs leftover space, meters always at bottom */
     }
 
     .row-title {
@@ -1003,6 +1007,26 @@
     }
     .score-sf .sb-label { color: #ff4db8; font-weight: 900; letter-spacing: 0.04em; }
     .score-sf .sb-val   { color: #c77dff; font-size: 14px; font-weight: 900; }
+
+    /* ── SAVED TITLE BANNER (top of card) ── */
+    .card-saved-banner {
+      background: linear-gradient(90deg, #c678dd 0%, #9b4fc8 100%);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      text-align: center;
+      flex-shrink: 0;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+      box-shadow: 0 2px 8px rgba(198,120,221,0.5);
+      animation: bannerPulse 3s ease-in-out infinite;
+    }
+    @keyframes bannerPulse {
+      0%,100% { box-shadow: 0 2px 8px rgba(198,120,221,0.5); }
+      50%      { box-shadow: 0 2px 16px rgba(198,120,221,0.9); }
+    }
 
     /* ── WANNA SEE SAVE BAR ── */
     .save-bar {
@@ -1829,6 +1853,7 @@ function renderCard(item, rank) {
   const isSaved = isWannaSee(item.id || item.imdb_id);
   return `
     <div class="title-row" id="card-${item.id}" data-id="${item.id}" onclick="openDetail(${cardIndex})">
+      ${isSaved ? `<div class="card-saved-banner">⭐ I wanna see this!!!!</div>` : ''}
       <div class="card-poster-wrap">
         ${posterEl}
         <div class="${rankClass}">${rank}</div>
