@@ -437,7 +437,7 @@ def fetch_movies():
 
     candidates = deduped[:1000]
     enriched = []
-    with ThreadPoolExecutor(max_workers=8) as ex:
+    with ThreadPoolExecutor(max_workers=2) as ex:
         futures = {ex.submit(_enrich_movie, src, item): (src, item) for src, item in candidates}
         for future in as_completed(futures):
             result = future.result()
@@ -643,7 +643,7 @@ def fetch_tv():
             candidates.append(('trakt_show', t))
 
     enriched = []
-    with ThreadPoolExecutor(max_workers=8) as ex:
+    with ThreadPoolExecutor(max_workers=2) as ex:
         futures = {ex.submit(_enrich_tv, src, item): (src, item) for src, item in candidates}
         for future in as_completed(futures):
             result = future.result()

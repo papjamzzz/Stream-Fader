@@ -1134,7 +1134,7 @@
         <div class="title-row" style="aspect-ratio:2/3;"><div class="shimmer" style="width:100%;height:100%;"></div></div>
         <div class="title-row" style="aspect-ratio:2/3;"><div class="shimmer" style="width:100%;height:100%;"></div></div>
       </div>
-      <button id="movie-list-more-btn" onclick="loadMoreMovies()" style="display:none;width:100%;margin-top:16px;padding:14px;background:#1a1815;border:1px solid #2a2520;border-radius:10px;color:#d4a855;font-family:Inter,sans-serif;font-size:13px;letter-spacing:0.08em;cursor:pointer;">🎬 I like movies. Show Me More.</button>
+      <button id="movie-list-more-btn" onclick="loadMoreMovies()" style="display:none;width:100%;margin-top:16px;padding:14px;background:#1a1815;border:1px solid #2a2520;border-radius:10px;color:#d4a855;font-family:Inter,sans-serif;font-size:13px;letter-spacing:0.08em;cursor:pointer;">Show more movies</button>
     </div>
 
     <!-- DIVIDER -->
@@ -1154,7 +1154,7 @@
         <div class="title-row" style="aspect-ratio:2/3;"><div class="shimmer" style="width:100%;height:100%;"></div></div>
         <div class="title-row" style="aspect-ratio:2/3;"><div class="shimmer" style="width:100%;height:100%;"></div></div>
       </div>
-      <button id="tv-list-more-btn" onclick="loadMoreTV()" style="display:none;width:100%;margin-top:16px;padding:14px;background:#1a1815;border:1px solid #2a2520;border-radius:10px;color:#d4a855;font-family:Inter,sans-serif;font-size:13px;letter-spacing:0.08em;cursor:pointer;">📺 I like TV. Show Me More.</button>
+      <button id="tv-list-more-btn" onclick="loadMoreTV()" style="display:none;width:100%;margin-top:16px;padding:14px;background:#1a1815;border:1px solid #2a2520;border-radius:10px;color:#d4a855;font-family:Inter,sans-serif;font-size:13px;letter-spacing:0.08em;cursor:pointer;">Show more series</button>
     </div>
 
   </div>
@@ -1191,12 +1191,16 @@
       Slide left to rank by <span style="color:#7b8cde;">critic scores</span> (Rotten Tomatoes, Metacritic). Slide right for <span style="color:#e8a838;">audience scores</span> (IMDb, Letterboxd). The middle is the sweet spot where both agree.
     </div>
     <div style="margin-bottom:18px;">
-      <strong style="color:#22c55e;">✓ I've Seen It</strong><br>
-      Tells StreamFader you've watched and liked this type of content. It boosts similar genres in your feed over time.
+      <strong style="color:#aaa;">SF Score</strong><br>
+      The number on each card is the StreamFader Score — a blend of critic and audience ratings weighted by where the fader is set. 100 is perfect.
     </div>
     <div style="margin-bottom:18px;">
-      <strong style="color:#ef4444;">✗ No Thank You</strong><br>
-      Hides this style from your feed. StreamFader learns which genres to suppress so they appear less often.
+      <strong style="color:#22c55e;">✓ Seen it</strong><br>
+      Removes the title and boosts similar content in your feed. Dismissed titles return after 30 days.
+    </div>
+    <div style="margin-bottom:18px;">
+      <strong style="color:#ef4444;">✗ No thanks</strong><br>
+      Removes the title and reduces similar content in your feed. Dismissed titles return after 30 days.
     </div>
     <div style="color:#555;font-size:13px;">The more you use it, the smarter it gets.</div>
   </div>
@@ -1218,7 +1222,7 @@
 // ── State ────────────────────────────────────────────
 let allMovies = [];
 let allTV     = [];
-let fader     = 50;
+let fader     = parseInt(localStorage.getItem('sf_fader') || '50');
 let allGenres = new Set();
 window._cardRegistry = [];
 
@@ -1290,7 +1294,7 @@ function blendScore(item, f) {
   const a = item.audience_score ?? 50;
   const ratio = f / 100;
   const base = c * (1 - ratio) + a * ratio;
-  return Math.round(base + genreAffinityScore(item.genres || []));
+  return Math.min(100, Math.round(base + genreAffinityScore(item.genres || [])));
 }
 
 let moviePage = 1;
@@ -1319,6 +1323,7 @@ function top12(items, f) {
 // ── Fader UI ──────────────────────────────────────────
 function onFaderMove(val) {
   fader = parseInt(val);
+  try { localStorage.setItem('sf_fader', fader); } catch (_) {}
   const col = blendColor(fader);
   const criticPct  = 100 - fader;
   const audiencePct = fader;
@@ -1516,14 +1521,10 @@ function updateCards(animate = true) {
 }
 
 // ── Data load ────────────────────────────────────────────
-function showError(msg) {
-  const err = `<div class="empty-state">
-    <div class="icon">🔑</div>
-    <h3>API Keys Needed</h3>
-    <p>Add your free API keys to <code>.env</code> and restart.<br><br>
-    <strong>TMDb:</strong> themoviedb.org/settings/api<br>
-    <strong>OMDb:</strong> omdbapi.com/apikey.aspx</p>
-  </div>`;
+function showError(type) {
+  const err = type === 'missing_keys'
+    ? `<div class="empty-state"><p>API keys are missing. Check server configuration.</p></div>`
+    : `<div class="empty-state"><p>Couldn't load titles — refresh to try again.</p></div>`;
   document.getElementById('movie-list').innerHTML = err;
   document.getElementById('tv-list').innerHTML = err;
   document.getElementById('movie-count').textContent = '—';
@@ -1538,7 +1539,7 @@ async function loadContent(force = false) {
     const data = await res.json();
 
     if (data.error === 'missing_keys') {
-      showError();
+      showError('missing_keys');
       return;
     }
 
@@ -1563,7 +1564,7 @@ const total = allMovies.length + allTV.length;
     fetchTop10();
 
   } catch (e) {
-    showError();
+    showError('network');
   }
 }
 
@@ -1995,6 +1996,10 @@ document.getElementById('helpModal').onclick = (e) => {
 
 // ── Boot ─────────────────────────────────────────────────
 onFaderMove(50);
+// Restore fader position before first render
+const _faderEl = document.getElementById('blend-fader');
+if (_faderEl) { _faderEl.value = fader; onFaderMove(fader); }
+
 loadPreferences().then(() => loadContent(false));
 </script>
 
