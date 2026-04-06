@@ -1566,6 +1566,14 @@ function renderCard(item, rank) {
         ${posterEl}
         <div class="${rankClass}">${rank}</div>
       </div>
+      <div class="dismiss-bar" onclick="event.stopPropagation()">
+        <button class="dismiss-btn dismiss-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'seen')">
+          <span class="dismiss-label">✓ Seen it</span>
+        </button>
+        <button class="dismiss-btn dismiss-nope" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'nope');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'skip')">
+          <span class="dismiss-label">✗ No thanks</span>
+        </button>
+      </div>
       <div class="card-body">
         <div class="row-title">${item.title}</div>
         <div class="score-row">
