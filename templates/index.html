@@ -988,11 +988,13 @@
 
 <!-- ═══════════════════ HEADER ═══════════════════ -->
 <header class="header" style="flex-direction:column;padding:0;gap:0;">
-  <div style="display:flex;align-items:center;justify-content:center;width:100%;padding:14px 32px 12px;gap:14px;">
-    <img src="/static/logo.png" alt="StreamFader" style="height:52px;width:52px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(79,195,247,0.5));" onerror="this.style.display='none'">
-    <div style="font-size:clamp(28px,5vw,52px);font-weight:900;letter-spacing:-0.04em;line-height:1;">
+  <div style="position:relative;width:100%;padding:28px 40px 22px;text-align:center;">
+    <!-- cinematic wordmark -->
+    <div style="font-size:clamp(52px,10vw,110px);font-weight:900;letter-spacing:-0.03em;line-height:0.95;">
       <span style="color:#ffffff;">Stream</span><span style="background:linear-gradient(90deg,#4fc3f7 0%,#c678dd 50%,#ffb74d 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Fader</span>
     </div>
+    <!-- icon — top right corner -->
+    <img src="/static/logo.png" alt="" style="position:absolute;right:28px;top:50%;transform:translateY(-50%);height:56px;width:56px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(79,195,247,0.45));opacity:0.9;" onerror="this.style.display='none'">
   </div>
 </header>
 
