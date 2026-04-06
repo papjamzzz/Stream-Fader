@@ -1580,8 +1580,10 @@ function renderCard(item, rank) {
         <div class="row-title">${item.title}</div>
         <div class="score-row">
           <span class="score-badge score-sf"><span class="sb-label">SF</span><span class="sb-val">${item.blend ?? '—'}</span></span>
-          ${item.rt_score    != null ? `<span class="score-badge"><span class="sb-emoji">🍅</span><span class="sb-val">${item.rt_score}</span></span>` : ''}
-          ${item.rt_audience != null ? `<span class="score-badge"><span class="sb-emoji">🍿</span><span class="sb-val">${item.rt_audience}</span></span>` : ''}
+          ${item.rt_score    != null ? `<span class="score-badge"><span class="sb-emoji">🍅</span><span class="sb-val">${item.rt_score}%</span></span>`
+            : item.critic_score != null ? `<span class="score-badge"><span class="sb-emoji">🎬</span><span class="sb-val">${item.critic_score}</span></span>` : ''}
+          ${item.rt_audience != null ? `<span class="score-badge"><span class="sb-emoji">🍿</span><span class="sb-val">${item.rt_audience}%</span></span>`
+            : item.audience_score != null ? `<span class="score-badge"><span class="sb-emoji">👥</span><span class="sb-val">${item.audience_score}</span></span>` : ''}
           ${item.mc_score    != null ? `<span class="score-badge"><span class="sb-emoji">🎯</span><span class="sb-val">${item.mc_score}</span></span>` : ''}
           ${item.imdb_score  != null ? `<span class="score-badge"><span class="sb-emoji">⭐</span><span class="sb-val">${item.imdb_score}</span></span>` : ''}
           ${item.letterboxd  != null ? `<span class="score-badge"><span class="sb-emoji">🎞️</span><span class="sb-val">${item.letterboxd}</span></span>` : ''}
