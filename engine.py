@@ -447,8 +447,12 @@ def fetch_movies():
                     seen_imdb.add(key)
                     enriched.append(result)
 
+    # Tag items with RT presence before sorting
+    for x in enriched:
+        x['rt_boost'] = 20 if x.get('rt_score') is not None else 0
+
     enriched.sort(key=lambda x: (
-        ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
+        ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2 + x['rt_boost']
     ), reverse=True)
     return enriched[:300]  # return top 300 to frontend for fader to work with
 
@@ -660,8 +664,12 @@ def fetch_tv():
             seen_final.add(key)
             deduped.append(item)
 
+    # Tag items with RT presence before sorting
+    for x in deduped:
+        x['rt_boost'] = 20 if x.get('rt_score') is not None else 0
+
     deduped.sort(key=lambda x: (
-        ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
+        ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2 + x['rt_boost']
     ), reverse=True)
     return deduped[:300]  # return top 300 TV to frontend
 
