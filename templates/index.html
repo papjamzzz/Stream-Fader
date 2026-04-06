@@ -16,8 +16,8 @@
       --card2:    #151828;
       --border:   #1e2235;
       --muted:    #2a2f48;
-      --text:     #f0f2ff;
-      --dim:      #5a6080;
+      --text:     #ffffff;
+      --dim:      #8890b0;
       --critic:   #4fc3f7;
       --audience: #ffb74d;
       --sweet:    #c678dd;
@@ -530,9 +530,23 @@
 
     .row-year {
       font-size: 12px;
-      color: var(--dim);
+      font-weight: 800;
+      color: #ffb74d;
+      text-shadow: 0 0 8px rgba(255,183,77,0.7);
       white-space: nowrap;
       flex-shrink: 0;
+    }
+    .row-genre {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #4fc3f7;
+      text-shadow: 0 0 10px rgba(79,195,247,1), 0 0 20px rgba(79,195,247,0.6);
+      white-space: nowrap;
+      flex-shrink: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .row-platforms {
@@ -1486,9 +1500,9 @@
     <div style="grid-column:1/-1;text-align:center;padding:0 0 18px;">
       <div class="hb-bar">
         <span class="hb-pulse">💚</span>
-        <span class="hb-text">Tap <span class="hb-green">Seen it</span> · StreamFader learns your taste</span>
+        <span class="hb-text">Tap <span class="hb-green">Seen it</span></span>
         <span class="hb-dot"></span>
-        <span class="hb-text">Tap <span class="hb-red">No thanks</span> · we filter it out</span>
+        <span class="hb-text">Tap <span class="hb-red">No thanks</span></span>
         <span class="hb-pulse hb-red-pulse">❤️</span>
       </div>
     </div>
@@ -1798,8 +1812,7 @@ function renderCard(item, rank) {
     : `<div class="card-poster-placeholder"><div class="ph-icon">${item.media_type === 'movie' ? '🎬' : '📺'}</div><div class="ph-title">${item.title}</div></div>`;
 
   const year = item.release ? item.release.slice(0, 4) : '';
-  const genres = (item.genres || []).slice(0, 1).join('');
-  const metaStr = [year, genres].filter(Boolean).join(' · ');
+  const genre = (item.genres || [])[0] || '';
 
   const cardIndex = window._cardRegistry.push(item) - 1;
   const safeTitle = item.title.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -1827,9 +1840,10 @@ function renderCard(item, rank) {
       </div>
       <div class="card-body">
         <div class="row-title">${item.title}</div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow:hidden;">
           <span class="score-badge score-sf"><span class="sb-label">SF</span><span class="sb-val">${item.blend ?? '—'}</span></span>
-          ${metaStr ? `<span class="row-year">${metaStr}</span>` : ''}
+          ${year ? `<span class="row-year">${year}</span>` : ''}
+          ${genre ? `<span class="row-genre">${genre}</span>` : ''}
           <div class="row-platforms" style="margin-left:auto;">${providers}${extraProviders}</div>
         </div>
         ${miniMeters(item)}
