@@ -786,38 +786,26 @@
       border: 1px solid rgba(239,83,80,0.35);
     }
 
-    /* card dismiss animations */
-    @keyframes fly-up {
-      0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-      100% { transform: translateY(-160%) rotate(-8deg) scale(0.7); opacity: 0; }
-    }
-    @keyframes fly-down {
-      0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-      60%  { transform: translateY(30px) rotate(4deg) scale(1.05); opacity: 1; }
-      100% { transform: translateY(200%) rotate(12deg) scale(0.6); opacity: 0; }
+    /* card dismiss */
+    .title-row.dismissing {
+      opacity: 0;
+      transform: scale(0.92) translateY(-6px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none;
     }
     @keyframes thumb-pop {
-      0%   { transform: translate(-50%,-50%) scale(0.2); opacity: 0; }
-      40%  { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
-      70%  { transform: translate(-50%,-50%) scale(1.0); opacity: 1; }
-      100% { transform: translate(-50%,-50%) scale(1.2); opacity: 0; }
+      0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.3); }
+      45%  { opacity: 1; transform: translate(-50%,-50%) scale(1.25); }
+      75%  { opacity: 1; transform: translate(-50%,-50%) scale(1.0); }
+      100% { opacity: 0; transform: translate(-50%,-50%) scale(1.1); }
     }
-    .title-row.dismissing-up {
-      animation: fly-up 0.55s cubic-bezier(0.4,0,0.2,1) forwards;
-      pointer-events: none;
-    }
-    .title-row.dismissing-down {
-      animation: fly-down 0.6s cubic-bezier(0.4,0,0.8,1) forwards;
-      pointer-events: none;
-    }
-    .dismiss-thumb {
-      position: absolute;
-      top: 50%; left: 50%;
+    .sf-thumb {
+      position: fixed;
       font-size: 72px;
       line-height: 1;
       pointer-events: none;
-      z-index: 99;
-      animation: thumb-pop 0.5s ease forwards;
+      z-index: 9999;
+      animation: thumb-pop 0.55s ease forwards;
     }
 
     /* ── UNDO TOAST ── */
@@ -1962,32 +1950,18 @@ function dismissTitle(item, reason) {
     ` | media: ${entry.media_type} | expires: ${new Date(expiry).toLocaleDateString()}`
   );
 
-  // Animate card out — clone escapes overflow:hidden containers, thumb on top
   const cardEl = document.getElementById('card-' + item.id);
   if (cardEl) {
     const rect = cardEl.getBoundingClientRect();
-
-    // Clone at fixed position so no parent clips it
-    const clone = cardEl.cloneNode(true);
-    clone.style.cssText = `position:fixed;top:${rect.top}px;left:${rect.left}px;width:${rect.width}px;height:${rect.height}px;margin:0;z-index:9999;pointer-events:none;border-radius:10px;overflow:hidden;`;
-    document.body.appendChild(clone);
-
-    // Hide original immediately
-    cardEl.style.visibility = 'hidden';
-
-    // Thumb over the clone
     const thumb = document.createElement('div');
-    thumb.className = 'dismiss-thumb';
+    thumb.className = 'sf-thumb';
     thumb.textContent = reason === 'seen' ? '👍' : '👎';
-    thumb.style.cssText = `position:fixed;left:${rect.left + rect.width/2}px;top:${rect.top + rect.height/2}px;`;
+    thumb.style.left = (rect.left + rect.width / 2) + 'px';
+    thumb.style.top  = (rect.top  + rect.height / 2) + 'px';
     document.body.appendChild(thumb);
-    setTimeout(() => thumb.remove(), 520);
-
-    // Fly the clone
-    setTimeout(() => {
-      clone.classList.add(reason === 'seen' ? 'dismissing-up' : 'dismissing-down');
-      setTimeout(() => { clone.remove(); updateCards(false); }, 650);
-    }, 280);
+    setTimeout(() => thumb.remove(), 600);
+    cardEl.classList.add('dismissing');
+    setTimeout(() => updateCards(false), 320);
   } else {
     updateCards(false);
   }
