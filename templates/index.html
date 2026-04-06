@@ -1189,7 +1189,7 @@
 
   <div class="fader-readout">
     <div class="readout-side left" id="critic-pct">50% Critics</div>
-    <div id="blend-badge">Teach StreamFader Your Taste</div>
+    <div id="blend-badge">Learn Your Likes</div>
     <div class="readout-side right" id="audience-pct">50% Audience</div>
   </div>
 </section>
@@ -1503,7 +1503,7 @@ function onFaderMove(val) {
 
   const badge = document.getElementById('blend-badge');
   if (Math.abs(fader - 50) < 8) {
-    badge.textContent = 'Teach StreamFader Your Taste';
+    badge.textContent = 'Learn Your Likes';
     badge.style.color = '#c678dd';
     badge.style.borderColor = 'rgba(198,120,221,0.4)';
     document.getElementById('sweet-label').classList.add('active');
