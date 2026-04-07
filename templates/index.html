@@ -1561,7 +1561,7 @@
   <div class="fader-inner">
     <div class="fader-labels">
       <div class="fader-label left">Critics</div>
-      <div class="fader-sweet-label" id="sweet-label">Sweet Spot</div>
+      <div class="fader-sweet-label" id="sweet-label">Stream The Mood</div>
       <div class="fader-label right">Audience</div>
     </div>
 
@@ -1583,7 +1583,7 @@
 
     <div class="fader-readout">
       <div class="readout-side left" id="critic-pct">50% Critics</div>
-      <div id="blend-badge">Sweet Spot</div>
+      <div id="blend-badge">Stream The Mood</div>
       <div class="readout-side right" id="audience-pct">50% Audience</div>
     </div>
   </div>
@@ -1647,7 +1647,7 @@
 ══════════════════════════════════════════════ -->
 <div class="top10-section" id="top10-section" style="display:none;">
   <div class="top10-header">
-    <div class="eyebrow">Results powered by the 5i Proprietary AI Consensus Engine</div>
+    <div class="eyebrow">5i AI Consensus Engine</div>
     <h2>Tonight's Top 12</h2>
     <p>Five independent AI perspectives vote on what's worth watching right now</p>
   </div>
@@ -2029,7 +2029,7 @@ function onFaderMove(val) {
 
   const badge = document.getElementById('blend-badge');
   if (Math.abs(fader - 50) < 8) {
-    badge.textContent = 'Sweet Spot';
+    badge.textContent = 'Stream The Mood';
     badge.style.color = '#c678dd';
     badge.style.borderColor = 'rgba(198,120,221,0.4)';
     document.getElementById('sweet-label').classList.add('active');
