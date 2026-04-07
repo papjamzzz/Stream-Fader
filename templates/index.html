@@ -1891,21 +1891,24 @@ function renderCards() {
 
 // ── Score Meters ──────────────────────────────────────
 function miniMeters(item) {
+  // Always render all 3 rows — consistent layout on every card
+  // rt_audience dropped (missing on 77/78 titles)
   const meters = [
-    { label: 'RT',   val: item.rt_score,    max: 100, color: '#fa4c0c' },
-    { label: 'AUD',  val: item.rt_audience, max: 100, color: '#fca130' },
-    { label: 'MC',   val: item.mc_score,    max: 100, color: '#ffcc34' },
-    { label: 'IMDb', val: item.imdb_score != null ? Math.round(item.imdb_score * 10) : null, max: 100, color: '#f5c518' },
-  ].filter(m => m.val != null);
-
-  if (!meters.length) return '';
+    { label: 'RT',   val: item.rt_score,   color: '#fa4c0c',
+      disp: item.rt_score != null ? `${item.rt_score}%` : '—' },
+    { label: 'MC',   val: item.mc_score,   color: '#ffcc34',
+      disp: item.mc_score != null ? `${item.mc_score}` : '—' },
+    { label: 'IMDb', val: item.imdb_score != null ? Math.round(item.imdb_score * 10) : null,
+      color: '#f5c518',
+      disp: item.imdb_score != null ? item.imdb_score.toFixed(1) : '—' },
+  ];
   return `<div class="card-meters">${meters.map(m => {
-    const pct = Math.min(100, Math.round((m.val / m.max) * 100));
-    const dispVal = m.label === 'IMDb' ? (item.imdb_score).toFixed(1) : `${m.val}`;
+    const pct  = m.val != null ? Math.min(100, Math.round(m.val)) : 0;
+    const dim  = m.val == null;
     return `<div class="mini-meter">
-      <span class="mini-meter-label">${m.label}</span>
-      <div class="mini-meter-track"><div class="mini-meter-fill" style="width:${pct}%;background:${m.color};box-shadow:0 0 4px ${m.color}88;"></div></div>
-      <span class="mini-meter-val" style="color:${m.color}">${dispVal}</span>
+      <span class="mini-meter-label" style="${dim ? 'opacity:0.3' : ''}">${m.label}</span>
+      <div class="mini-meter-track"><div class="mini-meter-fill" style="width:${pct}%;background:${dim ? 'rgba(255,255,255,0.15)' : m.color};${dim ? '' : `box-shadow:0 0 4px ${m.color}88`};"></div></div>
+      <span class="mini-meter-val" style="color:${dim ? 'rgba(255,255,255,0.2)' : m.color}">${m.disp}</span>
     </div>`;
   }).join('')}</div>`;
 }
