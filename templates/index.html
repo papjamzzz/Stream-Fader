@@ -1955,9 +1955,13 @@ function blendScore(item, f) {
   const c = item.critic_score   ?? 50;
   const a = item.audience_score ?? 50;
   const ratio = f / 100;
-  // Pure fader blend — this is what the knob controls
-  const blend = c * (1 - ratio) + a * ratio;
-  // Tiny tiebreaker only (max 2 pts) — never reorders; just breaks equal scores
+  // Linear blend
+  const linear = c * (1 - ratio) + a * ratio;
+  // Amplify: push scores further from the midpoint so fader movement is visible
+  // Amplifier 1.8 = 80% stronger spread. Clamped 20–100 to avoid negatives.
+  const mid = (c + a) / 2;
+  const blend = Math.min(100, Math.max(20, mid + (linear - mid) * 1.8));
+  // Tiny tiebreaker only (max 2 pts)
   const popTie = Math.min(2, (item.popularity || 0) / 300);
   // Genre affinity from user history (starts at 0, grows with use)
   return blend + popTie + genreAffinityScore(item.genres || []);
