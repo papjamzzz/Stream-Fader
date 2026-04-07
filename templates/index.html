@@ -490,7 +490,7 @@
       align-items: center;
       justify-content: center;
       font-variant-numeric: tabular-nums;
-      z-index: 2;
+      z-index: 4;
     }
     .row-rank.top1 { color: #FFD700; }
     .row-rank.top2 { color: #C0C0C0; }
@@ -715,9 +715,9 @@
       font-weight: 700;
     }
     .detail-overview {
-      font-size: 18px;
-      color: rgba(240,242,255,0.92);
-      line-height: 1.75;
+      font-size: 15px;
+      color: rgba(240,242,255,0.85);
+      line-height: 1.7;
       padding: 0 32px 24px;
     }
     .detail-footer {
@@ -1013,24 +1013,23 @@
     .score-sf .sb-label { color: #ff4db8; font-weight: 900; letter-spacing: 0.04em; }
     .score-sf .sb-val   { color: #c77dff; font-size: 14px; font-weight: 900; }
 
-    /* ── SAVED TITLE BANNER (top of card) ── */
+    /* ── SAVED TITLE BANNER (absolute overlay at top of poster) ── */
     .card-saved-banner {
-      background: linear-gradient(90deg, #c678dd 0%, #9b4fc8 100%);
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 3;
+      background: linear-gradient(90deg, rgba(198,120,221,0.93) 0%, rgba(155,79,200,0.93) 100%);
+      backdrop-filter: blur(4px);
       color: #fff;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 900;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      padding: 6px 10px;
+      padding: 5px 10px;
       text-align: center;
-      flex-shrink: 0;
       text-shadow: 0 1px 4px rgba(0,0,0,0.4);
-      box-shadow: 0 2px 8px rgba(198,120,221,0.5);
-      animation: bannerPulse 3s ease-in-out infinite;
-    }
-    @keyframes bannerPulse {
-      0%,100% { box-shadow: 0 2px 8px rgba(198,120,221,0.5); }
-      50%      { box-shadow: 0 2px 16px rgba(198,120,221,0.9); }
     }
 
     /* ── WANNA SEE SAVE BAR ── */
@@ -1486,6 +1485,30 @@
       color: var(--dim);
       font-size: 15px;
     }
+    /* ── SHOW MORE BUTTON ── */
+    .show-more-btn {
+      display: none;
+      width: 100%;
+      margin-top: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      color: rgba(240,242,255,0.45);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .show-more-btn:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.15);
+      color: rgba(240,242,255,0.8);
+    }
+
     .top10-loading .spinner {
       display: inline-block;
       width: 20px; height: 20px;
@@ -1538,7 +1561,7 @@
   <div class="fader-inner">
     <div class="fader-labels">
       <div class="fader-label left">Critics</div>
-      <div class="fader-sweet-label" id="sweet-label"></div>
+      <div class="fader-sweet-label" id="sweet-label">Sweet Spot</div>
       <div class="fader-label right">Audience</div>
     </div>
 
@@ -1560,7 +1583,7 @@
 
     <div class="fader-readout">
       <div class="readout-side left" id="critic-pct">50% Critics</div>
-      <div id="blend-badge">Learn Your Likes</div>
+      <div id="blend-badge">Sweet Spot</div>
       <div class="readout-side right" id="audience-pct">50% Audience</div>
     </div>
   </div>
@@ -1652,7 +1675,7 @@
         <span class="hb-text">Tap <span class="hb-green">Seen it</span></span>
         <span class="hb-dot"></span>
         <span class="hb-text">Tap <span class="hb-red">No thanks</span></span>
-        <span class="hb-pulse hb-red-pulse">❤️</span>
+        <span class="hb-pulse hb-red-pulse">👎</span>
       </div>
     </div>
 
@@ -1672,7 +1695,7 @@
         <div class="title-row" style="aspect-ratio:2/3;"><div class="shimmer" style="width:100%;height:100%;"></div></div>
         <div class="title-row" style="aspect-ratio:2/3;"><div class="shimmer" style="width:100%;height:100%;"></div></div>
       </div>
-      <button id="movie-list-more-btn" onclick="loadMoreMovies()" style="display:none;width:100%;margin-top:16px;padding:14px;background:#1a1815;border:1px solid #2a2520;border-radius:10px;color:#d4a855;font-family:Inter,sans-serif;font-size: 15px;letter-spacing:0.08em;cursor:pointer;">Show more movies</button>
+      <button id="movie-list-more-btn" class="show-more-btn" onclick="loadMoreMovies()">Show more movies</button>
     </div>
 
     <!-- DIVIDER -->
@@ -1700,7 +1723,7 @@
         <div class="title-row" style="aspect-ratio:2/3;"><div class="shimmer" style="width:100%;height:100%;"></div></div>
         <div class="title-row" style="aspect-ratio:2/3;"><div class="shimmer" style="width:100%;height:100%;"></div></div>
       </div>
-      <button id="tv-list-more-btn" onclick="loadMoreTV()" style="display:none;width:100%;margin-top:16px;padding:14px;background:#1a1815;border:1px solid #2a2520;border-radius:10px;color:#d4a855;font-family:Inter,sans-serif;font-size: 15px;letter-spacing:0.08em;cursor:pointer;">Show more series</button>
+      <button id="tv-list-more-btn" class="show-more-btn" onclick="loadMoreTV()">Show more series</button>
     </div>
 
   </div>
@@ -2006,7 +2029,7 @@ function onFaderMove(val) {
 
   const badge = document.getElementById('blend-badge');
   if (Math.abs(fader - 50) < 8) {
-    badge.textContent = 'Learn Your Likes';
+    badge.textContent = 'Sweet Spot';
     badge.style.color = '#c678dd';
     badge.style.borderColor = 'rgba(198,120,221,0.4)';
     document.getElementById('sweet-label').classList.add('active');
@@ -2059,8 +2082,8 @@ function renderCard(item, rank) {
   const isSaved = isWannaSee(item.id || item.imdb_id);
   return `
     <div class="title-row" id="card-${item.id}" data-id="${item.id}" onclick="openDetail(${cardIndex})">
-      ${isSaved ? `<div class="card-saved-banner">⭐ I wanna see this!!!!</div>` : ''}
       <div class="card-poster-wrap">
+        ${isSaved ? `<div class="card-saved-banner">⭐ In Queue</div>` : ''}
         ${posterEl}
         <div class="${rankClass}">${rank}</div>
         <div class="save-bar ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleWannaSee(window._cardRegistry[${cardIndex}],this)">
@@ -2223,7 +2246,7 @@ const total = allMovies.length + allTV.length;
       `${allMovies.length} movies · ${allTV.length} shows · last 12 months`;
 
     document.getElementById('info-text').textContent =
-      `${total} titles scored from last 12 months — move the fader to find your vibe`;
+      `${total} titles scored from last 12 months — move the fader to find tonight's pick`;
 
     // ── Claude Top Pick ──
     if (data.top_pick) {
@@ -2795,7 +2818,7 @@ function renderWatchlist() {
         <div class="q-title">${item.title}</div>
         <div class="q-meta">${[year, platforms].filter(Boolean).join(' · ')}</div>
       </div>
-      <a class="q-find" href="${jwUrl}" target="_blank" rel="noopener" title="Find on JustWatch">▶</a>
+      <a class="q-find" href="${jwUrl}" target="_blank" rel="noopener" title="Find on JustWatch">Find</a>
       <button class="q-remove" onclick="removeFromWatchlist('${searchId}')" title="Remove">✕</button>
     </div>`;
   }).join('');
