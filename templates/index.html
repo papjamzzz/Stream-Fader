@@ -305,13 +305,18 @@
       transition: color 0.2s, border-color 0.2s, background 0.2s;
     }
 
+    /* ── FADER INNER (50% width centered) ── */
+    .fader-inner {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
     /* ── CONTENT AREA ── */
     .content-area {
-      padding-bottom: 56px;
-      min-height: 600px;
       max-width: 1400px;
       margin: 0 auto;
-      padding: 0 28px 56px;
+      padding: 0 16px 40px;
     }
 
     /* ── TWO-COLUMN LAYOUT ── */
@@ -319,7 +324,7 @@
       display: grid;
       grid-template-columns: 1fr 88px 1fr;
       gap: 0;
-      padding-top: 24px;
+      padding-top: 12px;
       column-gap: 0;
     }
     .col-divider {
@@ -382,8 +387,8 @@
       display: flex;
       align-items: center;
       gap: 16px;
-      margin-bottom: 20px;
-      padding: 0 0 16px;
+      margin-bottom: 12px;
+      padding: 0 0 10px;
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     .col-title {
@@ -407,8 +412,8 @@
     /* ── POSTER CARD GRID ── */
     .card-list {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
     }
     @media (max-width: 600px) {
       .card-list { grid-template-columns: repeat(2, 1fr); }
@@ -493,10 +498,10 @@
 
     /* Card body — flex:1 so it fills all remaining space; meters anchor to bottom */
     .card-body {
-      padding: 10px 10px 12px;
+      padding: 7px 8px 8px;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
       flex: 1;          /* fills remaining height so all cards stretch equally */
     }
     /* Title pushes meters to the bottom of the body */
@@ -505,7 +510,7 @@
     }
 
     .row-title {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 700;
       color: var(--text);
       line-height: 1.3;
@@ -518,7 +523,7 @@
     /* SF Score badge */
     .row-score {
       display: inline-block;
-      font-size: 17px;
+      font-size: 14px;
       font-weight: 900;
       font-variant-numeric: tabular-nums;
       transition: color 0.3s;
@@ -1496,9 +1501,9 @@
 
 <!-- ═══════════════════ HEADER ═══════════════════ -->
 <header class="header" style="flex-direction:column;padding:0;gap:0;">
-  <div style="position:relative;width:100%;padding:28px 40px 22px;text-align:center;">
+  <div style="position:relative;width:100%;padding:14px 40px 10px;text-align:center;">
     <!-- cinematic wordmark -->
-    <div style="font-size:clamp(52px,10vw,110px);font-weight:900;letter-spacing:-0.03em;line-height:0.95;">
+    <div style="font-size:clamp(28px,4vw,44px);font-weight:900;letter-spacing:-0.03em;line-height:0.95;">
       <span style="color:#ffffff;">Stream</span><span style="background:linear-gradient(90deg,#4fc3f7 0%,#c678dd 50%,#ffb74d 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Fader</span>
     </div>
     <!-- Queue button -->
@@ -1522,40 +1527,42 @@
 </div>
 
 <!-- ═══════════════════ HERO INTRO ═══════════════════ -->
-<div class="hero-intro" style="padding:12px 40px 0;">
-  <p style="font-size: 17px;color:rgba(240,242,255,0.92);line-height:1.6;max-width:640px;margin:0 auto 20px;text-align:center;">The right movie or show, right now. We blend critic and audience scores so you don't have to guess.</p>
+<div class="hero-intro" style="padding:4px 40px 6px;">
+  <p style="font-size:14px;color:rgba(240,242,255,0.55);line-height:1.5;max-width:640px;margin:0 auto;text-align:center;">Blend critic &amp; audience scores with the fader. The right pick, right now.</p>
 </div>
 
 <!-- ══════════════════════════════════════════════
      THE FADER — moved above genre pills
 ══════════════════════════════════════════════ -->
-<section class="fader-section" style="padding:28px 48px 24px;">
-  <div class="fader-labels">
-    <div class="fader-label left">Critics</div>
-    <div class="fader-sweet-label" id="sweet-label"></div>
-    <div class="fader-label right">Audience</div>
-  </div>
-
-  <div class="fader-wrap">
-    <div class="fader-ticks">
-      <div class="tick major"></div>
-      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
-      <div class="tick major"></div>
-      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
-      <div class="tick major"></div>
-      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
-      <div class="tick major"></div>
-      <div class="tick"></div><div class="tick"></div><div class="tick"></div>
-      <div class="tick major"></div>
+<section class="fader-section" style="padding:14px 0 12px;">
+  <div class="fader-inner">
+    <div class="fader-labels">
+      <div class="fader-label left">Critics</div>
+      <div class="fader-sweet-label" id="sweet-label"></div>
+      <div class="fader-label right">Audience</div>
     </div>
-    <input type="range" id="blend-fader" min="0" max="100" value="50"
-           oninput="onFaderMove(this.value)">
-  </div>
 
-  <div class="fader-readout">
-    <div class="readout-side left" id="critic-pct">50% Critics</div>
-    <div id="blend-badge">Learn Your Likes</div>
-    <div class="readout-side right" id="audience-pct">50% Audience</div>
+    <div class="fader-wrap">
+      <div class="fader-ticks">
+        <div class="tick major"></div>
+        <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+        <div class="tick major"></div>
+        <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+        <div class="tick major"></div>
+        <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+        <div class="tick major"></div>
+        <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+        <div class="tick major"></div>
+      </div>
+      <input type="range" id="blend-fader" min="0" max="100" value="50"
+             oninput="onFaderMove(this.value)">
+    </div>
+
+    <div class="fader-readout">
+      <div class="readout-side left" id="critic-pct">50% Critics</div>
+      <div id="blend-badge">Learn Your Likes</div>
+      <div class="readout-side right" id="audience-pct">50% Audience</div>
+    </div>
   </div>
 </section>
 
@@ -1651,10 +1658,12 @@
 
     <!-- MOVIES COLUMN -->
     <div>
-      <div style="text-align:center;padding:12px 0 18px;">
-        <img src="/static/logo4.png" alt="Movies" style="width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 0 18px rgba(79,195,247,0.35));">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0 12px;border-bottom:2px solid rgba(79,195,247,0.2);margin-bottom:12px;">
+        <img src="/static/logo4.png" alt="Movies" style="height:36px;width:36px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(79,195,247,0.5));">
+        <span style="font-size:15px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;color:#4fc3f7;">Movies</span>
+        <div style="flex:1;height:1px;background:rgba(79,195,247,0.12);"></div>
+        <span id="movie-count" style="font-size:11px;font-weight:700;color:rgba(79,195,247,0.45);font-family:monospace;"></span>
       </div>
-      <span class="col-count" id="movie-count" style="display:none"></span>
       <div class="card-list" id="movie-list">
         <div class="title-row" style="aspect-ratio:2/3;"><div class="shimmer" style="width:100%;height:100%;"></div></div>
         <div class="title-row" style="aspect-ratio:2/3;"><div class="shimmer" style="width:100%;height:100%;"></div></div>
@@ -1677,10 +1686,12 @@
 
     <!-- TV COLUMN -->
     <div>
-      <div style="text-align:center;padding:12px 0 18px;">
-        <img src="/static/logo5.png" alt="TV Shows" style="width:120px;height:120px;object-fit:contain;filter:drop-shadow(0 0 18px rgba(198,120,221,0.4));">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0 12px;border-bottom:2px solid rgba(198,120,221,0.2);margin-bottom:12px;">
+        <img src="/static/logo5.png" alt="TV Shows" style="height:36px;width:36px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(198,120,221,0.5));">
+        <span style="font-size:15px;font-weight:900;letter-spacing:0.1em;text-transform:uppercase;color:#c678dd;">TV Shows</span>
+        <div style="flex:1;height:1px;background:rgba(198,120,221,0.12);"></div>
+        <span id="tv-count" style="font-size:11px;font-weight:700;color:rgba(198,120,221,0.45);font-family:monospace;"></span>
       </div>
-      <span class="col-count" id="tv-count" style="display:none"></span>
       <div class="card-list" id="tv-list">
         <div class="title-row" style="aspect-ratio:2/3;"><div class="shimmer" style="width:100%;height:100%;"></div></div>
         <div class="title-row" style="aspect-ratio:2/3;"><div class="shimmer" style="width:100%;height:100%;"></div></div>
@@ -2109,8 +2120,6 @@ function renderList(containerId, items, countId, page) {
   const all = topN(items, fader, items.length);
   const shown = all.slice(0, page * PAGE_SIZE);
 
-  count.textContent = '';
-
   if (shown.length === 0) {
     el.innerHTML = `<div class="empty-state">
       <p>You've seen everything here — move the fader or check back tomorrow.</p>
@@ -2131,6 +2140,7 @@ function renderList(containerId, items, countId, page) {
     el.innerHTML = shown.map((item, i) => renderCard(item, i + 1)).join('');
   }
 
+  if (count) count.textContent = all.length + ' titles';
   const btn = document.getElementById(containerId + '-more-btn');
   if (btn) btn.style.display = shown.length < all.length ? 'block' : 'none';
 }
