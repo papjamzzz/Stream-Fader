@@ -245,16 +245,16 @@ def best_scores(imdb_id):
                 scores['imdb'] = imdb_raw
                 scores['imdb_display'] = imdb_disp
 
-    # ── CRITIC POLE: RT Tomatometer 50% + Metacritic 50% ──────────────────────
-    # Pure professional critic panels only — no user scores
+    # ── CRITIC POLE: RT Tomatometer 70% + Metacritic 30% ──────────────────────
+    # RT is the dominant critic signal (broader panel, more culturally visible)
     critic_parts = []
     critic_weights = []
     if scores['rt'] is not None:
-        critic_parts.append(scores['rt'] * 0.50)
-        critic_weights.append(0.50)
+        critic_parts.append(scores['rt'] * 0.70)
+        critic_weights.append(0.70)
     if scores['mc'] is not None:
-        critic_parts.append(scores['mc'] * 0.50)
-        critic_weights.append(0.50)
+        critic_parts.append(scores['mc'] * 0.30)
+        critic_weights.append(0.30)
     if critic_parts:
         total_w = sum(critic_weights)
         scores['critic'] = round(sum(critic_parts) / total_w)
