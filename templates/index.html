@@ -576,6 +576,34 @@
       white-space: nowrap;
     }
 
+    /* Card meta line — year + SF score */
+    .card-meta-line {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+      overflow: hidden;
+      flex-wrap: nowrap;
+      margin-top: 2px;
+    }
+    .meta-dot {
+      color: rgba(255,255,255,0.2);
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+    .sf-inline {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(240,242,255,0.5);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sf-inline strong {
+      color: #c678dd;
+      font-weight: 900;
+    }
+
     /* keep score-pill for detail modal */
     .score-pill { display: none; }
     .card-blend-overlay { display: none; }
@@ -1065,19 +1093,19 @@
     /* ── QUEUE BUTTON (header) ── */
     #queue-toggle {
       position: absolute;
-      top: 18px;
+      top: 14px;
       right: 24px;
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 10px;
       background: rgba(245,196,0,0.1);
       border: 1px solid rgba(245,196,0,0.35);
-      border-radius: 20px;
-      padding: 7px 16px;
+      border-radius: 32px;
+      padding: 12px 28px;
       color: #f5c400;
-      font-size: 13px;
+      font-size: 22px;
       font-weight: 700;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.04em;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
       z-index: 20;
@@ -1549,7 +1577,7 @@
     </div>
     <!-- Queue button -->
     <button id="queue-toggle" onclick="toggleQueueDropdown()">
-      🎯 Queue <span id="queue-count-badge">0</span>
+      ★ Saved <span id="queue-count-badge">0</span>
     </button>
   </div>
 </header>
@@ -1574,7 +1602,7 @@
   <div class="fader-inner">
     <div class="fader-labels">
       <div class="fader-label left">Critics</div>
-      <div class="fader-sweet-label" id="sweet-label">Stream The Mood</div>
+      <div class="fader-sweet-label" id="sweet-label"></div>
       <div class="fader-label right">Audience</div>
     </div>
 
@@ -2114,11 +2142,9 @@ function renderCard(item, rank) {
       </div>
       <div class="card-body">
         <div class="row-title">${item.title}</div>
-        <div style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow:hidden;">
-          <span class="score-badge score-sf"><span class="sb-label">SF</span><span class="sb-val">${item.blend ?? '—'}</span></span>
-          ${year ? `<span class="row-year">${year}</span>` : ''}
-          ${genre ? `<span class="row-genre">${genre}</span>` : ''}
-          <div class="row-platforms" style="margin-left:auto;">${providers}${extraProviders}</div>
+        <div class="card-meta-line">
+          ${year ? `<span class="row-year">${year}</span><span class="meta-dot">·</span>` : ''}
+          <span class="sf-inline">StreamFader: <strong>${item.blend != null ? Math.round(item.blend) : '—'}</strong></span>
         </div>
       </div>
     </div>`;
