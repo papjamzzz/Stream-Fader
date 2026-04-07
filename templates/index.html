@@ -1952,11 +1952,12 @@ function blendScore(item, f) {
   const c = item.critic_score   ?? 50;
   const a = item.audience_score ?? 50;
   const ratio = f / 100;
-  const base = c * (1 - ratio) + a * ratio;
-  const rtBoost  = item.rt_score != null ? 20 : 0;
-  const pop      = item.popularity || 0;
-  const popBoost = Math.min(30, Math.round(Math.pow(pop, 0.45)));
-  return Math.min(100, Math.round(base + rtBoost + popBoost + genreAffinityScore(item.genres || [])));
+  // Pure fader blend — this is what the knob controls
+  const blend = c * (1 - ratio) + a * ratio;
+  // Tiny tiebreaker only (max 2 pts) — never reorders; just breaks equal scores
+  const popTie = Math.min(2, (item.popularity || 0) / 300);
+  // Genre affinity from user history (starts at 0, grows with use)
+  return blend + popTie + genreAffinityScore(item.genres || []);
 }
 
 let moviePage = 1;
