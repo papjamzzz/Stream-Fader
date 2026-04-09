@@ -1289,7 +1289,7 @@
     .amp-btn.playing #eq4 { animation: eq4 0.61s ease-in-out infinite; }
     .amp-btn.playing #eq5 { animation: eq5 0.47s ease-in-out infinite; }
     .amp-btn.playing #eq6 { animation: eq6 0.52s ease-in-out infinite; }
-    .amp-svg { width: 120px; height: 53px; }
+    .amp-svg { width: 80px; height: 35px; }
     .vst-popup {
       position: fixed; top: 80px; left: 16px;
       width: 340px;
@@ -1507,27 +1507,6 @@
       margin-bottom: 8px;
     }
 
-    /* ── GOLD SCROLLING BANNER ── */
-    .saved-banner-marquee {
-      background: linear-gradient(90deg, rgba(245,196,0,0.06) 0%, rgba(245,196,0,0.10) 50%, rgba(245,196,0,0.06) 100%);
-      border-top: 1px solid rgba(245,196,0,0.28);
-      border-bottom: 1px solid rgba(245,196,0,0.28);
-      overflow: hidden;
-      white-space: nowrap;
-      padding: 8px 0;
-    }
-    @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-    .saved-banner-inner {
-      display: inline-block;
-      animation: marquee 22s linear infinite;
-      color: #f5c400;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      text-shadow: 0 0 14px rgba(245,196,0,0.55);
-      padding-right: 0;
-    }
 
     /* ── SAVED BUTTON (content area) ── */
     #queue-toggle {
@@ -1580,7 +1559,7 @@
     <button id="queue-close" onclick="toggleQueueDropdown()" title="Close">✕</button>
   </div>
   <div id="queue-list"></div>
-  <div id="queue-empty">No items in queue yet.<br>Hit <strong style="color:#f5c400">Wanna See</strong> on any card to add it here.</div>
+  <div id="queue-empty">No items saved yet.<br>Hit <strong style="color:#f5c400">🔖 Save</strong> on any card to add it here.</div>
 </div>
 
 <!-- ══════════════════════════════════════════════
@@ -1620,12 +1599,6 @@
 
 <div id="results-anchor"></div>
 
-<!-- ══════════════════════════════════════════════
-     GOLD SCROLLING BANNER
-══════════════════════════════════════════════ -->
-<div class="saved-banner-marquee">
-  <div class="saved-banner-inner">✦ Saved For Another Day &nbsp;&nbsp;&nbsp;&nbsp; ✦ Saved For Another Day &nbsp;&nbsp;&nbsp;&nbsp; ✦ Saved For Another Day &nbsp;&nbsp;&nbsp;&nbsp; ✦ Saved For Another Day &nbsp;&nbsp;&nbsp;&nbsp; ✦ Saved For Another Day &nbsp;&nbsp;&nbsp;&nbsp; ✦ Saved For Another Day &nbsp;&nbsp;&nbsp;&nbsp; ✦ Saved For Another Day &nbsp;&nbsp;&nbsp;&nbsp; ✦ Saved For Another Day &nbsp;&nbsp;&nbsp;&nbsp; ✦ Saved For Another Day &nbsp;&nbsp;&nbsp;&nbsp; ✦ Saved For Another Day &nbsp;&nbsp;&nbsp;&nbsp; ✦ Saved For Another Day &nbsp;&nbsp;&nbsp;&nbsp; ✦ Saved For Another Day &nbsp;&nbsp;&nbsp;&nbsp; ✦ Saved For Another Day &nbsp;&nbsp;&nbsp;&nbsp; ✦ Saved For Another Day &nbsp;&nbsp;&nbsp;&nbsp;</div>
-</div>
 
 <!-- ══════════════════════════════════════════════
      CLAUDE TOP PICK
@@ -1710,7 +1683,7 @@
     <!-- SAVED BUTTON -->
     <div style="grid-column:1/-1;text-align:center;padding:18px 0 8px;">
       <button id="queue-toggle" onclick="toggleQueueDropdown()">
-        ★ Saved <span id="queue-count-badge">0</span>
+        🔖 Saved <span id="queue-count-badge">0</span>
       </button>
     </div>
 
@@ -2134,11 +2107,11 @@ function renderCard(item, rank) {
   return `
     <div class="title-row" id="card-${item.id}" data-id="${item.id}" onclick="openDetail(${cardIndex})">
       <div class="card-poster-wrap">
-        ${isSaved ? `<div class="card-saved-banner">⭐ In Queue</div>` : ''}
+        ${isSaved ? `<div class="card-saved-banner">🔖 Saved</div>` : ''}
         ${posterEl}
         <div class="${rankClass}">${rank}</div>
         <div class="save-bar ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleWannaSee(window._cardRegistry[${cardIndex}],this)">
-          ${isSaved ? '✅ Saved!' : '🌟 Wanna See'}
+          ${isSaved ? '🔖 Saved' : '🔖 Save'}
         </div>
       </div>
       <div class="dismiss-bar" onclick="event.stopPropagation()">
@@ -2774,10 +2747,10 @@ function toggleWannaSee(item, barEl) {
   const removing = idx >= 0;
   if (removing) {
     list.splice(idx, 1);
-    if (barEl) { barEl.textContent = '🌟 Wanna See'; barEl.classList.remove('saved'); }
+    if (barEl) { barEl.textContent = '🔖 Save'; barEl.classList.remove('saved'); }
   } else {
     list.push({ id: item.id, imdb_id: item.imdb_id, title: item.title, poster: item.poster || null, release: item.release || '', media_type: item.media_type || 'movie', providers: item.providers || [] });
-    if (barEl) { barEl.textContent = '✅ Saved!'; barEl.classList.add('saved'); }
+    if (barEl) { barEl.textContent = '🔖 Saved'; barEl.classList.add('saved'); }
   }
   saveWatchlist(list);
   renderWatchlist();
