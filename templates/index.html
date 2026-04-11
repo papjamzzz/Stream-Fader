@@ -805,6 +805,23 @@
       font-size: 12px;
       color: var(--muted);
       white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .live-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #66bb6a;
+      box-shadow: 0 0 6px #66bb6a;
+      animation: livePulse 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 6px #66bb6a; }
+      50%       { opacity: 0.4; box-shadow: 0 0 2px #66bb6a; }
     }
 
     /* card fade-swap animation */
@@ -2377,11 +2394,11 @@ async function loadContent(force = false) {
     updateCards(true);
 
 const total = allMovies.length + allTV.length;
-    document.getElementById('data-info').textContent =
-      `${allMovies.length} movies · ${allTV.length} shows · last 12 months`;
+    document.getElementById('data-info').innerHTML =
+      `<span class="live-dot"></span> ${allMovies.length} movies · ${allTV.length} shows · refreshed every 6 hrs`;
 
     document.getElementById('info-text').textContent =
-      `${total} titles scored from last 12 months — move the fader to find tonight's pick`;
+      `All titles released in the last 2 years — scores update around the clock`;
 
     // ── Claude Top Pick ──
     if (data.top_pick) {
