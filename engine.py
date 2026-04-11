@@ -652,6 +652,25 @@ def fetch_tv():
                     seen_ids.add(sid)
                     candidates.append(('tmdb_tv', s))
 
+        # ── Foreign language TV — top rated non-English series on streaming ──
+        for lang in ['ko', 'fr', 'es', 'ja', 'it', 'de', 'hi', 'pt', 'zh']:
+            for page in range(1, 4):
+                data = tmdb_get('/discover/tv', {
+                    'sort_by': 'vote_average.desc',
+                    'watch_region': 'US',
+                    'with_watch_providers': STREAMING_PROVIDER_IDS,
+                    'without_genres': TV_EXCLUDED_GENRES,
+                    'with_original_language': lang,
+                    'vote_count.gte': 50,
+                    'vote_average.gte': 6.5,
+                    'page': page,
+                })
+                for s in data.get('results', []):
+                    sid = str(s.get('id'))
+                    if sid and sid not in seen_ids:
+                        seen_ids.add(sid)
+                        candidates.append(('tmdb_tv', s))
+
     # ── TVmaze: what dropped this week on streaming (supplement) ──
     for day_offset in range(0, 7):
         date_str = (datetime.now() - timedelta(days=day_offset)).strftime('%Y-%m-%d')
@@ -796,8 +815,10 @@ def _enrich_tv(source, item):
             genres    = [g['name'] for g in (details.get('genres') or [])][:3]
             release   = last_air or details.get('first_air_date', '')
 
+            orig_lang = details.get('original_language') or item.get('original_language', 'en')
             return _tv_record(imdb_id or str(tmdb_id), imdb_id, title, overview,
-                              poster, release, providers, genres, scores)
+                              poster, release, providers, genres, scores,
+                              original_language=orig_lang)
 
         elif source == 'tvmaze':
             show    = item['show']
@@ -848,11 +869,11 @@ def _enrich_tv(source, item):
         return None
 
 
-def _tv_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores, popularity=0):
+def _tv_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores, popularity=0, original_language='en'):
     return {
         'id': uid, 'imdb_id': imdb_id, 'title': title, 'overview': overview,
         'poster': poster, 'release': release, 'media_type': 'tv',
-        'popularity': popularity,
+        'popularity': popularity, 'original_language': original_language,
         'providers': providers, 'genres': genres,
         'critic_score': scores.get('critic'), 'audience_score': scores.get('audience'),
         'rt_score': scores.get('rt'), 'rt_audience': scores.get('rt_audience'),
