@@ -320,6 +320,11 @@ TVMAZE_EXCLUDED_GENRES = {
     'soap', 'variety', 'awards show', 'sports talk',
 }
 
+# Titles manually blocked from appearing in results (normalized lowercase)
+TITLE_BLOCKLIST = {
+    'predator: killer of killers',
+}
+
 
 def _passes_filters(item):
     """Return True if a TMDb movie item clears popularity/vote thresholds."""
@@ -476,6 +481,8 @@ def fetch_movies():
         for future in as_completed(futures):
             result = future.result()
             if result and _passes_score_floor(result):
+                if (result.get('title') or '').lower().strip() in TITLE_BLOCKLIST:
+                    continue
                 key = result.get('imdb_id') or result.get('id')
                 if key and key not in seen_imdb:
                     seen_imdb.add(key)
