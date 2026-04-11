@@ -244,6 +244,9 @@ def best_scores(imdb_id):
             if scores['imdb'] is None and imdb_raw is not None:
                 scores['imdb'] = imdb_raw
                 scores['imdb_display'] = imdb_disp
+            rated = omdb.get('Rated', '')
+            if rated and rated not in ('N/A', ''):
+                scores['rated'] = rated.upper()
 
     # ── CRITIC POLE: RT Tomatometer 70% + Metacritic 30% ──────────────────────
     # RT is the dominant critic signal (broader panel, more culturally visible)
@@ -558,6 +561,7 @@ def _movie_record(uid, imdb_id, title, overview, poster, release, providers, gen
         'poster': poster, 'release': release, 'media_type': 'movie',
         'is_doc': is_doc, 'popularity': popularity, 'original_language': original_language,
         'providers': providers, 'genres': genres,
+        'rated': scores.get('rated', ''),
         'critic_score': scores.get('critic'), 'audience_score': scores.get('audience'),
         'rt_score': scores.get('rt'), 'rt_audience': scores.get('rt_audience'),
         'mc_score': scores.get('mc'), 'imdb_score': scores.get('imdb_display'),

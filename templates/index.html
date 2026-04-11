@@ -1981,7 +1981,11 @@ function applyGenreFilter(items) {
   return items.filter(m => {
     const genres = m.genres || [];
     const lang   = (m.original_language || 'en').toLowerCase();
-    if (activeGenreFilter === 'family')      return genres.includes('Family');
+    if (activeGenreFilter === 'family') {
+      const rating = (m.rated || '').toUpperCase();
+      const familyRatings = new Set(['G', 'PG', 'UR', 'NOT RATED', 'NR', 'UNRATED', 'APPROVED', 'PASSED']);
+      return familyRatings.has(rating) || genres.includes('Family') || genres.includes('Animation');
+    }
     if (activeGenreFilter === 'foreign')     return lang !== 'en';
     if (activeGenreFilter === 'blockbuster') return genres.some(g => BLOCKBUSTER_GENRES.has(g));
     if (activeGenreFilter === 'indie') {
