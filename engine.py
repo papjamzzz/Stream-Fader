@@ -299,7 +299,7 @@ def best_scores(imdb_id):
 
 MIN_VOTES       = 1500   # raised — ensures titles have genuine mainstream audience
 MIN_POPULARITY  = 30     # raised — removes obscure/indie/anime with tiny followings
-MIN_SCORE       = 55     # combined critic+audience floor — only quality content
+MIN_SCORE       = 50     # combined critic+audience floor — only quality content
 DOC_GENRE_ID    = 99     # TMDb genre ID for Documentary
 
 # TMDb movie genre IDs to exclude — Music videos, concerts
@@ -419,6 +419,37 @@ def fetch_movies():
             })
             for m in data.get('results', []):
                 candidates.append(('tmdb_movie', m))
+
+        # ── POOL 6: Family — lower vote threshold, dedicated genre pool ──
+        for page in range(1, 6):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'popularity.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'primary_release_date.gte': cutoff_2yr,
+                'with_genres': '10751',  # Family
+                'vote_count.gte': 200,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
+        # ── POOL 7: Foreign language — best rated non-English on streaming ──
+        for lang in ['ko', 'fr', 'es', 'ja', 'it', 'de', 'hi', 'pt', 'zh']:
+            for page in range(1, 4):
+                data = tmdb_get('/discover/movie', {
+                    'sort_by': 'vote_average.desc',
+                    'watch_region': 'US',
+                    'with_watch_providers': STREAMING_PROVIDER_IDS,
+                    'without_genres': MOVIE_EXCLUDED_GENRES,
+                    'primary_release_date.gte': cutoff_2yr,
+                    'with_original_language': lang,
+                    'vote_count.gte': 100,
+                    'vote_average.gte': 6.5,
+                    'page': page,
+                })
+                for m in data.get('results', []):
+                    candidates.append(('tmdb_movie', m))
 
     for t in trakt_trending_movies(50):
         candidates.append(('trakt_movie', t))
