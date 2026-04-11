@@ -1980,10 +1980,18 @@ window.addEventListener('visibilitychange', () => {
   }
 });
 
+// ── Fresh mode: ?fresh in URL = new user every load, nothing saved/read ──────
+const FRESH_MODE = new URLSearchParams(window.location.search).has('fresh');
+const _ls = {
+  getItem:    (k)    => FRESH_MODE ? null          : localStorage.getItem(k),
+  setItem:    (k, v) => FRESH_MODE ? undefined     : localStorage.setItem(k, v),
+  removeItem: (k)    => FRESH_MODE ? undefined     : localStorage.removeItem(k),
+};
+
 // ── State ────────────────────────────────────────────
 let allMovies = [];
 let allTV     = [];
-let fader     = parseInt(localStorage.getItem('sf_fader') || '50');
+let fader     = parseInt(_ls.getItem('sf_fader') || '50');
 window._sfFader = fader;
 let allGenres = new Set();
 window._cardRegistry = [];
@@ -2148,19 +2156,21 @@ function topN(items, f, n) {
     return true;
   });
 
-  // Rank interpolation — guarantees maximum card movement as fader moves.
-  // At fader=0: pure critic rank order. At fader=100: pure audience rank order.
-  // Movies with diverging critic/audience scores travel the farthest.
-  const byC = [...filtered].sort((a, b) => (b.critic_score ?? 50) - (a.critic_score ?? 50));
-  const byA = [...filtered].sort((a, b) => (b.audience_score ?? 50) - (a.audience_score ?? 50));
-  const cRank = new Map(byC.map((item, i) => [item.id, i]));
-  const aRank = new Map(byA.map((item, i) => [item.id, i]));
+  // Rank interpolation: 60% critic/audience blend + 40% popularity anchor.
+  // The popularity anchor stops obscure arthouse films from floating to #1
+  // just because critics loved them. Cards still travel visibly as fader moves.
+  const byC   = [...filtered].sort((a, b) => (b.critic_score ?? 50)   - (a.critic_score ?? 50));
+  const byA   = [...filtered].sort((a, b) => (b.audience_score ?? 50) - (a.audience_score ?? 50));
+  const byPop = [...filtered].sort((a, b) => (b.popularity ?? 0)      - (a.popularity ?? 0));
+  const cRank   = new Map(byC.map((item, i)   => [item.id, i]));
+  const aRank   = new Map(byA.map((item, i)   => [item.id, i]));
+  const popRank = new Map(byPop.map((item, i) => [item.id, i]));
 
   const ratio = f / 100;
   return filtered
     .map(i => {
-      const baseRank = (cRank.get(i.id) ?? 0) * (1 - ratio) + (aRank.get(i.id) ?? 0) * ratio;
-      // Genre affinity: each 8pts of boost = move up 1 rank position
+      const scoreRank = (cRank.get(i.id) ?? 0) * (1 - ratio) + (aRank.get(i.id) ?? 0) * ratio;
+      const baseRank  = scoreRank * 0.6 + (popRank.get(i.id) ?? 0) * 0.4;
       const affinityAdj = -(genreAffinityScore(i.genres || []) / 8);
       return { ...i, blend: blendScore(i, f), _rank: baseRank + affinityAdj };
     })
@@ -2178,7 +2188,7 @@ function onFaderMove(val) {
   window._sfFader = fader;
   window._sfSession.faderMoves++;
   if (window._sfSession.faderMoves % 5 === 0) _track('fader', { fader });
-  try { localStorage.setItem('sf_fader', fader); } catch (_) {}
+  try { _ls.setItem('sf_fader', fader); } catch (_) {}
   const col = blendColor(fader);
   const criticPct  = 100 - fader;
   const audiencePct = fader;
@@ -2686,13 +2696,13 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 function getDismissed() {
   let raw = [];
   try {
-    const stored = localStorage.getItem(DISMISS_KEY);
+    const stored = _ls.getItem(DISMISS_KEY);
     raw = stored ? JSON.parse(stored) : [];
     if (!Array.isArray(raw)) raw = [];
   } catch (err) {
     // Malformed data — reset silently
     console.warn('[SF] Dismiss store parse error, resetting:', err);
-    localStorage.removeItem(DISMISS_KEY);
+    _ls.removeItem(DISMISS_KEY);
     return [];
   }
 
@@ -2707,7 +2717,7 @@ function getDismissed() {
   if (active.length !== raw.length) {
     // Evict expired entries and migrate any old-shape entries to new shape
     const migrated = active.map(e => _migrateEntry(e));
-    try { localStorage.setItem(DISMISS_KEY, JSON.stringify(migrated)); } catch (_) {}
+    try { _ls.setItem(DISMISS_KEY, JSON.stringify(migrated)); } catch (_) {}
     return migrated;
   }
   return active;
@@ -2774,7 +2784,7 @@ function dismissTitle(item, reason) {
   cleaned.push(entry);
 
   try {
-    localStorage.setItem(DISMISS_KEY, JSON.stringify(cleaned));
+    _ls.setItem(DISMISS_KEY, JSON.stringify(cleaned));
   } catch (err) {
     console.error('[SF] Could not write dismiss to localStorage:', err);
     return;
@@ -2833,7 +2843,7 @@ function undoDismiss() {
   const entries = getDismissed().filter(e =>
     !(( e.id && e.id === id) || (e.imdb_id && e.imdb_id === id))
   );
-  try { localStorage.setItem(DISMISS_KEY, JSON.stringify(entries)); } catch (_) {}
+  try { _ls.setItem(DISMISS_KEY, JSON.stringify(entries)); } catch (_) {}
   hideToast();
   if (_toastTimer) clearTimeout(_toastTimer);
   updateCards(false);
@@ -2864,11 +2874,11 @@ loadPreferences().then(() => loadContent(false));
 const WATCHLIST_KEY = 'sf_watchlist';
 
 function getWatchlist() {
-  try { return JSON.parse(localStorage.getItem(WATCHLIST_KEY) || '[]'); } catch { return []; }
+  try { return JSON.parse(_ls.getItem(WATCHLIST_KEY) || '[]'); } catch { return []; }
 }
 
 function saveWatchlist(list) {
-  localStorage.setItem(WATCHLIST_KEY, JSON.stringify(list));
+  _ls.setItem(WATCHLIST_KEY, JSON.stringify(list));
 }
 
 function isWannaSee(id) {
