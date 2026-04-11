@@ -1473,6 +1473,33 @@
       color: var(--dim);
       font-size: 15px;
     }
+    /* ── GENRE FILTER PILLS ── */
+    .genre-pill {
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(79,195,247,0.25);
+      background: rgba(79,195,247,0.06);
+      color: rgba(240,242,255,0.55);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .genre-pill:hover {
+      background: rgba(79,195,247,0.15);
+      border-color: rgba(79,195,247,0.5);
+      color: rgba(240,242,255,0.85);
+    }
+    .genre-pill.active {
+      background: rgba(79,195,247,0.22);
+      border-color: rgba(79,195,247,0.8);
+      color: #4fc3f7;
+      box-shadow: 0 0 10px rgba(79,195,247,0.2);
+    }
+
     /* ── SHOW MORE BUTTON ── */
     .show-more-btn {
       display: none;
@@ -1680,15 +1707,22 @@
 <div class="content-area">
   <div class="two-col">
 
-    <!-- SAVED BUTTON -->
-    <div style="grid-column:1/-1;text-align:center;padding:18px 0 8px;">
-      <button id="queue-toggle" onclick="toggleQueueDropdown()">
+    <!-- GENRE FILTERS + SAVED -->
+    <div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:18px 0 8px;flex-wrap:wrap;">
+      <div id="genre-filter-bar" style="display:flex;gap:8px;flex-wrap:wrap;flex:1;">
+        <button class="genre-pill active" data-genre="all"    onclick="setGenreFilter('all')">All</button>
+        <button class="genre-pill"        data-genre="indie"  onclick="setGenreFilter('indie')">Indie</button>
+        <button class="genre-pill"        data-genre="family" onclick="setGenreFilter('family')">Family</button>
+        <button class="genre-pill"        data-genre="foreign" onclick="setGenreFilter('foreign')">Foreign</button>
+        <button class="genre-pill"        data-genre="blockbuster" onclick="setGenreFilter('blockbuster')">Blockbuster</button>
+      </div>
+      <button id="queue-toggle" onclick="toggleQueueDropdown()" style="margin-left:auto;white-space:nowrap;">
         🔖 Saved <span id="queue-count-badge">0</span>
       </button>
     </div>
 
     <!-- TASTE HELPER — heartbeat -->
-    <div style="grid-column:1/-1;text-align:center;padding:8px 0 18px;">
+    <div style="grid-column:1/-1;text-align:center;padding:4px 0 18px;">
       <div class="hb-bar">
         <span class="hb-pulse">💚</span>
         <span class="hb-text">Tap <span class="hb-green">Seen it</span></span>
@@ -1893,6 +1927,37 @@ let fader     = parseInt(localStorage.getItem('sf_fader') || '50');
 window._sfFader = fader;
 let allGenres = new Set();
 window._cardRegistry = [];
+let activeGenreFilter = 'all';
+
+// ── Genre Filter ─────────────────────────────────────
+const BLOCKBUSTER_GENRES = new Set(['Action', 'Adventure', 'Science Fiction', 'Animation']);
+const INDIE_EXCLUDE_GENRES = new Set(['Action', 'Adventure', 'Animation']);
+
+function applyGenreFilter(items) {
+  if (activeGenreFilter === 'all') return items;
+  return items.filter(m => {
+    const genres = m.genres || [];
+    const lang   = (m.original_language || 'en').toLowerCase();
+    if (activeGenreFilter === 'family')      return genres.includes('Family');
+    if (activeGenreFilter === 'foreign')     return lang !== 'en';
+    if (activeGenreFilter === 'blockbuster') return genres.some(g => BLOCKBUSTER_GENRES.has(g));
+    if (activeGenreFilter === 'indie') {
+      const hasBlockbuster = genres.some(g => INDIE_EXCLUDE_GENRES.has(g));
+      return !hasBlockbuster && lang === 'en';
+    }
+    return true;
+  });
+}
+
+function setGenreFilter(genre) {
+  activeGenreFilter = genre;
+  document.querySelectorAll('.genre-pill').forEach(b => {
+    b.classList.toggle('active', b.dataset.genre === genre);
+  });
+  moviePage = 1; tvPage = 1;
+  renderList('movie-list', applyGenreFilter(allMovies), 'movie-count', moviePage);
+  renderList('tv-list',    applyGenreFilter(allTV),    'tv-count',    tvPage);
+}
 
 // ── Preferences ─────────────────────────────────────
 let userPrefs = [];
@@ -1932,8 +1997,8 @@ async function sendPreference(imdbId, title, genres, signal, mediaType) {
 
 function renderCards() {
     window._cardRegistry = [];
-    renderList('movie-list', allMovies, 'movie-count', moviePage);
-    renderList('tv-list', allTV, 'tv-count', tvPage);
+    renderList('movie-list', applyGenreFilter(allMovies), 'movie-count', moviePage);
+    renderList('tv-list',    applyGenreFilter(allTV),    'tv-count',    tvPage);
 }
 
 // ── Score Meters ──────────────────────────────────────
@@ -2016,7 +2081,7 @@ function blendScore(item, f) {
 
 let moviePage = 1;
 let tvPage = 1;
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 24;
 
 function topN(items, f, n) {
   const dismissed = getDismissedIds(); // flat Set of all stored id + imdb_id values
@@ -2200,12 +2265,12 @@ function renderList(containerId, items, countId, page) {
 
 function loadMoreMovies() {
   moviePage++;
-  renderList('movie-list', allMovies, 'movie-count', moviePage);
+  renderList('movie-list', applyGenreFilter(allMovies), 'movie-count', moviePage);
 }
 
 function loadMoreTV() {
   tvPage++;
-  renderList('tv-list', allTV, 'tv-count', tvPage);
+  renderList('tv-list', applyGenreFilter(allTV), 'tv-count', tvPage);
 }
 
 function updateCards(animate = true) {
@@ -2218,8 +2283,8 @@ function updateCards(animate = true) {
     tvList.classList.add('swapping');
     setTimeout(() => {
       moviePage = 1; tvPage = 1;
-      renderList('movie-list', allMovies, 'movie-count', moviePage);
-      renderList('tv-list', allTV, 'tv-count', tvPage);
+      renderList('movie-list', applyGenreFilter(allMovies), 'movie-count', moviePage);
+      renderList('tv-list',    applyGenreFilter(allTV),    'tv-count',    tvPage);
       movieList.classList.remove('swapping');
       tvList.classList.remove('swapping');
       movieList.classList.add('swapping-in');
@@ -2231,8 +2296,8 @@ function updateCards(animate = true) {
     }, 150);
   } else {
     moviePage = 1; tvPage = 1;
-    renderList('movie-list', allMovies, 'movie-count', moviePage);
-    renderList('tv-list', allTV, 'tv-count', tvPage);
+    renderList('movie-list', applyGenreFilter(allMovies), 'movie-count', moviePage);
+    renderList('tv-list',    applyGenreFilter(allTV),    'tv-count',    tvPage);
   }
 }
 

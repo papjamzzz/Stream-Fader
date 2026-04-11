@@ -487,10 +487,12 @@ def _enrich_movie(source, item):
             title    = details.get('title') or item.get('title', 'Unknown')
             overview = (details.get('overview') or item.get('overview') or '')[:600]
             genres   = [g['name'] for g in (details.get('genres') or []) if g.get('name')][:3]
+            orig_lang = details.get('original_language') or item.get('original_language', 'en')
             return _movie_record(imdb_id or str(tmdb_id), imdb_id, title, overview,
                                  poster, item.get('release_date', ''), providers, genres, scores,
                                  is_doc=item.get('_is_doc', False),
-                                 popularity=item.get('popularity', 0))
+                                 popularity=item.get('popularity', 0),
+                                 original_language=orig_lang)
 
         elif source == 'trakt_movie':
             ids = item.get('ids') or {}
@@ -513,16 +515,17 @@ def _enrich_movie(source, item):
             return _movie_record(imdb_id or str(ids.get('trakt', '')), imdb_id,
                                  item.get('title', 'Unknown'), (item.get('overview') or '')[:600],
                                  poster, str(item.get('year', '')), providers,
-                                 (item.get('genres') or [])[:3], scores)
+                                 (item.get('genres') or [])[:3], scores,
+                                 original_language='en')
     except Exception:
         return None
 
 
-def _movie_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores, is_doc=False, popularity=0):
+def _movie_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores, is_doc=False, popularity=0, original_language='en'):
     return {
         'id': uid, 'imdb_id': imdb_id, 'title': title, 'overview': overview,
         'poster': poster, 'release': release, 'media_type': 'movie',
-        'is_doc': is_doc, 'popularity': popularity,
+        'is_doc': is_doc, 'popularity': popularity, 'original_language': original_language,
         'providers': providers, 'genres': genres,
         'critic_score': scores.get('critic'), 'audience_score': scores.get('audience'),
         'rt_score': scores.get('rt'), 'rt_audience': scores.get('rt_audience'),
