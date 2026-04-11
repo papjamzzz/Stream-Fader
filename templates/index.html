@@ -2158,11 +2158,12 @@ function topN(items, f, n) {
 
   const ratio = f / 100;
   return filtered
-    .map(i => ({
-      ...i,
-      blend: blendScore(i, f),
-      _rank: (cRank.get(i.id) ?? 0) * (1 - ratio) + (aRank.get(i.id) ?? 0) * ratio
-    }))
+    .map(i => {
+      const baseRank = (cRank.get(i.id) ?? 0) * (1 - ratio) + (aRank.get(i.id) ?? 0) * ratio;
+      // Genre affinity: each 8pts of boost = move up 1 rank position
+      const affinityAdj = -(genreAffinityScore(i.genres || []) / 8);
+      return { ...i, blend: blendScore(i, f), _rank: baseRank + affinityAdj };
+    })
     .sort((a, b) => a._rank - b._rank)
     .slice(0, n);
 }
