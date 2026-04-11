@@ -2127,20 +2127,12 @@ function blendColor(f) {
 }
 
 // ── Scoring ──────────────────────────────────────────
+// blendScore: used only for the displayed "StreamFader: XX" number on each card
 function blendScore(item, f) {
-  const c = item.critic_score   ?? 50;
+  const c = item.critic_score ?? 50;
   const a = item.audience_score ?? 50;
   const ratio = f / 100;
-  // Linear blend
-  const linear = c * (1 - ratio) + a * ratio;
-  // Amplify: push scores further from the midpoint so fader movement is visible
-  // Amplifier 1.8 = 80% stronger spread. Clamped 20–100 to avoid negatives.
-  const mid = (c + a) / 2;
-  const blend = Math.min(100, Math.max(20, mid + (linear - mid) * 1.8));
-  // Tiny tiebreaker only (max 2 pts)
-  const popTie = Math.min(2, (item.popularity || 0) / 300);
-  // Genre affinity from user history (starts at 0, grows with use)
-  return blend + popTie + genreAffinityScore(item.genres || []);
+  return Math.round(c * (1 - ratio) + a * ratio);
 }
 
 let moviePage = 1;
@@ -2148,17 +2140,30 @@ let tvPage = 1;
 const PAGE_SIZE = 100;
 
 function topN(items, f, n) {
-  const dismissed = getDismissedIds(); // flat Set of all stored id + imdb_id values
-  return items
-    .filter(i => {
-      if (!i) return false;
-      // Both axes checked: a title stays hidden even if its id field changed across refreshes
-      if (i.id      && dismissed.has(i.id))      return false;
-      if (i.imdb_id && dismissed.has(i.imdb_id)) return false;
-      return true;
-    })
-    .map(i => ({ ...i, blend: blendScore(i, f) }))
-    .sort((a, b) => b.blend - a.blend)
+  const dismissed = getDismissedIds();
+  const filtered = items.filter(i => {
+    if (!i) return false;
+    if (i.id      && dismissed.has(i.id))      return false;
+    if (i.imdb_id && dismissed.has(i.imdb_id)) return false;
+    return true;
+  });
+
+  // Rank interpolation — guarantees maximum card movement as fader moves.
+  // At fader=0: pure critic rank order. At fader=100: pure audience rank order.
+  // Movies with diverging critic/audience scores travel the farthest.
+  const byC = [...filtered].sort((a, b) => (b.critic_score ?? 50) - (a.critic_score ?? 50));
+  const byA = [...filtered].sort((a, b) => (b.audience_score ?? 50) - (a.audience_score ?? 50));
+  const cRank = new Map(byC.map((item, i) => [item.id, i]));
+  const aRank = new Map(byA.map((item, i) => [item.id, i]));
+
+  const ratio = f / 100;
+  return filtered
+    .map(i => ({
+      ...i,
+      blend: blendScore(i, f),
+      _rank: (cRank.get(i.id) ?? 0) * (1 - ratio) + (aRank.get(i.id) ?? 0) * ratio
+    }))
+    .sort((a, b) => a._rank - b._rank)
     .slice(0, n);
 }
 
