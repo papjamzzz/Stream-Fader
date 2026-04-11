@@ -1984,7 +1984,7 @@ function applyGenreFilter(items) {
     if (activeGenreFilter === 'family') {
       const rating = (m.rated || '').toUpperCase();
       const familyRatings = new Set(['G', 'PG', 'UR', 'NOT RATED', 'NR', 'UNRATED', 'APPROVED', 'PASSED']);
-      return familyRatings.has(rating) || genres.includes('Family');
+      return familyRatings.has(rating) || genres.includes('Family') || genres.includes('Animation');
     }
     if (activeGenreFilter === 'foreign')     return lang !== 'en';
     if (activeGenreFilter === 'blockbuster') return genres.some(g => BLOCKBUSTER_GENRES.has(g));
