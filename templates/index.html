@@ -2847,7 +2847,7 @@ function faderStroll(onDone) {
 }
 
 // ── First-time walkthrough ────────────────────────────────────────────────────
-const TOUR_KEY = 'sf_tour_v4';
+const TOUR_KEY = 'sf_tour_v5';
 
 const TOUR_STEPS = [
   {
@@ -3044,66 +3044,117 @@ function showTour() {
 
   function fireworks() {
     const W = window.innerWidth, H = window.innerHeight;
-    const palette = ['#4fc3f7','#c678dd','#ffb74d','#f5c400','#66bb6a','#ef5350','#fff','#ff80ab','#80d8ff','#ccff90'];
-    const shells = [
-      // [x_frac, y_frac, delay_ms, color, count, dist]
-      [0.5,  0.35,   0,  '#fff',     28, 90],
-      [0.25, 0.4,  120,  '#4fc3f7',  22, 75],
-      [0.75, 0.4,  120,  '#ffb74d',  22, 75],
-      [0.5,  0.25, 260,  '#c678dd',  26, 85],
-      [0.15, 0.55, 350,  '#66bb6a',  18, 65],
-      [0.85, 0.55, 350,  '#ef5350',  18, 65],
-      [0.4,  0.5,  480,  '#f5c400',  24, 80],
-      [0.6,  0.5,  480,  '#80d8ff',  24, 80],
-      [0.5,  0.6,  620,  '#ff80ab',  20, 70],
-      [0.3,  0.3,  720,  '#ffb74d',  20, 70],
-      [0.7,  0.3,  720,  '#4fc3f7',  20, 70],
-      [0.5,  0.4,  900,  '#fff',     32, 100],
-    ];
+    const colors = ['#4fc3f7','#c678dd','#ffb74d','#f5c400','#66bb6a','#ef5350','#ffffff','#ff80ab','#80d8ff','#ccff90','#ff6e40','#ea80fc'];
 
-    function shell(x, y, color, count, dist) {
-      for (let i = 0; i < count; i++) {
-        const p = document.createElement('div');
-        const angle = (i / count) * 360;
-        const d = dist + Math.random() * 30;
-        const size = 5 + Math.random() * 7;
-        p.style.cssText = `
+    // ── Full-screen white flash ─────────────────────────────────────────────
+    const flash = document.createElement('div');
+    flash.style.cssText = `position:fixed;inset:0;z-index:9990;background:#fff;opacity:0;pointer-events:none;transition:opacity 0.08s ease-in;`;
+    document.body.appendChild(flash);
+    requestAnimationFrame(() => { flash.style.opacity = '0.55'; });
+    setTimeout(() => { flash.style.transition = 'opacity 0.4s ease-out'; flash.style.opacity = '0'; }, 120);
+    setTimeout(() => flash.remove(), 600);
+
+    // ── Firework shell: big radial burst ───────────────────────────────────
+    function shell(x, y, color, count, radius, delay) {
+      setTimeout(() => {
+        // Flash at origin
+        const origin = document.createElement('div');
+        const os = 24;
+        origin.style.cssText = `
           position:fixed;z-index:9999;border-radius:50%;pointer-events:none;
-          width:${size}px;height:${size}px;background:${color};
-          left:${x}px;top:${y}px;
-          transition:transform 0.9s cubic-bezier(.2,.8,.3,1),opacity 0.9s ease-out;
-          transform:translate(-50%,-50%);opacity:1;
-          box-shadow:0 0 ${size*2}px ${color};
+          width:${os}px;height:${os}px;background:${color};
+          left:${x - os/2}px;top:${y - os/2}px;
+          box-shadow:0 0 60px 30px ${color};
+          transition:opacity 0.3s ease-out,transform 0.3s ease-out;
+          opacity:1;transform:scale(1);
         `;
-        document.body.appendChild(p);
+        document.body.appendChild(origin);
         requestAnimationFrame(() => requestAnimationFrame(() => {
-          const rad = angle * Math.PI / 180;
-          p.style.transform = `translate(calc(-50% + ${Math.cos(rad)*d}px), calc(-50% + ${Math.sin(rad)*d}px))`;
-          p.style.opacity = '0';
+          origin.style.opacity = '0'; origin.style.transform = 'scale(5)';
         }));
-        setTimeout(() => p.remove(), 1100);
-      }
-      // Bright flash at launch point
-      const flash = document.createElement('div');
-      flash.style.cssText = `
-        position:fixed;z-index:9998;border-radius:50%;pointer-events:none;
-        width:18px;height:18px;background:${color};
-        left:${x - 9}px;top:${y - 9}px;
-        box-shadow:0 0 40px 20px ${color};
-        transition:opacity 0.25s ease-out,transform 0.25s ease-out;
-        opacity:1;transform:scale(1);
-      `;
-      document.body.appendChild(flash);
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        flash.style.opacity = '0';
-        flash.style.transform = 'scale(3)';
-      }));
-      setTimeout(() => flash.remove(), 350);
+        setTimeout(() => origin.remove(), 400);
+
+        // Particles
+        for (let i = 0; i < count; i++) {
+          const p = document.createElement('div');
+          const angle = (i / count) * Math.PI * 2;
+          const r = radius + Math.random() * radius * 0.4;
+          const size = 7 + Math.random() * 9;
+          const col = Math.random() < 0.3 ? '#fff' : color;
+          p.style.cssText = `
+            position:fixed;z-index:9999;border-radius:50%;pointer-events:none;
+            width:${size}px;height:${size}px;background:${col};
+            left:${x}px;top:${y}px;opacity:1;
+            box-shadow:0 0 ${size*3}px ${size}px ${col};
+            transition:transform 1.3s cubic-bezier(.1,.7,.2,1),opacity 1.3s ease-in;
+            transform:translate(-50%,-50%);
+          `;
+          document.body.appendChild(p);
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            p.style.transform = `translate(calc(-50% + ${Math.cos(angle)*r}px),calc(-50% + ${Math.sin(angle)*r}px))`;
+            p.style.opacity = '0';
+          }));
+          setTimeout(() => p.remove(), 1500);
+        }
+      }, delay);
     }
 
-    shells.forEach(([xf, yf, delay, color, count, dist]) => {
-      setTimeout(() => shell(W * xf, H * yf, color, count, dist), delay);
-    });
+    // ── Confetti rain ──────────────────────────────────────────────────────
+    function confettiRain(count, duration) {
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+          const c = document.createElement('div');
+          const col = colors[Math.floor(Math.random() * colors.length)];
+          const w = 8 + Math.random() * 10;
+          const h = w * (Math.random() < 0.5 ? 1 : 2.5);
+          const x = Math.random() * W;
+          const spin = (Math.random() - 0.5) * 720;
+          const drift = (Math.random() - 0.5) * 200;
+          const fall = H * 0.7 + Math.random() * H * 0.4;
+          const dur = 1800 + Math.random() * 1200;
+          c.style.cssText = `
+            position:fixed;z-index:9995;pointer-events:none;
+            width:${w}px;height:${h}px;background:${col};
+            left:${x}px;top:-${h}px;border-radius:${Math.random()<0.4?'50%':'2px'};
+            opacity:1;
+            transition:transform ${dur}ms cubic-bezier(.25,.46,.45,.94),opacity ${dur}ms ease-in;
+            transform:translateY(0) translateX(0) rotate(0deg);
+          `;
+          document.body.appendChild(c);
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            c.style.transform = `translateY(${fall}px) translateX(${drift}px) rotate(${spin}deg)`;
+            c.style.opacity = '0';
+          }));
+          setTimeout(() => c.remove(), dur + 100);
+        }, Math.random() * duration);
+      }
+    }
+
+    // ── Fire sequence ──────────────────────────────────────────────────────
+    // Wave 1 — big center detonation
+    shell(W*0.5,  H*0.3,  '#fff',      60, 280,   0);
+    shell(W*0.5,  H*0.3,  '#4fc3f7',  50, 240,  60);
+
+    // Wave 2 — left and right flanks
+    shell(W*0.2,  H*0.4,  '#ffb74d',  45, 220, 180);
+    shell(W*0.8,  H*0.4,  '#c678dd',  45, 220, 180);
+
+    // Wave 3 — upper spread
+    shell(W*0.35, H*0.25, '#f5c400',  40, 200, 380);
+    shell(W*0.65, H*0.25, '#66bb6a',  40, 200, 380);
+
+    // Wave 4 — full width barrage
+    shell(W*0.1,  H*0.5,  '#ef5350',  35, 180, 580);
+    shell(W*0.5,  H*0.2,  '#ff80ab',  50, 260, 620);
+    shell(W*0.9,  H*0.5,  '#80d8ff',  35, 180, 580);
+
+    // Wave 5 — grand finale triple center
+    shell(W*0.3,  H*0.35, '#fff',     55, 270, 900);
+    shell(W*0.5,  H*0.3,  '#ea80fc',  60, 300, 950);
+    shell(W*0.7,  H*0.35, '#fff',     55, 270, 1000);
+
+    // Confetti cascade — 200 pieces falling over 2 seconds
+    confettiRain(200, 1200);
   }
 
   function endTour() {
