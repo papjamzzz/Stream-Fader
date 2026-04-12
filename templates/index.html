@@ -2847,7 +2847,7 @@ function faderStroll(onDone) {
 }
 
 // ── First-time walkthrough ────────────────────────────────────────────────────
-const TOUR_KEY = 'sf_tour_v3';
+const TOUR_KEY = 'sf_tour_v4';
 
 const TOUR_STEPS = [
   {
@@ -3042,6 +3042,70 @@ function showTour() {
     }
   }
 
+  function fireworks() {
+    const W = window.innerWidth, H = window.innerHeight;
+    const palette = ['#4fc3f7','#c678dd','#ffb74d','#f5c400','#66bb6a','#ef5350','#fff','#ff80ab','#80d8ff','#ccff90'];
+    const shells = [
+      // [x_frac, y_frac, delay_ms, color, count, dist]
+      [0.5,  0.35,   0,  '#fff',     28, 90],
+      [0.25, 0.4,  120,  '#4fc3f7',  22, 75],
+      [0.75, 0.4,  120,  '#ffb74d',  22, 75],
+      [0.5,  0.25, 260,  '#c678dd',  26, 85],
+      [0.15, 0.55, 350,  '#66bb6a',  18, 65],
+      [0.85, 0.55, 350,  '#ef5350',  18, 65],
+      [0.4,  0.5,  480,  '#f5c400',  24, 80],
+      [0.6,  0.5,  480,  '#80d8ff',  24, 80],
+      [0.5,  0.6,  620,  '#ff80ab',  20, 70],
+      [0.3,  0.3,  720,  '#ffb74d',  20, 70],
+      [0.7,  0.3,  720,  '#4fc3f7',  20, 70],
+      [0.5,  0.4,  900,  '#fff',     32, 100],
+    ];
+
+    function shell(x, y, color, count, dist) {
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('div');
+        const angle = (i / count) * 360;
+        const d = dist + Math.random() * 30;
+        const size = 5 + Math.random() * 7;
+        p.style.cssText = `
+          position:fixed;z-index:9999;border-radius:50%;pointer-events:none;
+          width:${size}px;height:${size}px;background:${color};
+          left:${x}px;top:${y}px;
+          transition:transform 0.9s cubic-bezier(.2,.8,.3,1),opacity 0.9s ease-out;
+          transform:translate(-50%,-50%);opacity:1;
+          box-shadow:0 0 ${size*2}px ${color};
+        `;
+        document.body.appendChild(p);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const rad = angle * Math.PI / 180;
+          p.style.transform = `translate(calc(-50% + ${Math.cos(rad)*d}px), calc(-50% + ${Math.sin(rad)*d}px))`;
+          p.style.opacity = '0';
+        }));
+        setTimeout(() => p.remove(), 1100);
+      }
+      // Bright flash at launch point
+      const flash = document.createElement('div');
+      flash.style.cssText = `
+        position:fixed;z-index:9998;border-radius:50%;pointer-events:none;
+        width:18px;height:18px;background:${color};
+        left:${x - 9}px;top:${y - 9}px;
+        box-shadow:0 0 40px 20px ${color};
+        transition:opacity 0.25s ease-out,transform 0.25s ease-out;
+        opacity:1;transform:scale(1);
+      `;
+      document.body.appendChild(flash);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        flash.style.opacity = '0';
+        flash.style.transform = 'scale(3)';
+      }));
+      setTimeout(() => flash.remove(), 350);
+    }
+
+    shells.forEach(([xf, yf, delay, color, count, dist]) => {
+      setTimeout(() => shell(W * xf, H * yf, color, count, dist), delay);
+    });
+  }
+
   function endTour() {
     if (arrowEl) arrowEl.remove();
     if (skipEl)  skipEl.remove();
@@ -3050,10 +3114,7 @@ function showTour() {
     tourEl.style.transform = 'scale(0.85)';
     setTimeout(() => {
       tourEl.remove();
-      // Big finale burst
-      burst(window.innerWidth/2, window.innerHeight/2, '#4fc3f7');
-      burst(window.innerWidth/2, window.innerHeight/2, '#c678dd');
-      burst(window.innerWidth/2, window.innerHeight/2, '#ffb74d');
+      fireworks();
     }, 300);
     _ls.setItem(TOUR_KEY, '1');
   }
