@@ -529,10 +529,9 @@ def _enrich_movie(source, item):
             scores = best_scores(imdb_id) if imdb_id else {}
             va = item.get('vote_average') or details.get('vote_average')
             if va:
-                scores.setdefault('tmdb_vote', round(va, 1))
-                # Always guarantee at least one displayable score — use TMDb vote as floor
-                scores.setdefault('imdb_display', round(va, 1))
-                scores.setdefault('imdb', round(va * 10))
+                if not scores.get('tmdb_vote'):    scores['tmdb_vote']    = round(va, 1)
+                if not scores.get('imdb_display'): scores['imdb_display'] = round(va, 1)
+                if not scores.get('imdb'):         scores['imdb']         = round(va * 10)
             if not scores.get('critic') and not scores.get('audience'):
                 if va:
                     tmdb_scaled = round(va * 10)
@@ -807,9 +806,9 @@ def _enrich_tv(source, item):
             scores   = best_scores(imdb_id) if imdb_id else {}
             va = item.get('vote_average') or details.get('vote_average')
             if va:
-                scores.setdefault('tmdb_vote', round(va, 1))
-                scores.setdefault('imdb_display', round(va, 1))
-                scores.setdefault('imdb', round(va * 10))
+                if not scores.get('tmdb_vote'):    scores['tmdb_vote']    = round(va, 1)
+                if not scores.get('imdb_display'): scores['imdb_display'] = round(va, 1)
+                if not scores.get('imdb'):         scores['imdb']         = round(va * 10)
             if not scores.get('critic') and not scores.get('audience'):
                 if va:
                     tmdb_scaled = round(va * 10)
