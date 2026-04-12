@@ -815,10 +815,11 @@ def _enrich_tv(source, item):
             genres    = [g['name'] for g in (details.get('genres') or [])][:3]
             release   = last_air or details.get('first_air_date', '')
 
-            orig_lang = details.get('original_language') or item.get('original_language', 'en')
+            orig_lang  = details.get('original_language') or item.get('original_language', 'en')
+            popularity = item.get('popularity') or details.get('popularity', 0)
             return _tv_record(imdb_id or str(tmdb_id), imdb_id, title, overview,
                               poster, release, providers, genres, scores,
-                              original_language=orig_lang)
+                              popularity=popularity, original_language=orig_lang)
 
         elif source == 'tvmaze':
             show    = item['show']

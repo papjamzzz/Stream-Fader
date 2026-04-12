@@ -2156,9 +2156,9 @@ function topN(items, f, n) {
     return true;
   });
 
-  // Rank interpolation: 60% critic/audience blend + 40% popularity anchor.
-  // The popularity anchor stops obscure arthouse films from floating to #1
-  // just because critics loved them. Cards still travel visibly as fader moves.
+  // Rank interpolation: 85% critic/audience blend + 15% popularity anchor.
+  // Small popularity weight prevents completely unknown films from dominating
+  // without overriding the fader's ability to reshuffle cards.
   const byC   = [...filtered].sort((a, b) => (b.critic_score ?? 50)   - (a.critic_score ?? 50));
   const byA   = [...filtered].sort((a, b) => (b.audience_score ?? 50) - (a.audience_score ?? 50));
   const byPop = [...filtered].sort((a, b) => (b.popularity ?? 0)      - (a.popularity ?? 0));
@@ -2170,7 +2170,7 @@ function topN(items, f, n) {
   return filtered
     .map(i => {
       const scoreRank = (cRank.get(i.id) ?? 0) * (1 - ratio) + (aRank.get(i.id) ?? 0) * ratio;
-      const baseRank  = scoreRank * 0.6 + (popRank.get(i.id) ?? 0) * 0.4;
+      const baseRank  = scoreRank * 0.85 + (popRank.get(i.id) ?? 0) * 0.15;
       const affinityAdj = -(genreAffinityScore(i.genres || []) / 8);
       return { ...i, blend: blendScore(i, f), _rank: baseRank + affinityAdj };
     })
