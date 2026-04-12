@@ -273,17 +273,13 @@
     .readout-side.left { color: var(--critic); }
     .readout-side.right { color: var(--audience); }
     #blend-badge {
-      background: rgba(198,120,221,0.12);
-      border: 1px solid rgba(198,120,221,0.4);
-      border-radius: 24px;
-      padding: 6px 22px;
-      font-size: 16px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--sweet);
-      text-shadow: 0 0 12px rgba(198,120,221,0.6);
-      transition: color 0.2s, border-color 0.2s, background 0.2s;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #c678dd;
+      box-shadow: 0 0 18px 8px rgba(198,120,221,0.7), 0 0 40px 16px rgba(198,120,221,0.3);
+      transition: background 0.15s, box-shadow 0.15s;
+      flex-shrink: 0;
     }
 
     /* ── FADER INNER (50% width centered) ── */
@@ -1657,7 +1653,6 @@
 ══════════════════════════════════════════════ -->
 <section class="fader-section" style="padding:14px 0 12px;">
   <div class="fader-inner">
-    <div style="text-align:center;margin-bottom:14px;font-size:22px;font-weight:900;letter-spacing:0.08em;color:#4fc3f7;text-shadow:0 0 18px rgba(79,195,247,0.7),0 0 40px rgba(79,195,247,0.35);">You're The VJ Now</div>
     <div class="fader-labels">
       <div class="fader-label left">Critics</div>
       <div class="fader-sweet-label" id="sweet-label"></div>
@@ -1682,7 +1677,7 @@
 
     <div class="fader-readout">
       <div class="readout-side left" id="critic-pct">50% Critics</div>
-      <div id="blend-badge">Find My Watch</div>
+      <div id="blend-badge"></div>
       <div class="readout-side right" id="audience-pct">50% Audience</div>
     </div>
   </div>
@@ -2153,20 +2148,12 @@ function onFaderMove(val) {
   document.getElementById('audience-pct').textContent = `${audiencePct}% Audience`;
 
   const badge = document.getElementById('blend-badge');
+  const c = blendColor(fader);
+  badge.style.background = c;
+  badge.style.boxShadow = `0 0 18px 8px ${c}b3, 0 0 40px 16px ${c}55`;
   if (Math.abs(fader - 50) < 8) {
-    badge.textContent = 'Find My Watch';
-    badge.style.color = '#c678dd';
-    badge.style.borderColor = 'rgba(198,120,221,0.4)';
     document.getElementById('sweet-label').classList.add('active');
-  } else if (fader < 50) {
-    badge.textContent = '🎭 Critic Mode';
-    badge.style.color = '#4fc3f7';
-    badge.style.borderColor = 'rgba(79,195,247,0.4)';
-    document.getElementById('sweet-label').classList.remove('active');
   } else {
-    badge.textContent = '★ Audience Mode';
-    badge.style.color = '#ffb74d';
-    badge.style.borderColor = 'rgba(255,183,77,0.4)';
     document.getElementById('sweet-label').classList.remove('active');
   }
 
