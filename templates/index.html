@@ -273,13 +273,13 @@
     .readout-side.left { color: var(--critic); }
     .readout-side.right { color: var(--audience); }
     #blend-badge {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #c678dd;
-      box-shadow: 0 0 18px 8px rgba(198,120,221,0.7), 0 0 40px 16px rgba(198,120,221,0.3);
-      transition: background 0.15s, box-shadow 0.15s;
-      flex-shrink: 0;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      color: #c678dd;
+      text-shadow: 0 0 16px rgba(198,120,221,0.8), 0 0 36px rgba(198,120,221,0.4);
+      transition: color 0.15s, text-shadow 0.15s;
+      white-space: nowrap;
     }
 
     /* ── FADER INNER (50% width centered) ── */
@@ -1620,15 +1620,17 @@
 <body>
 
 <!-- ═══════════════════ HEADER ═══════════════════ -->
-<header class="header" style="flex-direction:row;padding:10px 32px;align-items:center;justify-content:space-between;">
-  <!-- cinematic wordmark -->
-  <div style="flex:1;text-align:center;">
+<header class="header" style="flex-direction:row;padding:10px 32px;align-items:center;">
+  <!-- left spacer — matches saved button width so wordmark stays truly centered -->
+  <div style="flex:1;"></div>
+  <!-- cinematic wordmark — center -->
+  <div style="text-align:center;">
     <div style="font-size:clamp(36px,4.5vw,60px);font-weight:900;letter-spacing:-0.03em;line-height:0.95;">
       <span style="color:#ffffff;">Stream</span><span style="background:linear-gradient(90deg,#4fc3f7 0%,#c678dd 50%,#ffb74d 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Fader</span>
     </div>
   </div>
-  <!-- Saved button — far right of header, clear of the fixed ? button -->
-  <div style="flex-shrink:0;margin-right:56px;">
+  <!-- Saved button — far right, clear of the fixed ? button -->
+  <div style="flex:1;display:flex;justify-content:flex-end;padding-right:56px;">
     <button id="queue-toggle" onclick="toggleQueueDropdown()">
       🔖 Saved <span id="queue-count-badge">0</span>
     </button>
@@ -1677,7 +1679,7 @@
 
     <div class="fader-readout">
       <div class="readout-side left" id="critic-pct">50% Critics</div>
-      <div id="blend-badge"></div>
+      <div id="blend-badge">You're The VJ Now</div>
       <div class="readout-side right" id="audience-pct">50% Audience</div>
     </div>
   </div>
@@ -2149,8 +2151,8 @@ function onFaderMove(val) {
 
   const badge = document.getElementById('blend-badge');
   const c = blendColor(fader);
-  badge.style.background = c;
-  badge.style.boxShadow = `0 0 18px 8px ${c}b3, 0 0 40px 16px ${c}55`;
+  badge.style.color = c;
+  badge.style.textShadow = `0 0 16px ${c}cc, 0 0 36px ${c}66`;
   if (Math.abs(fader - 50) < 8) {
     document.getElementById('sweet-label').classList.add('active');
   } else {
@@ -2842,7 +2844,7 @@ const TOUR_STEPS = [
     color:  '#4fc3f7',
     emoji:  '🎚️',
     label:  'STEP 1 OF 5',
-    title:  'You\'re the DJ now.',
+    title:  'You\'re the VJ now.',
     body:   'Drag left for what <strong style="color:#4fc3f7">critics</strong> love.<br>Drag right for what <strong style="color:#ffb74d">audiences</strong> love.<br>Every position is a different list.',
     arrow:  'down',
     onShow: () => faderStroll(),
