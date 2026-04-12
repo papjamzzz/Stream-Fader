@@ -2846,7 +2846,7 @@ function faderStroll(onDone) {
 }
 
 // ── First-time walkthrough ────────────────────────────────────────────────────
-const TOUR_KEY = 'sf_tour_v5';
+const TOUR_KEY = 'sf_tour_v6';
 
 const TOUR_STEPS = [
   {
@@ -2935,32 +2935,30 @@ function showTour() {
     return el;
   }
 
-  function buildArrow(dir, color) {
+  function buildArrow() {
     const a = document.createElement('div');
-    const symbols = { down:'⬇️', up:'⬆️', left:'⬅️', right:'➡️' };
     a.style.cssText = `
-      position:fixed;z-index:9003;font-size:72px;
-      animation:arrowBounce 0.6s ease-in-out infinite alternate;
-      filter:drop-shadow(0 0 20px rgba(255,220,0,0.7));pointer-events:none;
-      text-align:center;line-height:1;
+      position:fixed;z-index:9003;font-size:72px;line-height:1;
+      animation:arrowBounce 0.5s ease-in-out infinite alternate;
+      filter:drop-shadow(0 0 20px rgba(255,220,0,0.8));
+      pointer-events:none;text-align:center;
+      transform:translateX(-50%);
     `;
-    a.textContent = symbols[dir] || '⬇️';
+    a.textContent = '⬆️';
     document.body.appendChild(a);
     return a;
   }
 
-  function positionArrow(arrow, targetSel, dir) {
+  function positionArrow(arrow, targetSel) {
+    if (!arrow) return;
     const el = document.querySelector(targetSel);
-    if (!el || !arrow) return;
-    const r = el.getBoundingClientRect();
-    const cx = r.left + r.width / 2;
-    if (dir === 'down') {
-      arrow.style.top  = (r.bottom + 8) + 'px';
-      arrow.style.left = (cx - 21) + 'px';
-    } else if (dir === 'up') {
-      arrow.style.top  = (r.top - 56) + 'px';
-      arrow.style.left = (cx - 21) + 'px';
-    }
+    if (!el) return;
+    const r   = el.getBoundingClientRect();
+    const cx  = r.left + r.width / 2;
+    // Place arrow just below the target, pointing up at it
+    const ay  = Math.min(r.bottom + 10, window.innerHeight - 220);
+    arrow.style.left = cx + 'px';   // translateX(-50%) handles centering
+    arrow.style.top  = ay + 'px';
   }
 
   function showStep(n) {
@@ -3010,16 +3008,17 @@ function showTour() {
       tourEl.style.transform = 'scale(1) translateY(0)';
     }, 50);
 
-    // Arrow — wait for scroll
+    // Arrow — wait for smooth scroll to settle, then measure real position
     setTimeout(() => {
-      arrowEl = buildArrow(s.arrow, s.color);
-      positionArrow(arrowEl, s.target, s.arrow);
-      // Burst at arrow
-      if (targetDom) {
-        const r = targetDom.getBoundingClientRect();
+      arrowEl = buildArrow();
+      positionArrow(arrowEl, s.target);
+      // Burst at the target element's settled position
+      const fresh = document.querySelector(s.target);
+      if (fresh) {
+        const r = fresh.getBoundingClientRect();
         burst(r.left + r.width / 2, r.top + r.height / 2, s.color);
       }
-    }, 400);
+    }, 700);
 
     // Next button
     const btn = document.getElementById('tour-next-btn');
@@ -3175,8 +3174,8 @@ function showTour() {
     s.id = 'tour-styles';
     s.textContent = `
       @keyframes arrowBounce {
-        from { transform: translateY(0); }
-        to   { transform: translateY(14px); }
+        from { transform: translateX(-50%) translateY(0px); }
+        to   { transform: translateX(-50%) translateY(12px); }
       }
       @keyframes tourGlow {
         0%   { box-shadow: 0 12px 80px rgba(0,0,0,0.9), 0 0 60px rgba(79,195,247,0.12); }
