@@ -2927,14 +2927,14 @@ function showTour() {
 
   function buildArrow(dir, color) {
     const a = document.createElement('div');
-    const symbols = { down:'↓', up:'↑', left:'←', right:'→' };
+    const symbols = { down:'⬇️', up:'⬆️', left:'⬅️', right:'➡️' };
     a.style.cssText = `
-      position:fixed;z-index:9003;font-size:64px;color:${color};
+      position:fixed;z-index:9003;font-size:72px;
       animation:arrowBounce 0.6s ease-in-out infinite alternate;
-      filter:drop-shadow(0 0 18px ${color});pointer-events:none;
+      filter:drop-shadow(0 0 20px rgba(255,220,0,0.7));pointer-events:none;
       text-align:center;line-height:1;
     `;
-    a.textContent = symbols[dir] || '↓';
+    a.textContent = symbols[dir] || '⬇️';
     document.body.appendChild(a);
     return a;
   }
