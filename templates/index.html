@@ -2823,123 +2823,258 @@ function faderStroll(onDone) {
 }
 
 // ── First-time walkthrough ────────────────────────────────────────────────────
-const TOUR_KEY = 'sf_tour_done';
+const TOUR_KEY = 'sf_tour_v2';
+
+const TOUR_STEPS = [
+  {
+    target: '#blend-fader',
+    color:  '#4fc3f7',
+    emoji:  '🎚️',
+    label:  'STEP 1 OF 5',
+    title:  'You\'re the DJ now.',
+    body:   'Drag left for what <strong style="color:#4fc3f7">critics</strong> love.<br>Drag right for what <strong style="color:#ffb74d">audiences</strong> love.<br>Every position is a different list.',
+    arrow:  'down',
+    onShow: () => faderStroll(),
+  },
+  {
+    target: '#movie-list',
+    color:  '#c678dd',
+    emoji:  '🍿',
+    label:  'STEP 2 OF 5',
+    title:  'Watch the magic happen.',
+    body:   'See those cards? Move the fader and they <strong style="color:#c678dd">reshuffle in real time</strong>. Same movies — totally different order. No algorithm. Just you.',
+    arrow:  'up',
+  },
+  {
+    target: '#movie-list',
+    color:  '#ffb74d',
+    emoji:  '🎬',
+    label:  'STEP 3 OF 5',
+    title:  'Tap any card.',
+    body:   'RT score. IMDb. Metacritic. Where to watch. <strong style="color:#ffb74d">Everything you need</strong> to make the call — right there.',
+    arrow:  'up',
+  },
+  {
+    target: '#queue-toggle',
+    color:  '#f5c400',
+    emoji:  '🔖',
+    label:  'STEP 4 OF 5',
+    title:  'Save it. It\'ll wait for you.',
+    body:   'Bookmark any movie or show. Come back tomorrow, next week — <strong style="color:#f5c400">your list is still here</strong>. No account needed.',
+    arrow:  'down',
+  },
+  {
+    target: '.hb-bar',
+    color:  '#66bb6a',
+    emoji:  '🎯',
+    label:  'STEP 5 OF 5',
+    title:  'Make it yours.',
+    body:   'Tap <strong style="color:#66bb6a">Seen it ✓</strong> or <strong style="color:#ef5350">No thanks 👎</strong> on any card. StreamFader learns your taste and moves things up or down for you.',
+    arrow:  'up',
+  },
+];
 
 function showTour() {
-  if (_ls.getItem(TOUR_KEY)) return; // already seen it
-
-  const steps = [
-    {
-      target: '#blend-fader',
-      emoji: '🎚️',
-      title: 'This is your fader.',
-      body: 'Drag left → what critics love.<br>Drag right → what audiences love.<br>You\'re the DJ.',
-      pos: 'below'
-    },
-    {
-      target: '#movie-list',
-      emoji: '🔀',
-      title: 'Watch the cards move.',
-      body: 'Every position of the fader is a different list.<br>Same movies. Totally different order.',
-      pos: 'right'
-    },
-    {
-      target: '#movie-list',
-      emoji: '🎬',
-      title: 'Tap any card.',
-      body: 'Get the full breakdown — RT score, IMDb, Metacritic, where to watch. Everything you need to decide.',
-      pos: 'right'
-    },
-    {
-      target: '#queue-toggle',
-      emoji: '🔖',
-      title: 'Save anything you like.',
-      body: 'Hit Save on any card and it stays here. Come back tomorrow — it\'ll still be waiting for you.',
-      pos: 'below'
-    },
-    {
-      target: '.hb-bar',
-      emoji: '🎯',
-      title: 'Train it to your taste.',
-      body: 'Tap <strong style="color:#66bb6a">Seen it</strong> or <strong style="color:#ef5350">No thanks</strong> and StreamFader learns what to push up for you.',
-      pos: 'above'
-    }
-  ];
+  if (_ls.getItem(TOUR_KEY)) return;
 
   let current = 0;
-  let overlay, bubble;
+  let tourEl, spotEl, arrowEl, skipEl;
 
-  function positionBubble(target, pos) {
+  // Confetti burst
+  function burst(x, y, color) {
+    const count = 18;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      const angle = (i / count) * 360;
+      const dist  = 40 + Math.random() * 50;
+      const size  = 6 + Math.random() * 6;
+      p.style.cssText = `
+        position:fixed;z-index:9999;border-radius:50%;pointer-events:none;
+        width:${size}px;height:${size}px;background:${color};
+        left:${x}px;top:${y}px;
+        transition:transform 0.6s ease-out,opacity 0.6s ease-out;
+        transform:translate(-50%,-50%);opacity:1;
+      `;
+      document.body.appendChild(p);
+      requestAnimationFrame(() => {
+        const rad = angle * Math.PI / 180;
+        p.style.transform = `translate(calc(-50% + ${Math.cos(rad)*dist}px), calc(-50% + ${Math.sin(rad)*dist}px))`;
+        p.style.opacity = '0';
+      });
+      setTimeout(() => p.remove(), 700);
+    }
+  }
+
+  function spotlightEl(target) {
     const el = document.querySelector(target);
-    if (!el) return;
+    if (!el) return null;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return el;
+  }
+
+  function buildArrow(dir, color) {
+    const a = document.createElement('div');
+    const symbols = { down:'↓', up:'↑', left:'←', right:'→' };
+    a.style.cssText = `
+      position:fixed;z-index:9003;font-size:42px;color:${color};
+      animation:arrowBounce 0.6s ease-in-out infinite alternate;
+      filter:drop-shadow(0 0 12px ${color});pointer-events:none;
+      text-align:center;line-height:1;
+    `;
+    a.textContent = symbols[dir] || '↓';
+    document.body.appendChild(a);
+    return a;
+  }
+
+  function positionArrow(arrow, targetSel, dir) {
+    const el = document.querySelector(targetSel);
+    if (!el || !arrow) return;
     const r = el.getBoundingClientRect();
-    const bw = 300, bh = 160;
-    let top, left;
-    if (pos === 'below') { top = r.bottom + 16; left = r.left + r.width / 2 - bw / 2; }
-    else if (pos === 'above') { top = r.top - bh - 16; left = r.left + r.width / 2 - bw / 2; }
-    else { top = r.top + r.height / 2 - bh / 2; left = r.right + 16; }
-    bubble.style.top  = Math.max(12, top)  + 'px';
-    bubble.style.left = Math.max(12, Math.min(left, window.innerWidth - bw - 12)) + 'px';
+    const cx = r.left + r.width / 2;
+    if (dir === 'down') {
+      arrow.style.top  = (r.bottom + 8) + 'px';
+      arrow.style.left = (cx - 21) + 'px';
+    } else if (dir === 'up') {
+      arrow.style.top  = (r.top - 56) + 'px';
+      arrow.style.left = (cx - 21) + 'px';
+    }
   }
 
   function showStep(n) {
-    const s = steps[n];
-    bubble.innerHTML = `
-      <div style="font-size:32px;margin-bottom:8px;">${s.emoji}</div>
-      <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:6px;">${s.title}</div>
-      <div style="font-size:13px;color:rgba(240,242,255,0.75);line-height:1.6;margin-bottom:14px;">${s.body}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:11px;color:rgba(255,255,255,0.3);">${n+1} of ${steps.length}</span>
-        <button onclick="tourNext()" style="
-          background:linear-gradient(135deg,#4fc3f7,#c678dd);
-          border:none;color:#fff;font-weight:800;font-size:13px;
-          padding:8px 20px;border-radius:20px;cursor:pointer;
-          box-shadow:0 0 16px rgba(79,195,247,0.4);
-        ">${n < steps.length - 1 ? 'Next →' : 'Let\'s go 🎬'}</button>
-      </div>`;
-    positionBubble(s.target, s.pos);
-    bubble.style.opacity = '0';
-    bubble.style.transform = 'scale(0.9)';
-    requestAnimationFrame(() => {
-      bubble.style.transition = 'opacity 0.25s, transform 0.25s';
-      bubble.style.opacity = '1';
-      bubble.style.transform = 'scale(1)';
-    });
-    // On step 1, run the stroll
-    if (n === 0) faderStroll();
+    const s = TOUR_STEPS[n];
+
+    // Remove previous arrow
+    if (arrowEl) { arrowEl.remove(); arrowEl = null; }
+
+    // Scroll target into view
+    const targetDom = spotlightEl(s.target);
+
+    // Build bubble
+    const dots = TOUR_STEPS.map((_, i) =>
+      `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 3px;
+        background:${i === n ? s.color : 'rgba(255,255,255,0.2)'};
+        transform:scale(${i === n ? 1.3 : 1});transition:all 0.2s;"></span>`
+    ).join('');
+
+    tourEl.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <span style="font-size:10px;font-weight:800;letter-spacing:0.15em;color:${s.color};opacity:0.8;">${s.label}</span>
+        <span style="font-size:22px;">${s.emoji}</span>
+      </div>
+      <div style="font-size:20px;font-weight:900;color:#fff;margin-bottom:10px;line-height:1.2;">${s.title}</div>
+      <div style="font-size:13px;color:rgba(240,242,255,0.8);line-height:1.7;margin-bottom:18px;">${s.body}</div>
+      <div style="text-align:center;margin-bottom:16px;">${dots}</div>
+      <div style="display:flex;justify-content:center;">
+        <button id="tour-next-btn" style="
+          background:linear-gradient(135deg,${s.color},${s.color}99);
+          border:none;color:#000;font-weight:900;font-size:15px;
+          padding:12px 32px;border-radius:30px;cursor:pointer;
+          box-shadow:0 0 24px ${s.color}66;
+          transition:transform 0.1s;
+          letter-spacing:0.04em;
+        ">${n < TOUR_STEPS.length - 1 ? '→ NEXT' : '🎬 LET\'S WATCH'}</button>
+      </div>
+    `;
+    tourEl.style.borderColor = s.color + '66';
+    tourEl.style.boxShadow = `0 8px 60px rgba(0,0,0,0.8), 0 0 0 1px ${s.color}22, 0 0 40px ${s.color}22`;
+
+    // Animate in
+    tourEl.style.opacity = '0';
+    tourEl.style.transform = 'scale(0.85) translateY(20px)';
+    setTimeout(() => {
+      tourEl.style.transition = 'opacity 0.3s, transform 0.3s, border-color 0.3s, box-shadow 0.3s';
+      tourEl.style.opacity = '1';
+      tourEl.style.transform = 'scale(1) translateY(0)';
+    }, 50);
+
+    // Arrow — wait for scroll
+    setTimeout(() => {
+      arrowEl = buildArrow(s.arrow, s.color);
+      positionArrow(arrowEl, s.target, s.arrow);
+      // Burst at arrow
+      if (targetDom) {
+        const r = targetDom.getBoundingClientRect();
+        burst(r.left + r.width / 2, r.top + r.height / 2, s.color);
+      }
+    }, 400);
+
+    // Next button
+    const btn = document.getElementById('tour-next-btn');
+    if (btn) {
+      btn.onmouseenter = () => btn.style.transform = 'scale(1.06)';
+      btn.onmouseleave = () => btn.style.transform = 'scale(1)';
+      btn.onclick = (e) => { e.stopPropagation(); advance(); };
+    }
+
+    if (s.onShow) s.onShow();
   }
 
-  window.tourNext = function() {
+  function advance() {
     current++;
-    if (current >= steps.length) {
-      overlay.remove();
-      bubble.remove();
-      _ls.setItem(TOUR_KEY, '1');
+    if (current >= TOUR_STEPS.length) {
+      endTour();
     } else {
       showStep(current);
     }
-  };
+  }
 
-  overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9000;backdrop-filter:blur(2px);';
-  overlay.onclick = () => { window.tourNext(); };
-  document.body.appendChild(overlay);
+  function endTour() {
+    if (arrowEl) arrowEl.remove();
+    if (skipEl)  skipEl.remove();
+    tourEl.style.transition = 'opacity 0.3s, transform 0.3s';
+    tourEl.style.opacity = '0';
+    tourEl.style.transform = 'scale(0.85)';
+    setTimeout(() => {
+      tourEl.remove();
+      // Big finale burst
+      burst(window.innerWidth/2, window.innerHeight/2, '#4fc3f7');
+      burst(window.innerWidth/2, window.innerHeight/2, '#c678dd');
+      burst(window.innerWidth/2, window.innerHeight/2, '#ffb74d');
+    }, 300);
+    _ls.setItem(TOUR_KEY, '1');
+  }
 
-  bubble = document.createElement('div');
-  bubble.style.cssText = `
-    position:fixed;z-index:9001;
-    background:linear-gradient(135deg,#0d0f1a,#111428);
-    border:1px solid rgba(79,195,247,0.35);
-    border-radius:16px;padding:20px 22px;width:300px;
-    box-shadow:0 8px 40px rgba(0,0,0,0.7),0 0 0 1px rgba(79,195,247,0.1);
+  // Inject bounce keyframes
+  if (!document.getElementById('tour-styles')) {
+    const s = document.createElement('style');
+    s.id = 'tour-styles';
+    s.textContent = `
+      @keyframes arrowBounce {
+        from { transform: translateY(0); }
+        to   { transform: translateY(10px); }
+      }
+    `;
+    document.head.appendChild(s);
+  }
+
+  // Build main bubble (always centered, fixed)
+  tourEl = document.createElement('div');
+  tourEl.style.cssText = `
+    position:fixed;bottom:32px;left:50%;transform:translateX(-50%) scale(0.85);
+    z-index:9002;width:360px;
+    background:linear-gradient(160deg,#0d0f1a 0%,#131628 100%);
+    border:1px solid rgba(79,195,247,0.3);
+    border-radius:20px;padding:24px 26px;
+    box-shadow:0 8px 60px rgba(0,0,0,0.8);
+    opacity:0;
   `;
-  document.body.appendChild(bubble);
+  document.body.appendChild(tourEl);
 
-  // Wait for content to load before showing tour
-  setTimeout(() => showStep(0), 1200);
+  // Skip button
+  skipEl = document.createElement('div');
+  skipEl.style.cssText = `
+    position:fixed;top:20px;left:50%;transform:translateX(-50%);
+    z-index:9003;font-size:12px;color:rgba(255,255,255,0.3);
+    cursor:pointer;letter-spacing:0.1em;padding:6px 12px;
+  `;
+  skipEl.textContent = 'skip tour';
+  skipEl.onclick = endTour;
+  document.body.appendChild(skipEl);
+
+  setTimeout(() => showStep(0), 800);
 }
 
-// Show tour only on first visit (not in fresh mode)
+// Show tour only on first visit
 if (!_ls.getItem(TOUR_KEY)) {
   document.addEventListener('sf:content-loaded', () => showTour(), { once: true });
 }
