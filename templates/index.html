@@ -1997,16 +1997,26 @@ function renderCards() {
 function miniMeters(item) {
   const hasReal = item.rt_score != null || item.mc_score != null || item.imdb_score != null;
 
-  // If no real review scores exist, show TMDb community score as a single honest fallback
-  if (!hasReal && item.tmdb_vote != null) {
-    const pct = Math.min(100, Math.round(item.tmdb_vote * 10));
-    return `<div class="card-meters">
-      <div class="mini-meter" style="width:100%">
-        <span class="mini-meter-label">TMDb</span>
-        <div class="mini-meter-track"><div class="mini-meter-fill" style="width:${pct}%;background:#01d277;box-shadow:0 0 4px #01d27788;"></div></div>
-        <span class="mini-meter-val" style="color:#01d277">${item.tmdb_vote.toFixed(1)}</span>
-      </div>
-    </div>`;
+  // If no real review scores — try tmdb_vote, then fall back to the composite scores
+  // that are always computed (critic_score / audience_score) from whatever data we have
+  if (!hasReal) {
+    const fallbackRaw = item.tmdb_vote ?? (
+      item.critic_score != null || item.audience_score != null
+        ? ((item.critic_score ?? item.audience_score) + (item.audience_score ?? item.critic_score)) / 2 / 10
+        : null
+    );
+    if (fallbackRaw != null) {
+      const label = item.tmdb_vote != null ? 'TMDb' : 'Score';
+      const pct   = Math.min(100, Math.round(fallbackRaw * 10));
+      const disp  = Number(fallbackRaw).toFixed(1);
+      return `<div class="card-meters">
+        <div class="mini-meter" style="width:100%">
+          <span class="mini-meter-label">${label}</span>
+          <div class="mini-meter-track"><div class="mini-meter-fill" style="width:${pct}%;background:#01d277;box-shadow:0 0 4px #01d27788;"></div></div>
+          <span class="mini-meter-val" style="color:#01d277">${disp}</span>
+        </div>
+      </div>`;
+    }
   }
 
   // Always render all 3 rows — consistent layout on every card
