@@ -2351,6 +2351,14 @@ async function loadContent(force = false) {
       return;
     }
 
+    // Server is still building the cache — retry in 8 seconds
+    if (data.loading && (!data.movies || data.movies.length === 0)) {
+      document.getElementById('data-info').innerHTML =
+        `<span class="live-dot" style="background:#ffb74d"></span> Warming up… checking back in a moment`;
+      setTimeout(() => loadContent(false), 8000);
+      return;
+    }
+
     allMovies = data.movies || [];
     allTV     = data.tv     || [];
 

@@ -78,12 +78,10 @@ def content():
             threading.Thread(target=_background_refresh, daemon=True).start()
         return jsonify(cached)
 
-    # No cache at all — must wait for a live fetch
-    try:
-        return jsonify(get_top_content(force=False))
-    except Exception as e:
-        app.logger.error(f"Content fetch failed: {e}")
-        return jsonify({'movies': [], 'tv': [], 'error': 'fetch_failed', 'fetched_at': None}), 500
+    # No cache yet — kick off background build and tell the client to retry.
+    # Never block a request waiting 60s for a cold fetch (gunicorn timeout killer).
+    threading.Thread(target=_background_refresh, daemon=True).start()
+    return jsonify({'movies': [], 'tv': [], 'loading': True, 'fetched_at': None})
 
 @app.route('/api/top10')
 def top10():
