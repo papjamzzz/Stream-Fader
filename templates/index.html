@@ -70,7 +70,7 @@
 
     /* ── HERO INTRO ── */
     .hero-intro {
-      padding: 32px 40px 28px;
+      padding: 36px 40px 32px;
       background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
       border-bottom: 1px solid var(--border);
       text-align: center;
@@ -89,13 +89,14 @@
       color: var(--dim);
       line-height: 1.6;
       max-width: 620px;
-      margin-bottom: 12px;
+      margin: 0 auto 12px;
     }
     .hero-sources {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
       align-items: center;
+      justify-content: center;
     }
     .hero-sources-label {
       font-size: 12px;
@@ -119,7 +120,7 @@
        THE FADER — HERO SECTION  (THE GIMMICK)
     ══════════════════════════════════════════════ */
     .fader-section {
-      padding: 40px 48px 36px;
+      padding: 36px 48px 36px;
       background: linear-gradient(180deg, #0a0c18 0%, #08090d 100%);
       border-bottom: 2px solid rgba(198,120,221,0.25);
       position: sticky;
@@ -293,7 +294,7 @@
     .content-area {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 0 16px 40px;
+      padding: 24px 16px 40px;
     }
 
     /* ── TWO-COLUMN LAYOUT ── */
@@ -382,8 +383,7 @@
       padding: 4px 12px;
       border-radius: 12px;
       font-weight: 700;
-      align-self: flex-end;
-      margin-bottom: 6px;
+      align-self: center;
     }
 
     /* ── POSTER CARD GRID ── */
@@ -1372,8 +1372,8 @@
     /* ── TOP 10 CONSENSUS LISTS ── */
     .top10-section {
       max-width: 1200px;
-      margin: 0 auto 0;
-      padding: 36px 28px 40px;
+      margin: 0 auto;
+      padding: 40px 28px 40px;
     }
     .top10-header {
       text-align: center;
@@ -1556,9 +1556,9 @@
     /* ── SHOW MORE BUTTON ── */
     .show-more-btn {
       display: none;
-      width: 100%;
-      margin-top: 14px;
-      padding: 12px;
+      width: auto;
+      margin: 14px auto 0;
+      padding: 12px 32px;
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 10px;
@@ -1620,12 +1620,12 @@
 <body>
 
 <!-- ═══════════════════ HEADER ═══════════════════ -->
-<header class="header" style="flex-direction:row;padding:10px 32px;align-items:center;">
+<header class="header" style="flex-direction:row;padding:18px 32px;align-items:center;">
   <!-- left spacer — matches saved button width so wordmark stays truly centered -->
   <div style="flex:1;"></div>
   <!-- cinematic wordmark — center -->
   <div style="text-align:center;">
-    <div style="font-size:clamp(36px,4.5vw,60px);font-weight:900;letter-spacing:-0.03em;line-height:0.95;">
+    <div style="font-size:clamp(72px,9vw,120px);font-weight:900;letter-spacing:-0.03em;line-height:0.95;">
       <span style="color:#ffffff;">Stream</span><span style="background:linear-gradient(90deg,#4fc3f7 0%,#c678dd 50%,#ffb74d 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Fader</span>
     </div>
   </div>
