@@ -114,6 +114,22 @@ def parse_omdb_scores(omdb):
                 imdb = round(float(val.split('/')[0]) * 10)
         except Exception:
             pass
+    # OMDb also stores these as top-level fields — always present if the title exists.
+    # Many titles have imdbRating/Metascore but an empty Ratings[] array.
+    if imdb is None:
+        try:
+            raw = omdb.get('imdbRating', 'N/A')
+            if raw and raw not in ('N/A', ''):
+                imdb = round(float(raw) * 10)
+        except Exception:
+            pass
+    if mc is None:
+        try:
+            raw = omdb.get('Metascore', 'N/A')
+            if raw and raw not in ('N/A', ''):
+                mc = int(raw)
+        except Exception:
+            pass
     critics = [s for s in [rt, mc] if s is not None]
     critic = round(sum(critics) / len(critics)) if critics else None
     imdb_display = round(imdb / 10, 1) if imdb else None
@@ -511,6 +527,8 @@ def _enrich_movie(source, item):
             details = tmdb_get(f'/movie/{tmdb_id}', {'append_to_response': 'external_ids,watch/providers'})
             imdb_id = (details.get('external_ids') or {}).get('imdb_id') or details.get('imdb_id')
             scores = best_scores(imdb_id) if imdb_id else {}
+            if item.get('vote_average'):
+                scores.setdefault('tmdb_vote', round(item['vote_average'], 1))
             if not scores.get('critic') and not scores.get('audience'):
                 if item.get('vote_average'):
                     # TMDb fallback: vote_average used for both poles as bridge until real scores load
@@ -573,6 +591,7 @@ def _movie_record(uid, imdb_id, title, overview, poster, release, providers, gen
         'rt_score': scores.get('rt'), 'rt_audience': scores.get('rt_audience'),
         'mc_score': scores.get('mc'), 'imdb_score': scores.get('imdb_display'),
         'letterboxd': scores.get('letterboxd'), 'trakt_score': scores.get('trakt'),
+        'tmdb_vote': scores.get('tmdb_vote'),
     }
 
 
@@ -783,6 +802,8 @@ def _enrich_tv(source, item):
 
             imdb_id  = (details.get('external_ids') or {}).get('imdb_id')
             scores   = best_scores(imdb_id) if imdb_id else {}
+            if item.get('vote_average'):
+                scores.setdefault('tmdb_vote', round(item['vote_average'], 1))
             if not scores.get('critic') and not scores.get('audience'):
                 if item.get('vote_average'):
                     tmdb_scaled = round(item['vote_average'] * 10)
@@ -880,6 +901,7 @@ def _tv_record(uid, imdb_id, title, overview, poster, release, providers, genres
         'rt_score': scores.get('rt'), 'rt_audience': scores.get('rt_audience'),
         'mc_score': scores.get('mc'), 'imdb_score': scores.get('imdb_display'),
         'letterboxd': scores.get('letterboxd'), 'trakt_score': scores.get('trakt'),
+        'tmdb_vote': scores.get('tmdb_vote'),
     }
 
 
