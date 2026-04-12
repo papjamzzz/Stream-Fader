@@ -149,6 +149,77 @@ def mdblist_fetch(imdb_id):
         return {}
 
 
+def mdblist_bulk_prefetch(imdb_ids):
+    """Fetch scores for up to 250 IMDb IDs in a single MDBList API call.
+    Populates _score_cache for each ID so individual best_scores() calls are cache hits.
+    Returns number of IDs successfully populated."""
+    if not MDBLIST_KEY or not imdb_ids:
+        return 0
+    populated = 0
+    # MDBList bulk: comma-separated IMDb IDs, max ~250 per call
+    BATCH = 200
+    ids_list = [i for i in imdb_ids if i and i not in _score_cache]
+    for start in range(0, len(ids_list), BATCH):
+        batch = ids_list[start:start + BATCH]
+        if not batch:
+            continue
+        try:
+            r = requests.get('https://mdblist.com/api/',
+                             params={'apikey': MDBLIST_KEY, 'i': ','.join(batch)},
+                             timeout=15)
+            if not r.ok:
+                break
+            results = r.json()
+            # Bulk response is a list when multiple IDs are given
+            if isinstance(results, dict):
+                results = [results]
+            for item in results:
+                iid = item.get('imdbid') or item.get('imdb_id')
+                if not iid or item.get('response') == 'False':
+                    continue
+                s = parse_mdblist_scores(item)
+                if not s:
+                    continue
+                # Compute critic/audience composites
+                scores = {
+                    'rt': s.get('rt'), 'rt_audience': s.get('rt_audience'),
+                    'mc': s.get('mc'), 'imdb': s.get('imdb'),
+                    'imdb_display': s.get('imdb_display'),
+                    'letterboxd': s.get('letterboxd'), 'trakt': s.get('trakt'),
+                    'critic': None, 'audience': None,
+                }
+                critic_parts, critic_weights = [], []
+                if scores['rt'] is not None:
+                    critic_parts.append(scores['rt'] * 0.70); critic_weights.append(0.70)
+                if scores['mc'] is not None:
+                    critic_parts.append(scores['mc'] * 0.30); critic_weights.append(0.30)
+                if critic_parts:
+                    scores['critic'] = round(sum(critic_parts) / sum(critic_weights))
+                elif scores['imdb'] is not None:
+                    scores['critic'] = scores['imdb']
+
+                aud_parts, aud_weights = [], []
+                if scores['rt_audience'] is not None:
+                    aud_parts.append(scores['rt_audience'] * 0.50); aud_weights.append(0.50)
+                if scores['imdb'] is not None:
+                    aud_parts.append(scores['imdb'] * 0.25); aud_weights.append(0.25)
+                if scores['letterboxd'] is not None:
+                    aud_parts.append(scores['letterboxd'] * 0.15); aud_weights.append(0.15)
+                if scores['trakt'] is not None:
+                    aud_parts.append(scores['trakt'] * 0.10); aud_weights.append(0.10)
+                if aud_parts:
+                    scores['audience'] = round(sum(aud_parts) / sum(aud_weights))
+
+                if scores['critic'] is not None or scores['audience'] is not None:
+                    _score_cache[iid] = scores
+                    populated += 1
+        except Exception:
+            break
+    if populated:
+        _save_score_cache()
+    return populated
+
+
 def parse_mdblist_scores(data):
     scores = {}
     for rating in data.get('ratings', []):
@@ -491,6 +562,19 @@ def fetch_movies():
             deduped.append((src, item))
 
     candidates = deduped[:1000]
+
+    # ── Bulk-prefetch MDBList scores before parallel enrichment ───────────────
+    # Collects IMDb IDs from Trakt candidates (tmdb candidates need a detail call first).
+    # This slashes MDBList quota from 200+ individual calls to 1-2 bulk calls per build.
+    bulk_imdb_ids = []
+    for src, item in candidates:
+        if src == 'trakt_movie':
+            iid = (item.get('ids') or {}).get('imdb')
+            if iid:
+                bulk_imdb_ids.append(iid)
+    if bulk_imdb_ids:
+        mdblist_bulk_prefetch(bulk_imdb_ids)
+
     enriched = []
     with ThreadPoolExecutor(max_workers=2) as ex:
         futures = {ex.submit(_enrich_movie, src, item): (src, item) for src, item in candidates}
@@ -735,6 +819,20 @@ def fetch_tv():
         if imdb_id and imdb_id not in seen_ids:
             seen_ids.add(imdb_id)
             candidates.append(('trakt_show', t))
+
+    # ── Bulk-prefetch MDBList scores before parallel enrichment ───────────────
+    bulk_tv_imdb_ids = []
+    for src, item in candidates:
+        if src == 'trakt_show':
+            iid = (item.get('ids') or {}).get('imdb')
+            if iid:
+                bulk_tv_imdb_ids.append(iid)
+        elif src == 'tvmaze':
+            iid = (item['show'].get('externals') or {}).get('imdb')
+            if iid:
+                bulk_tv_imdb_ids.append(iid)
+    if bulk_tv_imdb_ids:
+        mdblist_bulk_prefetch(bulk_tv_imdb_ids)
 
     enriched = []
     with ThreadPoolExecutor(max_workers=2) as ex:
@@ -1156,6 +1254,17 @@ def get_top_content(force=False):
 
     movies = fetch_movies()
     tv     = fetch_tv()
+
+    # Post-build bulk score top-up: grab RT/MC for any tmdb items that still
+    # lack critic scores (their imdb_ids were only known after the detail call).
+    # A second bulk pass fills them in for the next cache read — costs just 1-2 API calls.
+    missing_ids = [
+        item['imdb_id'] for item in movies + tv
+        if item.get('imdb_id') and item.get('rt_score') is None and item.get('imdb_id') not in _score_cache
+    ]
+    if missing_ids:
+        mdblist_bulk_prefetch(missing_ids)
+
     pick   = generate_top_pick(movies, tv)
 
     data = {
