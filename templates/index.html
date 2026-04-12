@@ -2017,14 +2017,16 @@ function miniMeters(item) {
   }
 
   // Always render all 3 rows — consistent layout on every card
+  // imdb_score may be TMDb vote_average when OMDb is unavailable — label it accordingly
+  const imdbLabel = (item.rt_score == null && item.mc_score == null && item.tmdb_vote != null) ? 'TMDb' : 'IMDb';
   const meters = [
     { label: 'RT',   val: item.rt_score,   color: '#fa4c0c',
       disp: item.rt_score != null ? `${item.rt_score}%` : '—' },
     { label: 'MC',   val: item.mc_score,   color: '#ffcc34',
       disp: item.mc_score != null ? `${item.mc_score}` : '—' },
-    { label: 'IMDb', val: item.imdb_score != null ? Math.round(item.imdb_score * 10) : null,
+    { label: imdbLabel, val: item.imdb_score != null ? Math.round(item.imdb_score * 10) : null,
       color: '#f5c518',
-      disp: item.imdb_score != null ? item.imdb_score.toFixed(1) : '—' },
+      disp: item.imdb_score != null ? Number(item.imdb_score).toFixed(1) : '—' },
   ];
   return `<div class="card-meters">${meters.map(m => {
     const pct  = m.val != null ? Math.min(100, Math.round(m.val)) : 0;

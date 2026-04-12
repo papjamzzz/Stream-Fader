@@ -527,14 +527,17 @@ def _enrich_movie(source, item):
             details = tmdb_get(f'/movie/{tmdb_id}', {'append_to_response': 'external_ids,watch/providers'})
             imdb_id = (details.get('external_ids') or {}).get('imdb_id') or details.get('imdb_id')
             scores = best_scores(imdb_id) if imdb_id else {}
-            if item.get('vote_average'):
-                scores.setdefault('tmdb_vote', round(item['vote_average'], 1))
+            va = item.get('vote_average') or details.get('vote_average')
+            if va:
+                scores.setdefault('tmdb_vote', round(va, 1))
+                # Always guarantee at least one displayable score — use TMDb vote as floor
+                scores.setdefault('imdb_display', round(va, 1))
+                scores.setdefault('imdb', round(va * 10))
             if not scores.get('critic') and not scores.get('audience'):
-                if item.get('vote_average'):
-                    # TMDb fallback: vote_average used for both poles as bridge until real scores load
-                    tmdb_scaled = round(item['vote_average'] * 10)
+                if va:
+                    tmdb_scaled = round(va * 10)
                     pop = item.get('popularity', 50)
-                    pop_scaled = min(100, round(50 + (pop / 20)))  # popularity → audience nudge
+                    pop_scaled = min(100, round(50 + (pop / 20)))
                     scores['critic'] = tmdb_scaled
                     scores['audience'] = min(100, round((tmdb_scaled + pop_scaled) / 2))
                 else:
@@ -802,11 +805,14 @@ def _enrich_tv(source, item):
 
             imdb_id  = (details.get('external_ids') or {}).get('imdb_id')
             scores   = best_scores(imdb_id) if imdb_id else {}
-            if item.get('vote_average'):
-                scores.setdefault('tmdb_vote', round(item['vote_average'], 1))
+            va = item.get('vote_average') or details.get('vote_average')
+            if va:
+                scores.setdefault('tmdb_vote', round(va, 1))
+                scores.setdefault('imdb_display', round(va, 1))
+                scores.setdefault('imdb', round(va * 10))
             if not scores.get('critic') and not scores.get('audience'):
-                if item.get('vote_average'):
-                    tmdb_scaled = round(item['vote_average'] * 10)
+                if va:
+                    tmdb_scaled = round(va * 10)
                     pop = item.get('popularity', 50)
                     pop_scaled = min(100, round(50 + (pop / 20)))
                     scores['critic'] = tmdb_scaled
