@@ -2156,15 +2156,24 @@ function topN(items, f, n) {
     return true;
   });
 
-  // Polarized rank interpolation.
-  // byC ranks by: critic*1.5 - audience*0.5  → rewards critic darlings, pushes crowd-pleasers down
-  // byA ranks by: audience*1.5 - critic*0.5  → rewards crowd-pleasers, pushes critic darlings down
-  // A movie loved equally by both (Wild Robot: c=98,a=95) ranks mid-pack at both poles,
-  // rising to the top only near fader=50 where balanced scores win.
-  const polarC = i => (i.critic_score ?? 50) * 1.5 - (i.audience_score ?? 50) * 0.5;
-  const polarA = i => (i.audience_score ?? 50) * 1.5 - (i.critic_score ?? 50) * 0.5;
-  const byC   = [...filtered].sort((a, b) => polarC(b) - polarC(a));
-  const byA   = [...filtered].sort((a, b) => polarA(b) - polarA(a));
+  // Use RAW subscores for each pole — RT Tomatometer for critics, RT Audience/IMDb for audience.
+  // These diverge far more than the pre-blended composite scores, creating real card movement.
+  // Tiny deterministic jitter (from title length) nudges ties apart differently each film.
+  const rawC = i => {
+    const rt  = i.rt_score      ?? i.critic_score   ?? 50;
+    const aud = i.rt_audience   ?? i.audience_score  ?? 50;
+    const jitter = ((i.title || '').length % 7) * 0.4; // 0–2.4pt spread, stable per title
+    return rt * 1.6 - aud * 0.6 + jitter;
+  };
+  const rawA = i => {
+    const aud = i.rt_audience   ?? i.audience_score  ?? 50;
+    const rt  = i.rt_score      ?? i.critic_score    ?? 50;
+    const imdb = i.imdb_score != null ? i.imdb_score * 10 : aud;
+    const jitter = ((i.title || '').length % 7) * 0.4;
+    return (aud * 0.7 + imdb * 0.3) * 1.6 - rt * 0.6 + jitter;
+  };
+  const byC   = [...filtered].sort((a, b) => rawC(b) - rawC(a));
+  const byA   = [...filtered].sort((a, b) => rawA(b) - rawA(a));
   const byPop = [...filtered].sort((a, b) => (b.popularity ?? 0)      - (a.popularity ?? 0));
   const cRank   = new Map(byC.map((item, i)   => [item.id, i]));
   const aRank   = new Map(byA.map((item, i)   => [item.id, i]));
