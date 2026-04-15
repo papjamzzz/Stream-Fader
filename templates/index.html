@@ -18,6 +18,53 @@
   <meta name="twitter:title" content="StreamFader — Blend Critic &amp; Audience Scores">
   <meta name="twitter:description" content="Slide the fader to blend critic and audience scores. Find the perfect movie or TV show based on exactly whose opinion you trust.">
   <meta name="twitter:image" content="https://stream.creativekonsoles.com/static/streamfader_logo_horizontal_color.svg">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "StreamFader",
+        "url": "https://stream.creativekonsoles.com",
+        "description": "StreamFader blends critic scores from Rotten Tomatoes and Metacritic with audience ratings from IMDb using a DJ-style crossfader. Find the perfect movie or TV show to watch tonight.",
+        "applicationCategory": "EntertainmentApplication",
+        "operatingSystem": "Web",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "creator": { "@type": "Organization", "name": "Creative Konsoles", "url": "https://creativekonsoles.com" }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is StreamFader?",
+            "acceptedAnswer": { "@type": "Answer", "text": "StreamFader is a free tool that blends critic scores (Rotten Tomatoes, Metacritic) with audience ratings (IMDb) using a DJ-style crossfader. Slide left for what critics love, slide right for what audiences love, or find the sweet spot where both agree." }
+          },
+          {
+            "@type": "Question",
+            "name": "Why do critics and audiences disagree on movies?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Critics evaluate film craft — cinematography, pacing, originality, and narrative structure. Audiences vote with their gut — entertainment value, emotional payoff, rewatchability. StreamFader lets you weight both based on what you actually care about." }
+          },
+          {
+            "@type": "Question",
+            "name": "How is the StreamFader Score calculated?",
+            "acceptedAnswer": { "@type": "Answer", "text": "The SF Score is a weighted blend: score = critic × (1 − fader) + audience × fader. At 0% you rank by pure critic consensus. At 100% by pure audience vote. At 50% both have equal weight." }
+          },
+          {
+            "@type": "Question",
+            "name": "Where does StreamFader get its data?",
+            "acceptedAnswer": { "@type": "Answer", "text": "StreamFader pulls from TMDb for catalog data, OMDb for Rotten Tomatoes and Metacritic scores, and IMDb ratings. Data refreshes every 6 hours." }
+          },
+          {
+            "@type": "Question",
+            "name": "Is StreamFader free?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Yes, completely free. No account required, no ads. Built by Creative Konsoles." }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q65Z08WGRK"></script>
   <script>
@@ -1960,6 +2007,58 @@
 
   </div>
 </div>
+
+<!-- ═══════════════════ FAQ SECTION ═══════════════════ -->
+<section style="max-width:860px;margin:0 auto;padding:48px 24px 32px;">
+  <h2 style="font-size:28px;font-weight:900;color:#fff;text-align:center;margin-bottom:8px;letter-spacing:-0.02em;">Frequently Asked Questions</h2>
+  <p style="text-align:center;color:rgba(240,242,255,0.45);font-size:15px;margin-bottom:36px;">Everything you need to know about StreamFader</p>
+
+  <div style="display:flex;flex-direction:column;gap:2px;">
+
+    <details style="background:#0d0f1a;border:1px solid #1e2235;border-radius:10px;padding:18px 22px;cursor:pointer;">
+      <summary style="font-weight:700;font-size:16px;color:#fff;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+        What is StreamFader? <span style="color:#c678dd;font-size:20px;">+</span>
+      </summary>
+      <p style="margin-top:12px;color:rgba(240,242,255,0.65);font-size:15px;line-height:1.7;">StreamFader is a free tool that blends critic scores (Rotten Tomatoes, Metacritic) with audience ratings (IMDb) using a DJ-style crossfader. Slide left for what critics love, slide right for what audiences love, or find the sweet spot where both agree.</p>
+    </details>
+
+    <details style="background:#0d0f1a;border:1px solid #1e2235;border-radius:10px;padding:18px 22px;cursor:pointer;">
+      <summary style="font-weight:700;font-size:16px;color:#fff;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+        Why do critics and audiences so often disagree? <span style="color:#c678dd;font-size:20px;">+</span>
+      </summary>
+      <p style="margin-top:12px;color:rgba(240,242,255,0.65);font-size:15px;line-height:1.7;">Critics evaluate film craft — cinematography, pacing, originality, and narrative structure. Audiences vote with their gut — entertainment value, emotional payoff, rewatchability. Neither is wrong. StreamFader lets you weight both based on what you actually care about tonight.</p>
+    </details>
+
+    <details style="background:#0d0f1a;border:1px solid #1e2235;border-radius:10px;padding:18px 22px;cursor:pointer;">
+      <summary style="font-weight:700;font-size:16px;color:#fff;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+        How is the StreamFader Score calculated? <span style="color:#c678dd;font-size:20px;">+</span>
+      </summary>
+      <p style="margin-top:12px;color:rgba(240,242,255,0.65);font-size:15px;line-height:1.7;">The SF Score is a weighted blend: <code style="background:#1e2235;padding:2px 6px;border-radius:4px;color:#4fc3f7;">score = critic × (1 − fader) + audience × fader</code>. At 0% you're ranking by pure critic consensus. At 100% you're ranking by pure audience vote. At 50% both have equal weight. Scores are normalized to 100.</p>
+    </details>
+
+    <details style="background:#0d0f1a;border:1px solid #1e2235;border-radius:10px;padding:18px 22px;cursor:pointer;">
+      <summary style="font-weight:700;font-size:16px;color:#fff;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+        Where does the data come from? <span style="color:#c678dd;font-size:20px;">+</span>
+      </summary>
+      <p style="margin-top:12px;color:rgba(240,242,255,0.65);font-size:15px;line-height:1.7;">We pull from TMDb (The Movie Database) for catalog data, OMDb for Rotten Tomatoes and Metacritic scores, and IMDb ratings. Data refreshes every 6 hours so you're always seeing current scores.</p>
+    </details>
+
+    <details style="background:#0d0f1a;border:1px solid #1e2235;border-radius:10px;padding:18px 22px;cursor:pointer;">
+      <summary style="font-weight:700;font-size:16px;color:#fff;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+        What does "Seen it" and "No thanks" do? <span style="color:#c678dd;font-size:20px;">+</span>
+      </summary>
+      <p style="margin-top:12px;color:rgba(240,242,255,0.65);font-size:15px;line-height:1.7;"><strong style="color:#4ade80;">Seen it</strong> removes the title from your feed and signals that you liked similar content. <strong style="color:#f87171;">No thanks</strong> removes it and reduces similar content. Both wear off after 30 days. The more you use it, the better your feed gets tuned to your taste.</p>
+    </details>
+
+    <details style="background:#0d0f1a;border:1px solid #1e2235;border-radius:10px;padding:18px 22px;cursor:pointer;">
+      <summary style="font-weight:700;font-size:16px;color:#fff;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+        Is StreamFader free? <span style="color:#c678dd;font-size:20px;">+</span>
+      </summary>
+      <p style="margin-top:12px;color:rgba(240,242,255,0.65);font-size:15px;line-height:1.7;">Yes, completely free. No account required, no ads, no tracking beyond anonymous analytics. Built by <a href="https://creativekonsoles.com" style="color:#c678dd;text-decoration:none;font-weight:700;">Creative Konsoles</a>.</p>
+    </details>
+
+  </div>
+</section>
 
 <!-- ═══════════════════ SOCIAL FOOTER ═══════════════════ -->
 <div class="social-footer">
