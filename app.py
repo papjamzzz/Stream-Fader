@@ -338,5 +338,22 @@ def stats():
     return jsonify({'sessions': len(sessions), 'swipes': swipes, 'saves': saves, 'events': total})
 
 
+@app.route('/robots.txt')
+def robots():
+    return app.response_class(
+        "User-agent: *\nAllow: /\nSitemap: https://streamfader.com/sitemap.xml\n",
+        mimetype='text/plain'
+    )
+
+@app.route('/sitemap.xml')
+def sitemap():
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>'
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+           '<url><loc>https://streamfader.com/</loc>'
+           '<changefreq>daily</changefreq><priority>1.0</priority></url>'
+           '</urlset>')
+    return app.response_class(xml, mimetype='application/xml')
+
+
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=5556, debug=False)
