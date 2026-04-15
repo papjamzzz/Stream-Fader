@@ -1615,6 +1615,196 @@
       display: none;
     }
     #queue-count-badge.has-items { display: inline; }
+
+    /* ══════════════════════════════════════════════
+       MOBILE OPTIMIZATIONS  (≤ 480px)
+       All changes scoped to media queries — desktop unchanged.
+    ══════════════════════════════════════════════ */
+    @media (max-width: 480px) {
+
+      /* ── Header ── */
+      .header {
+        padding: 10px 12px !important;
+      }
+      /* Shrink the saved button */
+      #queue-toggle {
+        padding: 8px 14px;
+        font-size: 14px;
+        gap: 6px;
+      }
+      /* Give the amp button room (it's fixed top-left) */
+      .amp-btn {
+        top: 10px;
+        left: 10px;
+      }
+      .amp-svg { width: 56px; height: 25px; }
+
+      /* ── Fader section ── */
+      .fader-section {
+        padding: 10px 0 8px !important;
+        top: var(--header-h, 56px);
+      }
+      .fader-inner {
+        padding: 0 12px;
+      }
+      .fader-labels {
+        margin-bottom: 10px;
+      }
+      .fader-label {
+        font-size: 12px;
+        letter-spacing: 1px;
+      }
+      .fader-sweet-label {
+        font-size: 13px;
+      }
+      /* Smaller fader thumb on mobile — easier to grab, less vertical space eaten */
+      #blend-fader::-webkit-slider-thumb {
+        width: 22px;
+        height: 48px;
+      }
+      #blend-fader::-moz-range-thumb {
+        width: 22px;
+        height: 48px;
+      }
+      .fader-readout {
+        margin-top: 12px;
+        gap: 4px;
+      }
+      .readout-side {
+        font-size: 12px;
+      }
+      #blend-badge {
+        font-size: 13px;
+      }
+
+      /* ── Content area ── */
+      .content-area {
+        padding: 12px 8px 32px;
+      }
+
+      /* ── Taste helper bar — wrap gracefully ── */
+      .hb-bar {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+        font-size: 13px;
+        padding: 7px 14px;
+      }
+
+      /* ── Card grid — slightly tighter gap ── */
+      .card-list {
+        gap: 7px;
+      }
+
+      /* ── Column headers (Movies / TV) ── */
+      .col-header {
+        gap: 8px;
+      }
+      .col-title {
+        font-size: 17px;
+      }
+
+      /* ── Detail modal — stack poster + info vertically ── */
+      #detail-overlay {
+        padding: 0;
+        align-items: flex-end;
+      }
+      #detail-modal {
+        border-radius: 20px 20px 0 0;
+        max-height: 92vh;
+        max-width: 100vw;
+        width: 100%;
+        animation: none;
+      }
+      .detail-hero {
+        flex-direction: column;
+        gap: 14px;
+        padding: 20px 16px 14px;
+      }
+      .detail-poster {
+        width: 100px;
+      }
+      .detail-poster-placeholder {
+        width: 100px;
+        height: 150px;
+      }
+      .detail-title {
+        font-size: 20px;
+      }
+      .detail-overview {
+        padding: 0 16px 18px;
+        font-size: 14px;
+      }
+      .detail-footer {
+        padding: 12px 16px 20px;
+        gap: 8px;
+      }
+
+      /* ── Queue drawer — full width on mobile ── */
+      #queue-dropdown {
+        width: 100vw;
+        right: -100vw;
+      }
+
+      /* ── Genre pills — horizontally scrollable row ── */
+      .genre-filter-wrap,
+      [id*="genre"],
+      .genre-pills-row {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap !important;
+        scrollbar-width: none;
+      }
+      .genre-pill {
+        padding: 10px 18px;
+        font-size: 12px;
+        flex-shrink: 0;
+      }
+
+      /* ── Top 10 section ── */
+      .top10-section {
+        padding: 20px 10px;
+      }
+      .top10-header h2 {
+        font-size: 22px;
+      }
+      .top10-rank {
+        font-size: 20px !important;
+        width: 28px;
+      }
+
+      /* ── Info bar ── */
+      #info-bar {
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 6px 12px;
+      }
+
+      /* ── Social footer ── */
+      .social-footer {
+        padding: 20px 14px;
+        font-size: 13px;
+      }
+      .social-links {
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+
+    /* 600px: card grid already handled above; also fix fader for mid-size phones */
+    @media (max-width: 600px) {
+      .fader-section {
+        position: sticky;
+      }
+      /* Ensure genre pill containers scroll on tablets too */
+      .genre-filter-wrap,
+      .genre-pills-row {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+    }
   </style>
 </head>
 <body>
