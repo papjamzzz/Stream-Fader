@@ -1396,6 +1396,71 @@
     .vst-footer { display:flex;align-items:center;justify-content:center;padding:6px 16px 10px;gap:6px;border-top:1px solid rgba(255,255,255,0.05); }
     .vst-model-dot { width:5px;height:5px;border-radius:50%;opacity:0.7; }
 
+    /* ── EMAIL CAPTURE ── */
+    .email-capture-section {
+      background: linear-gradient(135deg, #0d0f1c 0%, #111327 100%);
+      border-top: 1px solid rgba(198,120,221,0.15);
+      border-bottom: 1px solid rgba(198,120,221,0.08);
+      padding: 48px 24px;
+      text-align: center;
+    }
+    .email-capture-inner { max-width: 480px; margin: 0 auto; }
+    .email-capture-heading {
+      font-size: 22px;
+      font-weight: 700;
+      color: #f0f2ff;
+      letter-spacing: 0.02em;
+      margin-bottom: 8px;
+    }
+    .email-capture-sub {
+      font-size: 14px;
+      color: rgba(240,242,255,0.5);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .email-capture-form {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .email-capture-input {
+      flex: 1;
+      min-width: 220px;
+      max-width: 320px;
+      background: #0a0b14;
+      border: 1px solid rgba(198,120,221,0.35);
+      border-radius: 8px;
+      padding: 11px 16px;
+      font-size: 14px;
+      color: #f0f2ff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .email-capture-input::placeholder { color: rgba(240,242,255,0.3); }
+    .email-capture-input:focus { border-color: rgba(198,120,221,0.75); }
+    .email-capture-btn {
+      background: #c678dd;
+      color: #0a0b14;
+      border: none;
+      border-radius: 8px;
+      padding: 11px 24px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .email-capture-btn:hover { background: #d48eef; }
+    .email-capture-btn:disabled { opacity: 0.5; cursor: default; }
+    .email-capture-msg {
+      margin-top: 14px;
+      font-size: 13px;
+      color: rgba(240,242,255,0.6);
+    }
+    .email-capture-msg.success { color: #98c379; }
+    .email-capture-msg.error   { color: #e06c75; }
+
     /* ── SOCIAL FOOTER ── */
     .social-footer {
       background: #05060e;
@@ -2060,6 +2125,19 @@
   </div>
 </section>
 
+<!-- ═══════════════════ EMAIL CAPTURE ═══════════════════ -->
+<div class="email-capture-section">
+  <div class="email-capture-inner">
+    <div class="email-capture-heading">Get weekly picks</div>
+    <div class="email-capture-sub">StreamFader updates + the week's most divisive movies — straight to your inbox.</div>
+    <form id="emailCaptureForm" class="email-capture-form" onsubmit="handleEmailSignup(event)">
+      <input type="email" id="emailInput" class="email-capture-input" placeholder="your@email.com" required autocomplete="email">
+      <button type="submit" class="email-capture-btn" id="emailSubmitBtn">Join</button>
+    </form>
+    <div id="emailCaptureMsg" class="email-capture-msg" style="display:none;"></div>
+  </div>
+</div>
+
 <!-- ═══════════════════ SOCIAL FOOTER ═══════════════════ -->
 <div class="social-footer">
   <div class="social-footer-label">Creative Konsoles</div>
@@ -2441,11 +2519,19 @@ function top12(items, f) {
 }
 
 // ── Fader UI ──────────────────────────────────────────
+let _faderGaTimer = null;
 function onFaderMove(val) {
   fader = parseInt(val);
   window._sfFader = fader;
   window._sfSession.faderMoves++;
   if (window._sfSession.faderMoves % 5 === 0) _track('fader', { fader });
+  // Debounced GA4 event — fires 1.5s after user stops moving the fader
+  clearTimeout(_faderGaTimer);
+  _faderGaTimer = setTimeout(() => {
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'fader_used', { event_category: 'engagement', fader_position: fader });
+    }
+  }, 1500);
   try { _ls.setItem('sf_fader', fader); } catch (_) {}
   const col = blendColor(fader);
   const criticPct  = 100 - fader;
@@ -2831,6 +2917,13 @@ function renderTop10List(containerId, items, type) {
 function openDetail(cardIndex) {
   const item = window._cardRegistry[cardIndex];
   if (!item) return;
+  if (typeof gtag !== 'undefined') {
+    gtag('event', 'title_opened', {
+      event_category: 'engagement',
+      event_label: item.title || '',
+      media_type: item.media_type || '',
+    });
+  }
   const overlay = document.getElementById('detail-overlay');
   const modal   = document.getElementById('detail-modal');
 
@@ -3118,6 +3211,49 @@ document.getElementById('helpClose').onclick = () => {
 document.getElementById('helpModal').onclick = (e) => {
     if (e.target === e.currentTarget) e.currentTarget.style.display = 'none';
 };
+
+// ── Email Capture ─────────────────────────────────────────
+async function handleEmailSignup(e) {
+  e.preventDefault();
+  const email  = document.getElementById('emailInput').value.trim();
+  const btn    = document.getElementById('emailSubmitBtn');
+  const msg    = document.getElementById('emailCaptureMsg');
+  const form   = document.getElementById('emailCaptureForm');
+  if (!email) return;
+  btn.disabled = true;
+  btn.textContent = '...';
+  try {
+    const res  = await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    form.style.display = 'none';
+    msg.style.display  = 'block';
+    if (data.ok) {
+      msg.className = 'email-capture-msg success';
+      msg.textContent = data.duplicate
+        ? "You're already on the list."
+        : "You're in. Weekly picks coming your way.";
+      if (!data.duplicate && typeof gtag !== 'undefined') {
+        gtag('event', 'email_signup', { event_category: 'conversion' });
+      }
+    } else {
+      msg.className = 'email-capture-msg error';
+      msg.textContent = 'Something went wrong — try again.';
+      form.style.display = 'flex';
+      btn.disabled = false;
+      btn.textContent = 'Join';
+    }
+  } catch (_) {
+    msg.className = 'email-capture-msg error';
+    msg.textContent = 'Something went wrong — try again.';
+    msg.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Join';
+  }
+}
 
 // ── Boot ─────────────────────────────────────────────────
 onFaderMove(50);

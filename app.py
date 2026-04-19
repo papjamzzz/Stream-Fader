@@ -202,9 +202,10 @@ def score_debug():
     })
 
 
-DATA_DIR   = os.getenv('DATA_DIR', 'data')
-PREFS_FILE = os.path.join(DATA_DIR, 'preferences.json')
-WATCH_FILE = os.path.join(DATA_DIR, 'watchlist.json')
+DATA_DIR        = os.getenv('DATA_DIR', 'data')
+PREFS_FILE      = os.path.join(DATA_DIR, 'preferences.json')
+WATCH_FILE      = os.path.join(DATA_DIR, 'watchlist.json')
+SUBSCRIBERS_FILE = os.path.join(DATA_DIR, 'subscribers.json')
 
 def _load_json(path):
     try:
@@ -317,6 +318,20 @@ def track():
     }
     _append_event(event)
     return jsonify({'ok': True})
+
+@app.route('/api/subscribe', methods=['POST'])
+def subscribe():
+    body  = request.get_json(force=True, silent=True) or {}
+    email = (body.get('email') or '').strip().lower()
+    if not email or '@' not in email or '.' not in email.split('@')[-1]:
+        return jsonify({'error': 'invalid_email'}), 400
+    subs = _load_json(SUBSCRIBERS_FILE)
+    if any(s.get('email') == email for s in subs):
+        return jsonify({'ok': True, 'duplicate': True})
+    subs.append({'email': email, 'ts': datetime.utcnow().isoformat()})
+    _save_json(SUBSCRIBERS_FILE, subs)
+    return jsonify({'ok': True})
+
 
 @app.route('/api/stats')
 def stats():
