@@ -202,10 +202,11 @@ def score_debug():
     })
 
 
-DATA_DIR        = os.getenv('DATA_DIR', 'data')
-PREFS_FILE      = os.path.join(DATA_DIR, 'preferences.json')
-WATCH_FILE      = os.path.join(DATA_DIR, 'watchlist.json')
+DATA_DIR         = os.getenv('DATA_DIR', 'data')
+PREFS_FILE       = os.path.join(DATA_DIR, 'preferences.json')
+WATCH_FILE       = os.path.join(DATA_DIR, 'watchlist.json')
 SUBSCRIBERS_FILE = os.path.join(DATA_DIR, 'subscribers.json')
+BREVO_API_KEY    = os.getenv('BREVO_API_KEY', '')
 
 def _load_json(path):
     try:
@@ -319,18 +320,39 @@ def track():
     _append_event(event)
     return jsonify({'ok': True})
 
+def _brevo_add_contact(email):
+    """Push email to Brevo contacts list. Returns True on success."""
+    if not BREVO_API_KEY:
+        return False
+    try:
+        r = requests.post(
+            'https://api.brevo.com/v3/contacts',
+            headers={'api-key': BREVO_API_KEY, 'Content-Type': 'application/json'},
+            json={'email': email, 'updateEnabled': True},
+            timeout=8,
+        )
+        return r.status_code in (200, 201, 204)
+    except Exception:
+        return False
+
 @app.route('/api/subscribe', methods=['POST'])
 def subscribe():
     body  = request.get_json(force=True, silent=True) or {}
     email = (body.get('email') or '').strip().lower()
     if not email or '@' not in email or '.' not in email.split('@')[-1]:
         return jsonify({'error': 'invalid_email'}), 400
+
+    # Check local cache for duplicate before hitting Brevo
     subs = _load_json(SUBSCRIBERS_FILE)
-    if any(s.get('email') == email for s in subs):
-        return jsonify({'ok': True, 'duplicate': True})
-    subs.append({'email': email, 'ts': datetime.utcnow().isoformat()})
-    _save_json(SUBSCRIBERS_FILE, subs)
-    return jsonify({'ok': True})
+    duplicate = any(s.get('email') == email for s in subs)
+
+    if not duplicate:
+        # Persist to Brevo (permanent) + local JSON (backup)
+        _brevo_add_contact(email)
+        subs.append({'email': email, 'ts': datetime.utcnow().isoformat()})
+        _save_json(SUBSCRIBERS_FILE, subs)
+
+    return jsonify({'ok': True, 'duplicate': duplicate})
 
 
 @app.route('/api/stats')
