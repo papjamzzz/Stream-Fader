@@ -11,7 +11,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 load_dotenv()
 
-OMDB_KEY      = os.getenv('OMDB_API_KEY', '')
 TMDB_KEY      = os.getenv('TMDB_API_KEY', '')
 TRAKT_ID      = os.getenv('TRAKT_CLIENT_ID', '')
 MDBLIST_KEY   = os.getenv('MDBLIST_API_KEY', '')
@@ -87,60 +86,6 @@ def is_streaming(channel_name):
 
 def strip_html(text):
     return re.sub(r'<[^>]+>', '', text or '')
-
-
-# ── OMDb ───────────────────────────────────────────────────────────────────────
-
-def omdb_fetch(imdb_id=None, title=None, year=None):
-    if not OMDB_KEY:
-        return {}
-    params = {'apikey': OMDB_KEY}
-    if imdb_id:
-        params['i'] = imdb_id
-    elif title:
-        params['t'] = title
-        if year:
-            params['y'] = year
-    try:
-        r = requests.get('http://www.omdbapi.com/', params=params, timeout=5)
-        return r.json() if r.ok else {}
-    except Exception:
-        return {}
-
-
-def parse_omdb_scores(omdb):
-    rt, mc, imdb = None, None, None
-    for rating in omdb.get('Ratings', []):
-        src, val = rating.get('Source', ''), rating.get('Value', '')
-        try:
-            if 'Rotten Tomatoes' in src:
-                rt = int(val.replace('%', ''))
-            elif 'Metacritic' in src:
-                mc = int(val.split('/')[0])
-            elif 'Internet Movie Database' in src:
-                imdb = round(float(val.split('/')[0]) * 10)
-        except Exception:
-            pass
-    # OMDb also stores these as top-level fields — always present if the title exists.
-    # Many titles have imdbRating/Metascore but an empty Ratings[] array.
-    if imdb is None:
-        try:
-            raw = omdb.get('imdbRating', 'N/A')
-            if raw and raw not in ('N/A', ''):
-                imdb = round(float(raw) * 10)
-        except Exception:
-            pass
-    if mc is None:
-        try:
-            raw = omdb.get('Metascore', 'N/A')
-            if raw and raw not in ('N/A', ''):
-                mc = int(raw)
-        except Exception:
-            pass
-    critics = [s for s in [rt, mc] if s is not None]
-    critic = round(sum(critics) / len(critics)) if critics else None
-    imdb_display = round(imdb / 10, 1) if imdb else None
-    return critic, imdb, rt, mc, imdb_display
 
 
 # ── MDBList ─────────────────────────────────────────────────────────────────────
@@ -326,22 +271,6 @@ def best_scores(imdb_id):
         if mdb and mdb.get('response') != 'False':
             s = parse_mdblist_scores(mdb)
             scores.update({k: v for k, v in s.items() if v is not None})
-
-    # Fire OMDb if ANY critic source is missing — not just when both RT AND MC are missing
-    if OMDB_KEY and imdb_id and (scores['rt'] is None or scores['mc'] is None or scores['imdb'] is None):
-        omdb = omdb_fetch(imdb_id=imdb_id)
-        if omdb and omdb.get('Response') != 'False':
-            _, imdb_raw, rt, mc, imdb_disp = parse_omdb_scores(omdb)
-            if scores['rt'] is None and rt is not None:
-                scores['rt'] = rt
-            if scores['mc'] is None and mc is not None:
-                scores['mc'] = mc
-            if scores['imdb'] is None and imdb_raw is not None:
-                scores['imdb'] = imdb_raw
-                scores['imdb_display'] = imdb_disp
-            rated = omdb.get('Rated', '')
-            if rated and rated not in ('N/A', ''):
-                scores['rated'] = rated.upper()
 
     # ── CRITIC POLE: RT Tomatometer 70% + Metacritic 30% ──────────────────────
     # RT is the dominant critic signal (broader panel, more culturally visible)
