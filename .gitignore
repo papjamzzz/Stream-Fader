@@ -1,7 +1,7 @@
 .env
 __pycache__/
 *.pyc
-data/cache.json
 .DS_Store
 
+# All runtime data — caches, user data, events, subscribers
 data/
