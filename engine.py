@@ -446,8 +446,9 @@ def fetch_movies():
     if TMDB_KEY:
         cutoff_1yr  = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
         cutoff_2yr  = (datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d')
+        cutoff_3yr  = (datetime.now() - timedelta(days=1095)).strftime('%Y-%m-%d')
 
-        # ALL POOLS: strictly last 2 years only
+        # ALL POOLS: last 3 years
         # ── POOL 1: Popular on streaming — broad recent titles ──
         for page in range(1, 12):
             data = tmdb_get('/discover/movie', {
@@ -455,7 +456,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_2yr,
+                'primary_release_date.gte': cutoff_3yr,
                 'vote_count.gte': MIN_VOTES,
                 'page': page,
             })
@@ -469,7 +470,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_2yr,
+                'primary_release_date.gte': cutoff_3yr,
                 'vote_count.gte': 200,
                 'vote_average.gte': 7.0,
                 'with_genres': '18,53,36,10752',  # Drama, Thriller, History, War
@@ -485,7 +486,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_2yr,
+                'primary_release_date.gte': cutoff_3yr,
                 'with_genres': str(DOC_GENRE_ID),
                 'vote_count.gte': 100,
                 'page': page,
@@ -501,7 +502,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_2yr,
+                'primary_release_date.gte': cutoff_3yr,
                 'vote_count.gte': 200,
                 'with_genres': '28,27,35,16,878',  # Action, Horror, Comedy, Animation, Sci-Fi
                 'page': page,
@@ -516,7 +517,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_2yr,
+                'primary_release_date.gte': cutoff_3yr,
                 'vote_count.gte': 300,
                 'vote_average.gte': 7.5,
                 'page': page,
@@ -530,7 +531,7 @@ def fetch_movies():
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'primary_release_date.gte': cutoff_2yr,
+                'primary_release_date.gte': cutoff_3yr,
                 'with_genres': '10751',  # Family
                 'vote_count.gte': 200,
                 'page': page,
@@ -546,7 +547,7 @@ def fetch_movies():
                     'watch_region': 'US',
                     'with_watch_providers': STREAMING_PROVIDER_IDS,
                     'without_genres': MOVIE_EXCLUDED_GENRES,
-                    'primary_release_date.gte': cutoff_2yr,
+                    'primary_release_date.gte': cutoff_3yr,
                     'with_original_language': lang,
                     'vote_count.gte': 100,
                     'vote_average.gte': 6.5,
@@ -570,7 +571,7 @@ def fetch_movies():
             seen_cand.add(cid)
             deduped.append((src, item))
 
-    candidates = deduped[:1000]
+    candidates = deduped[:1500]
 
     # ── Bulk-prefetch MDBList scores before parallel enrichment ───────────────
     # Collects IMDb IDs from Trakt candidates (tmdb candidates need a detail call first).
@@ -608,7 +609,7 @@ def fetch_movies():
         + x['rt_boost']
         + x['pop_score']
     ), reverse=True)
-    return enriched[:300]
+    return enriched[:500]
 
 
 def _enrich_movie(source, item):
@@ -692,7 +693,7 @@ def _movie_record(uid, imdb_id, title, overview, poster, release, providers, gen
 
 # ── TV Shows ───────────────────────────────────────────────────────────────────
 
-TV_RECENCY_CUTOFF = (datetime.now() - timedelta(days=548)).strftime('%Y-%m-%d')  # ~18 months
+TV_RECENCY_CUTOFF = (datetime.now() - timedelta(days=912)).strftime('%Y-%m-%d')  # ~30 months
 
 
 def fetch_tv():
@@ -707,7 +708,7 @@ def fetch_tv():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': TV_EXCLUDED_GENRES,
-                'air_date.gte': TV_RECENCY_CUTOFF,   # last episode within 18 months
+                'air_date.gte': TV_RECENCY_CUTOFF,   # last episode within 30 months
                 'vote_count.gte': 30,
                 'popularity.gte': 5,
                 'page': page,
@@ -871,7 +872,7 @@ def fetch_tv():
         + x['rt_boost']
         + x['pop_score']
     ), reverse=True)
-    return deduped[:300]
+    return deduped[:500]
 
 
 def _enrich_tv(source, item):
@@ -887,7 +888,7 @@ def _enrich_tv(source, item):
             if show_type and show_type not in TV_ALLOWED_TYPES:
                 return None
 
-            # Hard recency gate: last_air_date must be within 18 months
+            # Hard recency gate: last_air_date must be within 30 months
             # Also reject shows with no air date (likely cancelled/unaired)
             last_air = details.get('last_air_date') or item.get('last_air_date', '')
             if not last_air or last_air < TV_RECENCY_CUTOFF:
