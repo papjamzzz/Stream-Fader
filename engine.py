@@ -390,6 +390,7 @@ def fetch_movies():
                 'page': page,
             })
             for m in data.get('results', []):
+                m['_trending'] = True
                 candidates.append(('tmdb_movie', m))
 
         # ── POOL 2: Critic darlings — high RT/MC score, Drama/Thriller/Indie, last 2yr on streaming ──
@@ -486,9 +487,11 @@ def fetch_movies():
                     candidates.append(('tmdb_movie', m))
 
     for t in trakt_trending_movies(50):
+        t['_trending'] = True
         candidates.append(('trakt_movie', t))
 
     for t in trakt_popular_movies(50):
+        t['_trending'] = True
         candidates.append(('trakt_movie', t))
 
     # Deduplicate by TMDb ID before enrichment
@@ -529,18 +532,20 @@ def fetch_movies():
 
     for x in enriched:
         x['rt_boost'] = 20 if x.get('rt_score') is not None else 0
-        # Popularity score: doubled cap — blockbusters surface strongly
         pop = x.get('popularity', 0)
-        x['pop_score'] = min(60, round((pop ** 0.50)))  # doubled from 30 cap, steeper curve
-        # Name recognition boost from vote count — more votes = more recognizable title
+        x['pop_score'] = min(60, round((pop ** 0.50)))
         votes = x.get('vote_count', 0) or 0
         x['recognition_boost'] = 30 if votes >= 100000 else 20 if votes >= 50000 else 10 if votes >= 10000 else 0
+        # 10% trending bump — titles from popularity/trending pools surface over comparable non-trending titles
+        base = ((x.get('critic_score') or 50) + (x.get('audience_score') or 50)) / 2
+        x['trending_boost'] = round(base * 0.10) if x.get('trending') else 0
 
     enriched.sort(key=lambda x: (
         ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
         + x['rt_boost']
         + x['pop_score']
         + x['recognition_boost']
+        + x['trending_boost']
     ), reverse=True)
     return enriched[:500]
 
@@ -581,7 +586,8 @@ def _enrich_movie(source, item):
                                  is_doc=item.get('_is_doc', False),
                                  popularity=item.get('popularity', 0),
                                  original_language=orig_lang,
-                                 vote_count=item.get('vote_count', 0) or details.get('vote_count', 0))
+                                 vote_count=item.get('vote_count', 0) or details.get('vote_count', 0),
+                                 trending=item.get('_trending', False))
 
         elif source == 'trakt_movie':
             ids = item.get('ids') or {}
@@ -605,17 +611,18 @@ def _enrich_movie(source, item):
                                  item.get('title', 'Unknown'), (item.get('overview') or '')[:600],
                                  poster, str(item.get('year', '')), providers,
                                  (item.get('genres') or [])[:3], scores,
-                                 original_language='en')
+                                 original_language='en',
+                                 trending=item.get('_trending', False))
     except Exception:
         return None
 
 
-def _movie_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores, is_doc=False, popularity=0, original_language='en', vote_count=0):
+def _movie_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores, is_doc=False, popularity=0, original_language='en', vote_count=0, trending=False):
     return {
         'id': uid, 'imdb_id': imdb_id, 'title': title, 'overview': overview,
         'poster': poster, 'release': release, 'media_type': 'movie',
         'is_doc': is_doc, 'popularity': popularity, 'original_language': original_language,
-        'vote_count': vote_count,
+        'vote_count': vote_count, 'trending': trending,
         'providers': providers, 'genres': genres,
         'rated': scores.get('rated', ''),
         'critic_score': scores.get('critic'), 'audience_score': scores.get('audience'),
@@ -652,6 +659,7 @@ def fetch_tv():
                 sid = str(s.get('id'))
                 if sid and sid not in seen_ids:
                     seen_ids.add(sid)
+                    s['_trending'] = True
                     candidates.append(('tmdb_tv', s))
 
         # ── Top-rated shows with RECENT episodes — high bar, still active ──
@@ -763,6 +771,7 @@ def fetch_tv():
         imdb_id = (t.get('ids') or {}).get('imdb')
         if imdb_id and imdb_id not in seen_ids:
             seen_ids.add(imdb_id)
+            t['_trending'] = True
             candidates.append(('trakt_show', t))
 
     # ── Bulk-prefetch MDBList scores before parallel enrichment ───────────────
@@ -800,15 +809,18 @@ def fetch_tv():
     for x in deduped:
         x['rt_boost'] = 20 if x.get('rt_score') is not None else 0
         pop = x.get('popularity', 0)
-        x['pop_score'] = min(60, round((pop ** 0.50)))  # doubled from 30 cap, steeper curve
+        x['pop_score'] = min(60, round((pop ** 0.50)))
         votes = x.get('vote_count', 0) or 0
         x['recognition_boost'] = 30 if votes >= 100000 else 20 if votes >= 50000 else 10 if votes >= 10000 else 0
+        base = ((x.get('critic_score') or 50) + (x.get('audience_score') or 50)) / 2
+        x['trending_boost'] = round(base * 0.10) if x.get('trending') else 0
 
     deduped.sort(key=lambda x: (
         ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
         + x['rt_boost']
         + x['pop_score']
         + x['recognition_boost']
+        + x['trending_boost']
     ), reverse=True)
     return deduped[:500]
 
@@ -892,7 +904,8 @@ def _enrich_tv(source, item):
             return _tv_record(imdb_id or str(tmdb_id), imdb_id, title, overview,
                               poster, release, providers, genres, scores,
                               popularity=popularity, original_language=orig_lang,
-                              vote_count=item.get('vote_count', 0) or details.get('vote_count', 0))
+                              vote_count=item.get('vote_count', 0) or details.get('vote_count', 0),
+                              trending=item.get('_trending', False))
 
         elif source == 'tvmaze':
             show    = item['show']
@@ -937,18 +950,19 @@ def _enrich_tv(source, item):
                 imdb_id or str(ids.get('trakt', '')), imdb_id,
                 item.get('title', 'Unknown'), (item.get('overview') or '')[:600],
                 poster, str(item.get('year', '')), providers,
-                (item.get('genres') or [])[:3], scores
+                (item.get('genres') or [])[:3], scores,
+                trending=item.get('_trending', False)
             )
     except Exception:
         return None
 
 
-def _tv_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores, popularity=0, original_language='en', vote_count=0):
+def _tv_record(uid, imdb_id, title, overview, poster, release, providers, genres, scores, popularity=0, original_language='en', vote_count=0, trending=False):
     return {
         'id': uid, 'imdb_id': imdb_id, 'title': title, 'overview': overview,
         'poster': poster, 'release': release, 'media_type': 'tv',
         'popularity': popularity, 'original_language': original_language,
-        'vote_count': vote_count,
+        'vote_count': vote_count, 'trending': trending,
         'providers': providers, 'genres': genres,
         'critic_score': scores.get('critic'), 'audience_score': scores.get('audience'),
         'rt_score': scores.get('rt'), 'rt_audience': scores.get('rt_audience'),
