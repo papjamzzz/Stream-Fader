@@ -17,11 +17,12 @@ TRAKT_ID      = os.getenv('TRAKT_CLIENT_ID', '')
 MDBLIST_KEY   = os.getenv('MDBLIST_API_KEY', '')
 ANTHROPIC_KEY = os.getenv('ANTHROPIC_API_KEY', '')
 
-CACHE_FILE      = 'data/cache.json'
+CACHE_FILE       = 'data/cache.json'
 SCORE_CACHE_FILE = 'data/score_cache.json'  # per-title score cache — survives content rebuilds
-TOPPICK_FILE    = 'data/toppick.json'
-CACHE_TTL       = 6 * 3600   # 6 hours — refresh frequently for fresher data
-TOPPICK_TTL     = 12 * 3600
+TOPPICK_FILE     = 'data/toppick.json'
+CACHE_TTL        = 6 * 3600    # 6 hours — refresh frequently for fresher data
+TOPPICK_TTL      = 12 * 3600
+SCORE_CACHE_TTL  = 7 * 24 * 3600  # 7 days — scores do change (RT, IMDb), refresh weekly
 
 # ── Per-title score cache (survives content rebuilds, keyed by IMDb ID) ───────
 _score_cache = {}
@@ -31,7 +32,13 @@ def _load_score_cache():
     try:
         if os.path.exists(SCORE_CACHE_FILE):
             with open(SCORE_CACHE_FILE) as f:
-                _score_cache = json.load(f)
+                raw = json.load(f)
+            # Evict entries older than SCORE_CACHE_TTL so scores refresh weekly
+            now = time.time()
+            _score_cache = {
+                k: v for k, v in raw.items()
+                if now - v.get('_cached_at', 0) < SCORE_CACHE_TTL
+            }
     except Exception:
         _score_cache = {}
 
@@ -211,6 +218,7 @@ def mdblist_bulk_prefetch(imdb_ids):
                     scores['audience'] = round(sum(aud_parts) / sum(aud_weights))
 
                 if scores['critic'] is not None or scores['audience'] is not None:
+                    scores['_cached_at'] = time.time()
                     _score_cache[iid] = scores
                     populated += 1
         except Exception:
@@ -377,8 +385,9 @@ def best_scores(imdb_id):
     else:
         scores['audience'] = None
 
-    # Cache scores permanently per IMDb ID — scores don't change daily
+    # Cache scores per IMDb ID with timestamp — expires after SCORE_CACHE_TTL
     if imdb_id and (scores['critic'] is not None or scores['audience'] is not None):
+        scores['_cached_at'] = time.time()
         _score_cache[imdb_id] = scores
         _save_score_cache()
 
