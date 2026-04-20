@@ -1461,6 +1461,14 @@
     .email-capture-msg.success { color: #98c379; }
     .email-capture-msg.error   { color: #e06c75; }
 
+    /* ── WORDMARK ── */
+    .sf-wordmark {
+      font-size: clamp(72px, 9vw, 120px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+    }
+
     /* ── SOCIAL FOOTER ── */
     .social-footer {
       background: #05060e;
@@ -1916,6 +1924,61 @@
         flex-wrap: wrap;
         justify-content: center;
       }
+
+      /* ── Wordmark — clamp min was 72px, crushing mobile layouts ── */
+      .sf-wordmark {
+        font-size: clamp(36px, 10vw, 72px) !important;
+      }
+
+      /* ── Help button — move below header so it doesn't overlap Saved ── */
+      #helpBtn {
+        top: auto !important;
+        bottom: 20px !important;
+        right: 16px !important;
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 18px !important;
+      }
+
+      /* ── Header — tighter padding, stack saved button below on very small ── */
+      .header {
+        padding: 10px 12px !important;
+      }
+      /* Pull saved button padding in — was 56px for help button clearance */
+      .header > div:last-child {
+        padding-right: 52px !important;
+      }
+
+      /* ── Card body — slightly larger tap targets ── */
+      .row-title {
+        font-size: 11px;
+      }
+      .card-body {
+        padding: 6px 6px 7px;
+      }
+
+      /* ── Card grid — 2 cols, tighter ── */
+      .card-list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+      }
+
+      /* ── Platform tags on cards — hide on very small screens to reduce clutter ── */
+      @media (max-width: 360px) {
+        .card-meta-row .plat-tag { display: none; }
+      }
+
+      /* ── Email capture — stack vertically ── */
+      .email-capture-form {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .email-capture-input {
+        max-width: 100%;
+      }
+      .email-capture-btn {
+        width: 100%;
+      }
     }
 
     /* 600px: card grid already handled above; also fix fader for mid-size phones */
@@ -1941,7 +2004,7 @@
   <div style="flex:1;"></div>
   <!-- cinematic wordmark — center -->
   <div style="text-align:center;">
-    <div style="font-size:clamp(72px,9vw,120px);font-weight:900;letter-spacing:-0.03em;line-height:0.95;">
+    <div class="sf-wordmark">
       <span style="color:#ffffff;">Stream</span><span style="background:linear-gradient(90deg,#4fc3f7 0%,#c678dd 50%,#ffb74d 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Fader</span>
     </div>
   </div>
