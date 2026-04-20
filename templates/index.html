@@ -2292,16 +2292,42 @@ const PLATFORM_URLS = {
   'fubo':       'https://www.fubo.tv',
 };
 
-function platformUrl(name) {
+// Search URL builders — take the user directly to that title on each platform
+const PLATFORM_SEARCH = {
+  'netflix':    t => `https://www.netflix.com/search?q=${encodeURIComponent(t)}`,
+  'prime':      t => `https://www.amazon.com/s?k=${encodeURIComponent(t)}&i=instant-video`,
+  'amazon':     t => `https://www.amazon.com/s?k=${encodeURIComponent(t)}&i=instant-video`,
+  'apple':      t => `https://tv.apple.com/search?term=${encodeURIComponent(t)}`,
+  'disney':     t => `https://www.disneyplus.com/search/${encodeURIComponent(t)}`,
+  'hulu':       t => `https://www.hulu.com/search?q=${encodeURIComponent(t)}`,
+  'max':        t => `https://play.max.com/search?q=${encodeURIComponent(t)}`,
+  'hbo':        t => `https://play.max.com/search?q=${encodeURIComponent(t)}`,
+  'paramount':  t => `https://www.paramountplus.com/search/?q=${encodeURIComponent(t)}`,
+  'peacock':    t => `https://www.peacocktv.com/watch/search?q=${encodeURIComponent(t)}`,
+  'showtime':   t => `https://www.sho.com/search?q=${encodeURIComponent(t)}`,
+  'amc':        t => `https://www.amcplus.com/search?q=${encodeURIComponent(t)}`,
+  'mubi':       t => `https://mubi.com/en/us/films?q=${encodeURIComponent(t)}`,
+  'shudder':    t => `https://www.shudder.com/search?q=${encodeURIComponent(t)}`,
+  'tubi':       t => `https://tubitv.com/search/${encodeURIComponent(t)}`,
+  'criterion':  t => `https://www.criterionchannel.com/search#stq=${encodeURIComponent(t)}`,
+  'starz':      t => `https://www.starz.com/us/en/search?q=${encodeURIComponent(t)}`,
+  'mgm':        t => `https://www.mgmplus.com/search?q=${encodeURIComponent(t)}`,
+};
+
+function platformUrl(name, title) {
   const key = (name || '').toLowerCase();
+  for (const [k, fn] of Object.entries(PLATFORM_SEARCH)) {
+    if (key.includes(k)) return title ? fn(title) : PLATFORM_URLS[k] || null;
+  }
+  // fallback to base URL map
   for (const [k, url] of Object.entries(PLATFORM_URLS)) {
     if (key.includes(k)) return url;
   }
   return null;
 }
 
-function platformTag(p, extraStyle) {
-  const url = platformUrl(p.name);
+function platformTag(p, extraStyle, title) {
+  const url = platformUrl(p.name, title || null);
   const style = `background:${p.color}22;color:${p.color};border:1px solid ${p.color}44;${extraStyle||''}`;
   if (url) {
     return `<a class="platform-tag" href="${url}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="${style};text-decoration:none;">${p.name}</a>`;
@@ -2631,9 +2657,9 @@ function renderCard(item, rank) {
   const rankClass = rank === 1 ? 'row-rank top1' : rank === 2 ? 'row-rank top2' : rank === 3 ? 'row-rank top3' : 'row-rank';
 
   const rawProviders = item.providers || [];
-  const providers = rawProviders.slice(0, 2).map(p => platformTag(p)).join('');
-  const extraProviders = rawProviders.length > 2
-    ? `<span class="platform-tag" style="background:rgba(255,255,255,0.06);color:rgba(240,242,255,0.4);border:1px solid rgba(255,255,255,0.1);">+${rawProviders.length - 2}</span>`
+  const providers = rawProviders.slice(0, 3).map(p => platformTag(p, '', item.title)).join('');
+  const extraProviders = rawProviders.length > 3
+    ? `<span class="platform-tag" style="background:rgba(255,255,255,0.06);color:rgba(240,242,255,0.4);border:1px solid rgba(255,255,255,0.1);">+${rawProviders.length - 3}</span>`
     : '';
 
   const posterEl = item.poster
@@ -2675,6 +2701,8 @@ function renderCard(item, rank) {
           ${year ? `<span class="row-year">${year}</span><span class="meta-dot">·</span>` : ''}
           <span class="sf-inline">StreamFader: <strong>${item.blend != null ? Math.round(item.blend) : '—'}</strong></span>
         </div>
+        ${miniMeters(item)}
+        ${(providers || extraProviders) ? `<div class="card-providers" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;">${providers}${extraProviders}</div>` : ''}
       </div>
     </div>`;
 }
@@ -3012,7 +3040,7 @@ function openDetail(cardIndex) {
     .join('');
 
   // Providers
-  const providerChips = (item.providers || []).map(p => platformTag(p)).join('');
+  const providerChips = (item.providers || []).map(p => platformTag(p, '', item.title)).join('');
 
   const year = item.release ? item.release.slice(0, 4) : '';
   const type = item.media_type === 'movie' ? 'Movie' : 'TV Show';
