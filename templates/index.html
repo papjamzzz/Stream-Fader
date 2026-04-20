@@ -2531,7 +2531,9 @@ function blendScore(item, f) {
 
 let moviePage = 1;
 let tvPage = 1;
-const PAGE_SIZE = 100;
+const PAGE_SIZE        = 100;
+const MOBILE_PAGE_SIZE = 10;
+const isMobile = () => window.innerWidth <= 480;
 
 function topN(items, f, n) {
   const dismissed = getDismissedIds();
@@ -2715,7 +2717,8 @@ function renderList(containerId, items, countId, page) {
   const el = document.getElementById(containerId);
   const count = document.getElementById(countId);
   const all = topN(items, fader, items.length);
-  const shown = all.slice(0, page * PAGE_SIZE);
+  const limit = isMobile() ? MOBILE_PAGE_SIZE : page * PAGE_SIZE;
+  const shown = all.slice(0, limit);
 
   if (shown.length === 0) {
     el.innerHTML = `<div class="empty-state">
