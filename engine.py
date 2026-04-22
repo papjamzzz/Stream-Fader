@@ -373,11 +373,11 @@ def fetch_movies():
     candidates = []
 
     if TMDB_KEY:
-        cutoff_1yr  = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
-        cutoff_2yr  = (datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d')
-        cutoff_3yr  = (datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d')
+        cutoff_1yr  = (datetime.now() - timedelta(days=243)).strftime('%Y-%m-%d')
+        cutoff_2yr  = (datetime.now() - timedelta(days=243)).strftime('%Y-%m-%d')
+        cutoff_3yr  = (datetime.now() - timedelta(days=243)).strftime('%Y-%m-%d')
 
-        # ALL POOLS: last 24 months
+        # ALL POOLS: last 8 months
         # ── POOL 1: Popular on streaming — broad recent titles ──
         for page in range(1, 12):
             data = tmdb_get('/discover/movie', {
@@ -635,7 +635,7 @@ def _movie_record(uid, imdb_id, title, overview, poster, release, providers, gen
 
 # ── TV Shows ───────────────────────────────────────────────────────────────────
 
-TV_RECENCY_CUTOFF = (datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d')  # 24 months
+TV_RECENCY_CUTOFF = (datetime.now() - timedelta(days=243)).strftime('%Y-%m-%d')  # 8 months
 
 
 def fetch_tv():
@@ -838,7 +838,7 @@ def _enrich_tv(source, item):
             if show_type and show_type not in TV_ALLOWED_TYPES:
                 return None
 
-            # Hard recency gate: last_air_date must be within 24 months
+            # Hard recency gate: last_air_date must be within 8 months
             # Also reject shows with no air date (likely cancelled/unaired)
             last_air = details.get('last_air_date') or item.get('last_air_date', '')
             if not last_air or last_air < TV_RECENCY_CUTOFF:
