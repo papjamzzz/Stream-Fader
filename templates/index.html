@@ -1843,10 +1843,10 @@
       box-shadow: 0 0 20px rgba(198,120,221,0.35), 0 4px 16px rgba(198,120,221,0.2);
     }
     .genre-pill[data-genre="family"].active {
-      background: linear-gradient(135deg, rgba(102,187,106,0.28) 0%, rgba(56,142,60,0.22) 100%);
-      border-color: rgba(102,187,106,0.9);
-      color: #66bb6a;
-      box-shadow: 0 0 20px rgba(102,187,106,0.35), 0 4px 16px rgba(102,187,106,0.2);
+      background: linear-gradient(135deg, rgba(41,182,246,0.28) 0%, rgba(2,136,209,0.22) 100%);
+      border-color: rgba(41,182,246,0.9);
+      color: #29b6f6;
+      box-shadow: 0 0 20px rgba(41,182,246,0.4), 0 4px 16px rgba(41,182,246,0.25);
     }
     .genre-pill[data-genre="foreign"].active {
       background: linear-gradient(135deg, rgba(79,195,247,0.2) 0%, rgba(26,120,180,0.28) 100%);
@@ -2592,8 +2592,8 @@ let activeGenreFilter = 'all';
 // ── Genre Filter ─────────────────────────────────────
 const BLOCKBUSTER_GENRES    = new Set(['Action', 'Adventure', 'Science Fiction', 'Thriller', 'Drama']);
 const INDIE_EXCLUDE_GENRES  = new Set(['Action', 'Adventure']);
-const FAMILY_SAFE_RATINGS   = new Set(['G', 'PG']);
-const FAMILY_BLOCKED_GENRES = new Set(['Horror', 'Thriller', 'Crime', 'Mystery', 'Romance', 'Adult', 'War', 'Western']);
+const FAMILY_SAFE_RATINGS   = new Set(['G', 'PG', 'PG-12', 'PG-13']);
+const FAMILY_BLOCKED_GENRES = new Set(['Horror', 'Thriller', 'Crime', 'Mystery', 'Adult', 'War', 'Western']);
 
 // Animation/Anime = anything tagged Animation, or Japanese-language content
 function isAnimated(m) {
@@ -2622,10 +2622,11 @@ function applyGenreFilter(items) {
       return genres.some(g => BLOCKBUSTER_GENRES.has(g));
     }
 
-    // ── Family: strict safe content — no dark genres, G/PG or Family tagged ──
+    // ── Family: safe ratings + Family/Animation/Romance/Drama genres ──
     if (activeGenreFilter === 'family') {
       if (genres.some(g => FAMILY_BLOCKED_GENRES.has(g))) return false;
-      return FAMILY_SAFE_RATINGS.has(rating) || genres.includes('Family');
+      const familyGenres = new Set(['Family', 'Animation', 'Romance', 'Drama']);
+      return FAMILY_SAFE_RATINGS.has(rating) || genres.some(g => familyGenres.has(g));
     }
 
     // ── Foreign: non-English only ──
