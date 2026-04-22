@@ -1700,12 +1700,6 @@
       color: #4fc3f7;
       box-shadow: 0 0 20px rgba(79,195,247,0.35), 0 4px 16px rgba(79,195,247,0.2);
     }
-    .genre-pill[data-genre="comedy"].active {
-      background: linear-gradient(135deg, rgba(255,235,59,0.25) 0%, rgba(255,193,7,0.2) 100%);
-      border-color: rgba(255,235,59,0.9);
-      color: #ffeb3b;
-      box-shadow: 0 0 20px rgba(255,235,59,0.35), 0 4px 16px rgba(255,235,59,0.2);
-    }
     .genre-pill.active {
       transform: translateY(-2px);
     }
@@ -2105,10 +2099,10 @@
       </div>
     </div>
 
-    <!-- RIGHT PILLS: Foreign + Comedy -->
+    <!-- RIGHT PILLS: Foreign + Family -->
     <div class="fader-pills-right">
       <button class="genre-pill" data-genre="foreign" onclick="setGenreFilter(activeGenreFilter==='foreign'?'all':'foreign')">Foreign</button>
-      <button class="genre-pill" data-genre="comedy" onclick="setGenreFilter(activeGenreFilter==='comedy'?'all':'comedy')">Comedy</button>
+      <button class="genre-pill" data-genre="family" onclick="setGenreFilter(activeGenreFilter==='family'?'all':'family')">Family</button>
     </div>
 
   </div>
@@ -2435,26 +2429,48 @@ window._cardRegistry = [];
 let activeGenreFilter = 'all';
 
 // ── Genre Filter ─────────────────────────────────────
-const BLOCKBUSTER_GENRES = new Set(['Action', 'Adventure', 'Science Fiction', 'Animation']);
-const INDIE_EXCLUDE_GENRES = new Set(['Action', 'Adventure', 'Animation']);
+const BLOCKBUSTER_GENRES    = new Set(['Action', 'Adventure', 'Science Fiction', 'Thriller', 'Drama']);
+const INDIE_EXCLUDE_GENRES  = new Set(['Action', 'Adventure', 'Animation']);
+const ANIMATED_GENRES       = new Set(['Animation']);
+const FAMILY_SAFE_RATINGS   = new Set(['G', 'PG']);
+const FAMILY_BLOCKED_GENRES = new Set(['Horror', 'Thriller', 'Crime', 'Mystery', 'Romance', 'Adult', 'War', 'Western']);
+
+function isAnimated(m) {
+  return (m.genres || []).some(g => ANIMATED_GENRES.has(g));
+}
 
 function applyGenreFilter(items) {
-  if (activeGenreFilter === 'all') return items;
   return items.filter(m => {
     const genres = m.genres || [];
     const lang   = (m.original_language || 'en').toLowerCase();
+    const rating = (m.rated || '').toUpperCase().trim();
+
+    // ── Default (all): hide anime & cartoons ──
+    if (activeGenreFilter === 'all') {
+      return !isAnimated(m);
+    }
+
+    // ── Blockbuster: big-budget Hollywood only, no anime/cartoons ──
+    if (activeGenreFilter === 'blockbuster') {
+      return genres.some(g => BLOCKBUSTER_GENRES.has(g)) && !isAnimated(m);
+    }
+
+    // ── Family: strict safe content only ──
     if (activeGenreFilter === 'family') {
-      const rating = (m.rated || '').toUpperCase();
-      const familyRatings = new Set(['G', 'PG', 'UR', 'NOT RATED', 'NR', 'UNRATED', 'APPROVED', 'PASSED']);
-      return familyRatings.has(rating) || genres.includes('Family') || genres.includes('Animation');
+      if (genres.some(g => FAMILY_BLOCKED_GENRES.has(g))) return false;
+      const safeRating   = FAMILY_SAFE_RATINGS.has(rating);
+      const familyGenre  = genres.includes('Family') || genres.includes('Animation');
+      return safeRating || familyGenre;
     }
-    if (activeGenreFilter === 'foreign')     return lang !== 'en';
-    if (activeGenreFilter === 'blockbuster') return genres.some(g => BLOCKBUSTER_GENRES.has(g));
-    if (activeGenreFilter === 'comedy')      return genres.includes('Comedy');
+
+    // ── Foreign: non-English, anime welcome here ──
+    if (activeGenreFilter === 'foreign') return lang !== 'en';
+
+    // ── Indie: low-budget English, no blockbuster genres ──
     if (activeGenreFilter === 'indie') {
-      const hasBlockbuster = genres.some(g => INDIE_EXCLUDE_GENRES.has(g));
-      return !hasBlockbuster && lang === 'en';
+      return !genres.some(g => INDIE_EXCLUDE_GENRES.has(g)) && lang === 'en';
     }
+
     return true;
   });
 }
