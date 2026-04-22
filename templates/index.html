@@ -344,11 +344,28 @@
       white-space: nowrap;
     }
 
+    /* ── FADER WITH FLANKING PILLS ── */
+    .fader-with-pills {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      padding: 0 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .fader-pills-left,
+    .fader-pills-right {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+    }
     /* ── FADER INNER (50% width centered) ── */
     .fader-inner {
+      flex: 1;
       max-width: 640px;
-      margin: 0 auto;
-      padding: 0 24px;
+      padding: 0;
     }
 
     /* ── CONTENT AREA ── */
@@ -1683,6 +1700,12 @@
       color: #4fc3f7;
       box-shadow: 0 0 20px rgba(79,195,247,0.35), 0 4px 16px rgba(79,195,247,0.2);
     }
+    .genre-pill[data-genre="comedy"].active {
+      background: linear-gradient(135deg, rgba(255,235,59,0.25) 0%, rgba(255,193,7,0.2) 100%);
+      border-color: rgba(255,235,59,0.9);
+      color: #ffeb3b;
+      box-shadow: 0 0 20px rgba(255,235,59,0.35), 0 4px 16px rgba(255,235,59,0.2);
+    }
     .genre-pill.active {
       transform: translateY(-2px);
     }
@@ -1778,7 +1801,18 @@
         padding: 10px 0 8px !important;
         top: var(--header-h, 56px);
       }
+      .fader-with-pills {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .fader-pills-left,
+      .fader-pills-right {
+        flex-direction: row;
+        justify-content: center;
+        gap: 8px;
+      }
       .fader-inner {
+        width: 100%;
         padding: 0 12px;
       }
       .fader-labels {
@@ -2033,34 +2067,50 @@
      THE FADER
 ══════════════════════════════════════════════ -->
 <section class="fader-section" style="padding:14px 0 12px;">
-  <div class="fader-inner">
-    <div class="fader-labels">
-      <div class="fader-label left">Critics</div>
-      <div class="fader-sweet-label" id="sweet-label"></div>
-      <div class="fader-label right">Audience</div>
+  <div class="fader-with-pills">
+
+    <!-- LEFT PILLS: Blockbusters! + Indie -->
+    <div class="fader-pills-left">
+      <button class="genre-pill" data-genre="blockbuster" onclick="setGenreFilter(activeGenreFilter==='blockbuster'?'all':'blockbuster')">Blockbusters!</button>
+      <button class="genre-pill" data-genre="indie" onclick="setGenreFilter(activeGenreFilter==='indie'?'all':'indie')">Indie</button>
     </div>
 
-    <div class="fader-wrap">
-      <div class="fader-ticks">
-        <div class="tick major"></div>
-        <div class="tick"></div><div class="tick"></div><div class="tick"></div>
-        <div class="tick major"></div>
-        <div class="tick"></div><div class="tick"></div><div class="tick"></div>
-        <div class="tick major"></div>
-        <div class="tick"></div><div class="tick"></div><div class="tick"></div>
-        <div class="tick major"></div>
-        <div class="tick"></div><div class="tick"></div><div class="tick"></div>
-        <div class="tick major"></div>
+    <div class="fader-inner">
+      <div class="fader-labels">
+        <div class="fader-label left">Critics</div>
+        <div class="fader-sweet-label" id="sweet-label"></div>
+        <div class="fader-label right">Audience</div>
       </div>
-      <input type="range" id="blend-fader" min="0" max="100" value="50"
-             oninput="onFaderMove(this.value)">
+
+      <div class="fader-wrap">
+        <div class="fader-ticks">
+          <div class="tick major"></div>
+          <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+          <div class="tick major"></div>
+          <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+          <div class="tick major"></div>
+          <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+          <div class="tick major"></div>
+          <div class="tick"></div><div class="tick"></div><div class="tick"></div>
+          <div class="tick major"></div>
+        </div>
+        <input type="range" id="blend-fader" min="0" max="100" value="50"
+               oninput="onFaderMove(this.value)">
+      </div>
+
+      <div class="fader-readout">
+        <div class="readout-side left" id="critic-pct">50% Critics</div>
+        <div id="blend-badge">You're The VJ Now</div>
+        <div class="readout-side right" id="audience-pct">50% Audience</div>
+      </div>
     </div>
 
-    <div class="fader-readout">
-      <div class="readout-side left" id="critic-pct">50% Critics</div>
-      <div id="blend-badge">You're The VJ Now</div>
-      <div class="readout-side right" id="audience-pct">50% Audience</div>
+    <!-- RIGHT PILLS: Foreign + Comedy -->
+    <div class="fader-pills-right">
+      <button class="genre-pill" data-genre="foreign" onclick="setGenreFilter(activeGenreFilter==='foreign'?'all':'foreign')">Foreign</button>
+      <button class="genre-pill" data-genre="comedy" onclick="setGenreFilter(activeGenreFilter==='comedy'?'all':'comedy')">Comedy</button>
     </div>
+
   </div>
 </section>
 
@@ -2400,6 +2450,7 @@ function applyGenreFilter(items) {
     }
     if (activeGenreFilter === 'foreign')     return lang !== 'en';
     if (activeGenreFilter === 'blockbuster') return genres.some(g => BLOCKBUSTER_GENRES.has(g));
+    if (activeGenreFilter === 'comedy')      return genres.includes('Comedy');
     if (activeGenreFilter === 'indie') {
       const hasBlockbuster = genres.some(g => INDIE_EXCLUDE_GENRES.has(g));
       return !hasBlockbuster && lang === 'en';
