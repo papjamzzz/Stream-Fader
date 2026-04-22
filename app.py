@@ -164,6 +164,84 @@ def trailer():
     return jsonify({'url': None})
 
 
+@app.route('/api/cast')
+def cast():
+    imdb_id = request.args.get('imdb_id', '')
+    tmdb_id = request.args.get('tmdb_id', '')
+    media   = request.args.get('type', 'movie')
+    if media not in ('movie', 'tv'):
+        media = 'movie'
+    if not TMDB_KEY:
+        return jsonify([])
+    if not tmdb_id and imdb_id:
+        try:
+            r = requests.get(
+                f'https://api.themoviedb.org/3/find/{imdb_id}',
+                params={'api_key': TMDB_KEY, 'external_source': 'imdb_id'},
+                timeout=6
+            )
+            results = r.json().get(f'{media}_results', [])
+            if results:
+                tmdb_id = results[0]['id']
+        except Exception:
+            return jsonify([])
+    if not tmdb_id:
+        return jsonify([])
+    try:
+        r = requests.get(
+            f'https://api.themoviedb.org/3/{media}/{tmdb_id}/credits',
+            params={'api_key': TMDB_KEY},
+            timeout=6
+        )
+        cast_list = r.json().get('cast', [])[:4]
+        return jsonify([{
+            'id':        p['id'],
+            'name':      p['name'],
+            'character': p.get('character', ''),
+            'photo':     f"https://image.tmdb.org/t/p/w185{p['profile_path']}" if p.get('profile_path') else None,
+        } for p in cast_list])
+    except Exception:
+        return jsonify([])
+
+
+@app.route('/api/actor/<int:actor_id>')
+def actor_credits(actor_id):
+    if not TMDB_KEY:
+        return jsonify([])
+    try:
+        r = requests.get(
+            f'https://api.themoviedb.org/3/person/{actor_id}',
+            params={'api_key': TMDB_KEY, 'append_to_response': 'combined_credits'},
+            timeout=8
+        )
+        data = r.json()
+        person = {'name': data.get('name', ''), 'photo': f"https://image.tmdb.org/t/p/w185{data['profile_path']}" if data.get('profile_path') else None}
+        credits = data.get('combined_credits', {}).get('cast', [])
+        credits.sort(key=lambda x: x.get('popularity', 0), reverse=True)
+        seen, results = set(), []
+        for c in credits:
+            title = c.get('title') or c.get('name', '')
+            if not title or title in seen:
+                continue
+            seen.add(title)
+            poster = f"https://image.tmdb.org/t/p/w300{c['poster_path']}" if c.get('poster_path') else None
+            results.append({
+                'id':         c.get('id'),
+                'title':      title,
+                'poster':     poster,
+                'release':    c.get('release_date') or c.get('first_air_date') or '',
+                'overview':   (c.get('overview') or '')[:300],
+                'media_type': c.get('media_type', 'movie'),
+                'character':  c.get('character', ''),
+                'vote':       round(c.get('vote_average', 0) * 10),
+            })
+            if len(results) >= 20:
+                break
+        return jsonify({'person': person, 'credits': results})
+    except Exception:
+        return jsonify({'person': {}, 'credits': []})
+
+
 @app.route('/api/score-debug')
 def score_debug():
     """Show score distribution to find the fader sweet spot."""

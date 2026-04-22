@@ -792,6 +792,160 @@
       font-size: 15px;
       font-weight: 700;
     }
+    /* ── RATING BADGE ── */
+    .detail-rating-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,0.25);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: rgba(240,242,255,0.75);
+      background: rgba(255,255,255,0.07);
+      vertical-align: middle;
+      margin-left: 4px;
+    }
+
+    /* ── CAST CARDS ── */
+    .detail-cast {
+      padding: 0 28px 20px;
+    }
+    .detail-cast-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(240,242,255,0.35);
+      margin-bottom: 14px;
+    }
+    .cast-grid {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .cast-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      width: 80px;
+      transition: transform 0.2s;
+    }
+    .cast-card:hover { transform: translateY(-3px); }
+    .cast-photo {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.1);
+      transition: border-color 0.2s;
+    }
+    .cast-card:hover .cast-photo { border-color: rgba(79,195,247,0.7); }
+    .cast-photo-placeholder {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: #1a1d2e;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px;
+      border: 2px solid rgba(255,255,255,0.08);
+    }
+    .cast-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(240,242,255,0.75);
+      text-align: center;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+    .cast-character {
+      font-size: 10px;
+      color: rgba(240,242,255,0.35);
+      text-align: center;
+    }
+
+    /* ── ACTOR FILMOGRAPHY OVERLAY ── */
+    #actor-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(16px);
+      z-index: 1100;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px;
+      overflow-y: auto;
+    }
+    #actor-overlay.open { display: flex; }
+    #actor-modal {
+      background: #0d0f1a;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 860px;
+      padding: 32px;
+      position: relative;
+      animation: modalIn 0.2s ease;
+    }
+    #actor-close {
+      position: absolute;
+      top: 16px; right: 20px;
+      background: rgba(255,255,255,0.08);
+      border: none; color: #fff;
+      font-size: 23px; width: 36px; height: 36px;
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    #actor-close:hover { background: rgba(255,255,255,0.16); }
+    .actor-header {
+      display: flex; align-items: center; gap: 18px; margin-bottom: 28px;
+    }
+    .actor-header-photo {
+      width: 72px; height: 72px; border-radius: 50%;
+      object-fit: cover; border: 2px solid rgba(79,195,247,0.5);
+    }
+    .actor-header-name {
+      font-size: 26px; font-weight: 800; color: #fff;
+    }
+    .actor-header-sub {
+      font-size: 13px; color: rgba(240,242,255,0.4); margin-top: 3px;
+    }
+    .actor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 16px;
+    }
+    .actor-film-card {
+      border-radius: 10px;
+      overflow: hidden;
+      background: #13151f;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .actor-film-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+    .actor-film-poster {
+      width: 100%; aspect-ratio: 2/3;
+      object-fit: cover; display: block;
+    }
+    .actor-film-placeholder {
+      width: 100%; aspect-ratio: 2/3;
+      background: #1a1d2e; display: flex;
+      align-items: center; justify-content: center; font-size: 32px;
+    }
+    .actor-film-info {
+      padding: 8px 10px;
+    }
+    .actor-film-title {
+      font-size: 12px; font-weight: 700; color: #fff;
+      line-height: 1.3; margin-bottom: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .actor-film-year {
+      font-size: 11px; color: rgba(240,242,255,0.35);
+    }
+
     .detail-overview {
       font-size: 15px;
       color: rgba(240,242,255,0.85);
@@ -3115,12 +3269,21 @@ function openDetail(cardIndex) {
     .map(s => `<div class="detail-score-chip" style="color:${s.color}">${s.label} ${s.val}${s.unit}</div>`)
     .join('');
 
-  // Providers
+  // Providers + rating
   const providerChips = (item.providers || []).map(p => platformTag(p, '', item.title)).join('');
+  const ratingBadge = item.rated ? `<span class="detail-rating-badge">${item.rated}</span>` : '';
 
   const year = item.release ? item.release.slice(0, 4) : '';
   const type = item.media_type === 'movie' ? 'Movie' : 'TV Show';
   const genres = (item.genres || []).join(' · ');
+
+  // Truncate overview to 2-3 sentences
+  function truncateSentences(text, max) {
+    if (!text) return '';
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    return sentences.slice(0, max).join(' ').trim();
+  }
+  const synopsis = truncateSentences(item.overview, 3);
 
   const imdbLink = item.imdb_id
     ? `<a class="imdb-btn" href="https://www.imdb.com/title/${item.imdb_id}/" target="_blank">⭐ IMDb Page</a>`
@@ -3137,11 +3300,15 @@ function openDetail(cardIndex) {
           <span>${type}</span>
           ${genres ? `<span>${genres}</span>` : ''}
         </div>
-        <div class="detail-providers">${providerChips}</div>
+        <div class="detail-providers" style="align-items:center;">${providerChips}${ratingBadge}</div>
         ${fullMeters(item)}
       </div>
     </div>
-    ${item.overview ? `<div class="detail-overview">${item.overview}</div>` : ''}
+    ${synopsis ? `<div class="detail-overview">${synopsis}</div>` : ''}
+    <div class="detail-cast" id="detail-cast-section">
+      <div class="detail-cast-title">Cast</div>
+      <div class="cast-grid" id="cast-grid"><div style="color:rgba(255,255,255,0.2);font-size:13px;">Loading cast…</div></div>
+    </div>
     <div class="detail-footer">
       <button class="trailer-btn loading" id="trailer-btn" disabled>⏳ Finding trailer…</button>
       ${imdbLink}
@@ -3176,6 +3343,36 @@ function openDetail(cardIndex) {
       const btn = document.getElementById('trailer-btn');
       if (btn) { btn.textContent = 'No trailer found'; btn.classList.add('no-trailer'); }
     });
+
+  // Fetch cast
+  const castParams = new URLSearchParams({
+    imdb_id: item.imdb_id || '',
+    type: item.media_type || 'movie'
+  });
+  fetch(`/api/cast?${castParams}`)
+    .then(r => r.json())
+    .then(cast => {
+      const grid = document.getElementById('cast-grid');
+      if (!grid) return;
+      if (!cast || cast.length === 0) {
+        grid.innerHTML = '<div style="color:rgba(255,255,255,0.2);font-size:13px;">No cast info available</div>';
+        return;
+      }
+      grid.innerHTML = cast.map(p => `
+        <div class="cast-card" onclick="openActorOverlay(${p.id}, '${(p.name||'').replace(/'/g,"\\'")}')">
+          ${p.photo
+            ? `<img class="cast-photo" src="${p.photo}" alt="${p.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+            : ''}
+          <div class="cast-photo-placeholder" ${p.photo ? 'style="display:none"' : ''}>🎭</div>
+          <div class="cast-name">${p.name}</div>
+          ${p.character ? `<div class="cast-character">${p.character}</div>` : ''}
+        </div>
+      `).join('');
+    })
+    .catch(() => {
+      const grid = document.getElementById('cast-grid');
+      if (grid) grid.innerHTML = '';
+    });
 }
 
 function closeDetail() {
@@ -3183,14 +3380,67 @@ function closeDetail() {
   document.body.style.overflow = '';
 }
 
+// ── Actor Filmography Overlay ─────────────────────────────
+function openActorOverlay(actorId, actorName) {
+  const overlay = document.getElementById('actor-overlay');
+  const content = document.getElementById('actor-modal-content');
+  content.innerHTML = `<div style="color:rgba(255,255,255,0.3);font-size:15px;padding:20px 0;">Loading ${actorName}'s films…</div>`;
+  overlay.classList.add('open');
+
+  fetch(`/api/actor/${actorId}`)
+    .then(r => r.json())
+    .then(data => {
+      const person  = data.person || {};
+      const credits = data.credits || [];
+      const photoEl = person.photo
+        ? `<img class="actor-header-photo" src="${person.photo}" alt="${person.name}">`
+        : `<div class="cast-photo-placeholder">🎭</div>`;
+      content.innerHTML = `
+        <div class="actor-header">
+          ${photoEl}
+          <div>
+            <div class="actor-header-name">${person.name || actorName}</div>
+            <div class="actor-header-sub">${credits.length} titles</div>
+          </div>
+        </div>
+        <div class="actor-grid">
+          ${credits.map(c => `
+            <div class="actor-film-card">
+              ${c.poster
+                ? `<img class="actor-film-poster" src="${c.poster}" alt="${c.title}" loading="lazy">`
+                : `<div class="actor-film-placeholder">🎬</div>`}
+              <div class="actor-film-info">
+                <div class="actor-film-title">${c.title}</div>
+                <div class="actor-film-year">${(c.release||'').slice(0,4)}${c.vote ? ` · ${c.vote}%` : ''}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    })
+    .catch(() => {
+      content.innerHTML = '<div style="color:rgba(255,255,255,0.3);padding:20px 0;">Could not load filmography.</div>';
+    });
+}
+
+function closeActorOverlay() {
+  document.getElementById('actor-overlay').classList.remove('open');
+}
+
 // Close on overlay click (outside modal)
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('detail-overlay').addEventListener('click', e => {
     if (e.target === document.getElementById('detail-overlay')) closeDetail();
   });
+  document.getElementById('actor-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('actor-overlay')) closeActorOverlay();
+  });
   // Close on Escape
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeDetail();
+    if (e.key === 'Escape') {
+      if (document.getElementById('actor-overlay').classList.contains('open')) closeActorOverlay();
+      else closeDetail();
+    }
   });
 });
 
@@ -3958,6 +4208,13 @@ renderWatchlist();
 <!-- ── Detail Modal ── -->
 <div id="detail-overlay">
   <div id="detail-modal"></div>
+</div>
+
+<div id="actor-overlay">
+  <div id="actor-modal">
+    <button id="actor-close" onclick="closeActorOverlay()">✕</button>
+    <div id="actor-modal-content"></div>
+  </div>
 </div>
 
 
