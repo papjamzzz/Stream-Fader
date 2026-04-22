@@ -1700,6 +1700,12 @@
       color: #4fc3f7;
       box-shadow: 0 0 20px rgba(79,195,247,0.35), 0 4px 16px rgba(79,195,247,0.2);
     }
+    .genre-pill[data-genre="anime"].active {
+      background: linear-gradient(135deg, rgba(255,105,180,0.28) 0%, rgba(180,60,220,0.22) 100%);
+      border-color: rgba(255,105,180,0.9);
+      color: #ff69b4;
+      box-shadow: 0 0 20px rgba(255,105,180,0.35), 0 4px 16px rgba(255,105,180,0.2);
+    }
     .genre-pill.active {
       transform: translateY(-2px);
     }
@@ -2099,10 +2105,11 @@
       </div>
     </div>
 
-    <!-- RIGHT PILLS: Foreign + Family -->
+    <!-- RIGHT PILLS: Foreign + Family + Animation/Anime -->
     <div class="fader-pills-right">
       <button class="genre-pill" data-genre="foreign" onclick="setGenreFilter(activeGenreFilter==='foreign'?'all':'foreign')">Foreign</button>
       <button class="genre-pill" data-genre="family" onclick="setGenreFilter(activeGenreFilter==='family'?'all':'family')">Family</button>
+      <button class="genre-pill" data-genre="anime" onclick="setGenreFilter(activeGenreFilter==='anime'?'all':'anime')">Animation / Anime</button>
     </div>
 
   </div>
@@ -2430,13 +2437,15 @@ let activeGenreFilter = 'all';
 
 // ── Genre Filter ─────────────────────────────────────
 const BLOCKBUSTER_GENRES    = new Set(['Action', 'Adventure', 'Science Fiction', 'Thriller', 'Drama']);
-const INDIE_EXCLUDE_GENRES  = new Set(['Action', 'Adventure', 'Animation']);
-const ANIMATED_GENRES       = new Set(['Animation']);
+const INDIE_EXCLUDE_GENRES  = new Set(['Action', 'Adventure']);
 const FAMILY_SAFE_RATINGS   = new Set(['G', 'PG']);
 const FAMILY_BLOCKED_GENRES = new Set(['Horror', 'Thriller', 'Crime', 'Mystery', 'Romance', 'Adult', 'War', 'Western']);
 
+// Animation/Anime = anything tagged Animation, or Japanese-language content
 function isAnimated(m) {
-  return (m.genres || []).some(g => ANIMATED_GENRES.has(g));
+  const genres = m.genres || [];
+  const lang   = (m.original_language || '').toLowerCase();
+  return genres.includes('Animation') || lang === 'ja';
 }
 
 function applyGenreFilter(items) {
@@ -2445,28 +2454,30 @@ function applyGenreFilter(items) {
     const lang   = (m.original_language || 'en').toLowerCase();
     const rating = (m.rated || '').toUpperCase().trim();
 
-    // ── Default (all): hide anime & cartoons ──
-    if (activeGenreFilter === 'all') {
-      return !isAnimated(m);
-    }
+    // ── Animation/Anime pill: ONLY animated content ──
+    if (activeGenreFilter === 'anime') return isAnimated(m);
 
-    // ── Blockbuster: big-budget Hollywood only, no anime/cartoons ──
+    // ── All other filters: strip animation completely ──
+    if (isAnimated(m)) return false;
+
+    // ── Default (all): everything except animation ──
+    if (activeGenreFilter === 'all') return true;
+
+    // ── Blockbuster: big-budget Hollywood genres ──
     if (activeGenreFilter === 'blockbuster') {
-      return genres.some(g => BLOCKBUSTER_GENRES.has(g)) && !isAnimated(m);
+      return genres.some(g => BLOCKBUSTER_GENRES.has(g));
     }
 
-    // ── Family: strict safe content only ──
+    // ── Family: strict safe content — no dark genres, G/PG or Family tagged ──
     if (activeGenreFilter === 'family') {
       if (genres.some(g => FAMILY_BLOCKED_GENRES.has(g))) return false;
-      const safeRating   = FAMILY_SAFE_RATINGS.has(rating);
-      const familyGenre  = genres.includes('Family') || genres.includes('Animation');
-      return safeRating || familyGenre;
+      return FAMILY_SAFE_RATINGS.has(rating) || genres.includes('Family');
     }
 
-    // ── Foreign: non-English, anime welcome here ──
+    // ── Foreign: non-English only ──
     if (activeGenreFilter === 'foreign') return lang !== 'en';
 
-    // ── Indie: low-budget English, no blockbuster genres ──
+    // ── Indie: English, no blockbuster genres ──
     if (activeGenreFilter === 'indie') {
       return !genres.some(g => INDIE_EXCLUDE_GENRES.has(g)) && lang === 'en';
     }
