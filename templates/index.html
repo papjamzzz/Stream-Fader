@@ -1866,39 +1866,101 @@
       color: #fff;
       box-shadow: 0 0 20px rgba(79,195,247,0.35), 0 4px 16px rgba(79,195,247,0.2);
     }
-    .genre-pill[data-genre="blockbuster"].active {
-      background: linear-gradient(135deg, rgba(255,100,50,0.28) 0%, rgba(255,183,77,0.22) 100%);
-      border-color: rgba(255,140,60,0.9);
-      color: #ffb74d;
-      box-shadow: 0 0 20px rgba(255,120,50,0.35), 0 4px 16px rgba(255,120,50,0.2);
+    /* ── Category tabs ── */
+    .cat-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 0 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: 0;
     }
-    .genre-pill[data-genre="indie"].active {
+    .cat-tabs::-webkit-scrollbar { display: none; }
+    .cat-tab {
+      flex-shrink: 0;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 10px 20px;
+      border-radius: 8px 8px 0 0;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-bottom: none;
+      background: rgba(255,255,255,0.03);
+      color: rgba(240,242,255,0.4);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .cat-tab:hover { color: rgba(240,242,255,0.7); background: rgba(255,255,255,0.06); }
+    .cat-tab.active {
+      background: #0d0f1a;
+      color: #f0f2ff;
+      border-color: rgba(255,255,255,0.12);
+    }
+    .cat-tab[data-cat="movies"].active { color: #4fc3f7; border-top: 2px solid #4fc3f7; }
+    .cat-tab[data-cat="tv"].active { color: #c678dd; border-top: 2px solid #c678dd; }
+    .cat-tab[data-cat="new"].active { color: #22c55e; border-top: 2px solid #22c55e; }
+    .cat-tab[data-cat="trending"].active { color: #ff6b35; border-top: 2px solid #ff6b35; }
+
+    .tabs-genre-bar {
+      background: rgba(13,15,26,0.98);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 10px 16px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tabs-genre-bar::-webkit-scrollbar { display: none; }
+
+    .genre-pill[data-genre="all"].active {
       background: linear-gradient(135deg, rgba(198,120,221,0.28) 0%, rgba(121,90,180,0.22) 100%);
-      border-color: rgba(198,120,221,0.9);
-      color: #c678dd;
+      border-color: rgba(198,120,221,0.9); color: #c678dd;
       box-shadow: 0 0 20px rgba(198,120,221,0.35), 0 4px 16px rgba(198,120,221,0.2);
     }
-    .genre-pill[data-genre="family"].active {
-      background: linear-gradient(135deg, rgba(41,182,246,0.28) 0%, rgba(2,136,209,0.22) 100%);
-      border-color: rgba(41,182,246,0.9);
-      color: #29b6f6;
-      box-shadow: 0 0 20px rgba(41,182,246,0.4), 0 4px 16px rgba(41,182,246,0.25);
+    .genre-pill[data-genre="action"].active {
+      background: linear-gradient(135deg, rgba(255,100,50,0.28) 0%, rgba(255,183,77,0.22) 100%);
+      border-color: rgba(255,140,60,0.9); color: #ffb74d;
+      box-shadow: 0 0 20px rgba(255,120,50,0.35), 0 4px 16px rgba(255,120,50,0.2);
     }
-    .genre-pill[data-genre="foreign"].active {
+    .genre-pill[data-genre="comedy"].active {
+      background: linear-gradient(135deg, rgba(255,235,59,0.22) 0%, rgba(255,193,7,0.18) 100%);
+      border-color: rgba(255,235,59,0.8); color: #ffee58;
+      box-shadow: 0 0 20px rgba(255,235,59,0.3), 0 4px 16px rgba(255,235,59,0.15);
+    }
+    .genre-pill[data-genre="drama"].active {
       background: linear-gradient(135deg, rgba(79,195,247,0.2) 0%, rgba(26,120,180,0.28) 100%);
-      border-color: rgba(79,195,247,0.9);
-      color: #4fc3f7;
+      border-color: rgba(79,195,247,0.9); color: #4fc3f7;
       box-shadow: 0 0 20px rgba(79,195,247,0.35), 0 4px 16px rgba(79,195,247,0.2);
     }
-    .genre-pill[data-genre="anime"].active {
-      background: linear-gradient(135deg, rgba(255,105,180,0.28) 0%, rgba(180,60,220,0.22) 100%);
-      border-color: rgba(255,105,180,0.9);
-      color: #ff69b4;
-      box-shadow: 0 0 20px rgba(255,105,180,0.35), 0 4px 16px rgba(255,105,180,0.2);
+    .genre-pill[data-genre="horror"].active {
+      background: linear-gradient(135deg, rgba(239,83,80,0.28) 0%, rgba(183,28,28,0.22) 100%);
+      border-color: rgba(239,83,80,0.9); color: #ef5350;
+      box-shadow: 0 0 20px rgba(239,83,80,0.35), 0 4px 16px rgba(239,83,80,0.2);
     }
-    .genre-pill.active {
-      transform: translateY(-2px);
+    .genre-pill[data-genre="scifi"].active {
+      background: linear-gradient(135deg, rgba(41,182,246,0.28) 0%, rgba(2,136,209,0.22) 100%);
+      border-color: rgba(41,182,246,0.9); color: #29b6f6;
+      box-shadow: 0 0 20px rgba(41,182,246,0.4), 0 4px 16px rgba(41,182,246,0.25);
     }
+    .genre-pill[data-genre="documentary"].active {
+      background: linear-gradient(135deg, rgba(102,187,106,0.28) 0%, rgba(56,142,60,0.22) 100%);
+      border-color: rgba(102,187,106,0.9); color: #66bb6a;
+      box-shadow: 0 0 20px rgba(102,187,106,0.35), 0 4px 16px rgba(102,187,106,0.2);
+    }
+    .genre-pill.active { transform: translateY(-2px); }
+
+    /* tab-driven column visibility */
+    .two-col.tab-movies .col-divider,
+    .two-col.tab-movies > div:last-child { display: none; }
+    .two-col.tab-movies > div:first-child { grid-column: 1 / -1; }
+    .two-col.tab-tv .col-divider,
+    .two-col.tab-tv > div:first-child { display: none; }
+    .two-col.tab-tv > div:last-child { grid-column: 1 / -1; }
 
     /* ── SHOW MORE BUTTON ── */
     .show-more-btn {
@@ -2342,12 +2404,6 @@
 <section class="fader-section" style="padding:14px 0 12px;">
   <div class="fader-with-pills">
 
-    <!-- LEFT PILLS: Blockbusters! + Indie -->
-    <div class="fader-pills-left">
-      <button class="genre-pill" data-genre="blockbuster" onclick="setGenreFilter(activeGenreFilter==='blockbuster'?'all':'blockbuster')">Blockbusters!</button>
-      <button class="genre-pill" data-genre="indie" onclick="setGenreFilter(activeGenreFilter==='indie'?'all':'indie')">Indie</button>
-    </div>
-
     <div class="fader-inner">
       <div class="fader-labels">
         <div class="fader-label left">Critics</div>
@@ -2433,18 +2489,29 @@
       </div>
     </div>
 
-    <!-- RIGHT PILLS: Foreign + Family + Animation/Anime -->
-    <div class="fader-pills-right">
-      <button class="genre-pill" data-genre="foreign" onclick="setGenreFilter(activeGenreFilter==='foreign'?'all':'foreign')">Foreign</button>
-      <button class="genre-pill" data-genre="family" onclick="setGenreFilter(activeGenreFilter==='family'?'all':'family')">Family</button>
-      <button class="genre-pill" data-genre="anime" onclick="setGenreFilter(activeGenreFilter==='anime'?'all':'anime')">Animation / Anime</button>
-    </div>
-
   </div>
 </section>
 
 <div id="results-anchor"></div>
 
+<!-- ══════════════════════════════════════════════
+     CAT TABS + GENRE BAR
+══════════════════════════════════════════════ -->
+<div class="cat-tabs" id="cat-tabs">
+  <button class="cat-tab active" data-cat="movies" onclick="setActiveTab('movies')">🎬 Movies</button>
+  <button class="cat-tab" data-cat="tv" onclick="setActiveTab('tv')">📺 TV Shows</button>
+  <button class="cat-tab" data-cat="new" onclick="setActiveTab('new')">✨ New This Week</button>
+  <button class="cat-tab" data-cat="trending" onclick="setActiveTab('trending')">🔥 Trending</button>
+</div>
+<div class="tabs-genre-bar" id="tabs-genre-bar">
+  <button class="genre-pill active" data-genre="all" onclick="setGenreFilter('all')">All</button>
+  <button class="genre-pill" data-genre="action" onclick="setGenreFilter('action')">Action</button>
+  <button class="genre-pill" data-genre="comedy" onclick="setGenreFilter('comedy')">Comedy</button>
+  <button class="genre-pill" data-genre="drama" onclick="setGenreFilter('drama')">Drama</button>
+  <button class="genre-pill" data-genre="horror" onclick="setGenreFilter('horror')">Horror</button>
+  <button class="genre-pill" data-genre="scifi" onclick="setGenreFilter('scifi')">Sci-Fi</button>
+  <button class="genre-pill" data-genre="documentary" onclick="setGenreFilter('documentary')">Documentary</button>
+</div>
 
 <!-- ══════════════════════════════════════════════
      CLAUDE TOP PICK
@@ -2762,57 +2829,48 @@ window._sfFader = fader;
 let allGenres = new Set();
 window._cardRegistry = [];
 let activeGenreFilter = 'all';
+let activeTab = 'movies';
 
 // ── Genre Filter ─────────────────────────────────────
-const BLOCKBUSTER_GENRES    = new Set(['Action', 'Adventure', 'Science Fiction', 'Thriller', 'Drama']);
-const INDIE_EXCLUDE_GENRES  = new Set(['Action', 'Adventure']);
-const FAMILY_SAFE_RATINGS   = new Set(['G', 'PG', 'PG-12', 'PG-13']);
-const FAMILY_BLOCKED_GENRES = new Set(['Horror', 'Thriller', 'Crime', 'Mystery', 'Adult', 'War', 'Western']);
-
-// Animation/Anime = anything tagged Animation, or Japanese-language content
-function isAnimated(m) {
-  const genres = m.genres || [];
-  const lang   = (m.original_language || '').toLowerCase();
-  return genres.includes('Animation') || lang === 'ja';
-}
+const GENRE_MAP = {
+  action:      ['Action'],
+  comedy:      ['Comedy'],
+  drama:       ['Drama'],
+  horror:      ['Horror'],
+  scifi:       ['Science Fiction'],
+  documentary: ['Documentary'],
+};
 
 function applyGenreFilter(items) {
-  return items.filter(m => {
-    const genres = m.genres || [];
-    const lang   = (m.original_language || 'en').toLowerCase();
-    const rating = (m.rated || '').toUpperCase().trim();
+  let filtered = items;
 
-    // ── Animation/Anime pill: ONLY animated content ──
-    if (activeGenreFilter === 'anime') return isAnimated(m);
+  // ── Tab: New This Week — released in last 14 days ──
+  if (activeTab === 'new') {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 14);
+    filtered = filtered.filter(m => {
+      const d = m.release ? new Date(m.release) : null;
+      return d && d >= cutoff;
+    });
+  }
 
-    // ── All other filters: strip animation completely ──
-    if (isAnimated(m)) return false;
+  // ── Genre pill filter ──
+  if (activeGenreFilter !== 'all') {
+    const genres = GENRE_MAP[activeGenreFilter] || [];
+    filtered = filtered.filter(m => {
+      const mg = m.genres || [];
+      return genres.some(g => mg.includes(g));
+    });
+  }
 
-    // ── Default (all): everything except animation ──
-    if (activeGenreFilter === 'all') return true;
+  return filtered;
+}
 
-    // ── Blockbuster: big-budget Hollywood genres ──
-    if (activeGenreFilter === 'blockbuster') {
-      return genres.some(g => BLOCKBUSTER_GENRES.has(g));
-    }
-
-    // ── Family: safe ratings + Family/Animation/Romance/Drama genres ──
-    if (activeGenreFilter === 'family') {
-      if (genres.some(g => FAMILY_BLOCKED_GENRES.has(g))) return false;
-      const familyGenres = new Set(['Family', 'Animation', 'Romance', 'Drama']);
-      return FAMILY_SAFE_RATINGS.has(rating) || genres.some(g => familyGenres.has(g));
-    }
-
-    // ── Foreign: non-English only ──
-    if (activeGenreFilter === 'foreign') return lang !== 'en';
-
-    // ── Indie: English, no blockbuster genres ──
-    if (activeGenreFilter === 'indie') {
-      return !genres.some(g => INDIE_EXCLUDE_GENRES.has(g)) && lang === 'en';
-    }
-
-    return true;
-  });
+function sortForTab(items) {
+  if (activeTab === 'trending') {
+    return [...items].sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+  }
+  return items;
 }
 
 function setGenreFilter(genre) {
@@ -2821,8 +2879,21 @@ function setGenreFilter(genre) {
     b.classList.toggle('active', b.dataset.genre === genre);
   });
   moviePage = 1; tvPage = 1;
-  renderList('movie-list', applyGenreFilter(allMovies), 'movie-count', moviePage);
-  renderList('tv-list',    applyGenreFilter(allTV),    'tv-count',    tvPage);
+  renderCards();
+}
+
+function setActiveTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.cat-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.cat === tab);
+  });
+  const tc = document.querySelector('.two-col');
+  if (tc) {
+    tc.classList.remove('tab-movies', 'tab-tv', 'tab-new', 'tab-trending');
+    tc.classList.add('tab-' + tab);
+  }
+  moviePage = 1; tvPage = 1;
+  renderCards();
 }
 
 // ── Preferences ─────────────────────────────────────
@@ -2863,8 +2934,8 @@ async function sendPreference(imdbId, title, genres, signal, mediaType) {
 
 function renderCards() {
     window._cardRegistry = [];
-    renderList('movie-list', applyGenreFilter(allMovies), 'movie-count', moviePage);
-    renderList('tv-list',    applyGenreFilter(allTV),    'tv-count',    tvPage);
+    renderList('movie-list', sortForTab(applyGenreFilter(allMovies)), 'movie-count', moviePage);
+    renderList('tv-list',    sortForTab(applyGenreFilter(allTV)),    'tv-count',    tvPage);
 }
 
 // ── Score Meters ──────────────────────────────────────
@@ -3187,12 +3258,12 @@ function renderList(containerId, items, countId, page) {
 
 function loadMoreMovies() {
   moviePage++;
-  renderList('movie-list', applyGenreFilter(allMovies), 'movie-count', moviePage);
+  renderList('movie-list', sortForTab(applyGenreFilter(allMovies)), 'movie-count', moviePage);
 }
 
 function loadMoreTV() {
   tvPage++;
-  renderList('tv-list', applyGenreFilter(allTV), 'tv-count', tvPage);
+  renderList('tv-list', sortForTab(applyGenreFilter(allTV)), 'tv-count', tvPage);
 }
 
 function updateCards(animate = true) {
@@ -3205,8 +3276,8 @@ function updateCards(animate = true) {
     tvList.classList.add('swapping');
     setTimeout(() => {
       moviePage = 1; tvPage = 1;
-      renderList('movie-list', applyGenreFilter(allMovies), 'movie-count', moviePage);
-      renderList('tv-list',    applyGenreFilter(allTV),    'tv-count',    tvPage);
+      renderList('movie-list', sortForTab(applyGenreFilter(allMovies)), 'movie-count', moviePage);
+      renderList('tv-list',    sortForTab(applyGenreFilter(allTV)),    'tv-count',    tvPage);
       movieList.classList.remove('swapping');
       tvList.classList.remove('swapping');
       movieList.classList.add('swapping-in');
@@ -3862,6 +3933,12 @@ onFaderMove(50);
 // Restore fader position before first render
 const _faderEl = document.getElementById('blend-fader');
 if (_faderEl) { _faderEl.value = fader; onFaderMove(fader); }
+
+// Initialize tab state on two-col
+(function() {
+  const tc = document.querySelector('.two-col');
+  if (tc) tc.classList.add('tab-' + activeTab);
+})();
 
 loadPreferences().then(() => loadContent(false));
 
