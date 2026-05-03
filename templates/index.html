@@ -4223,6 +4223,11 @@ async function runStreamFinder() {
       loading.style.display = 'none';
       go.style.display = 'block';
       go.textContent = 'Try again ✦';
+      const errMsg = data.error === 'no_ai_key' || data.error === 'ai_failed'
+        ? 'AI not configured — set ANTHROPIC_API_KEY in Railway'
+        : `Error: ${data.error}`;
+      document.getElementById('sf-finder-taste').textContent = errMsg;
+      document.getElementById('sf-finder-taste').style.color = '#ef5350';
       return;
     }
 
