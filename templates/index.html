@@ -524,8 +524,8 @@
     /* ── POSTER CARD GRID ── */
     .card-list {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
     }
     @media (max-width: 600px) {
       .card-list { grid-template-columns: repeat(2, 1fr); }
@@ -2625,51 +2625,7 @@
 </div>
 
 <!-- ═══════════════════ HELP BUTTON + MODAL ═══════════════════ -->
-<!-- ══════════════════════════════════════════════
-     STREAMFINDER FLOATING BUTTON + MODAL
-══════════════════════════════════════════════ -->
-<button id="sf-finder-btn" onclick="openStreamFinder()" title="StreamFinder — AI picks in 3 words" style="
-  position: fixed;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 201;
-  background: linear-gradient(135deg, #1a0d2e 0%, #0d1a2e 100%);
-  border: 1px solid rgba(198,120,221,0.5);
-  color: #c678dd;
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  padding: 10px 24px;
-  border-radius: 30px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 0 20px rgba(198,120,221,0.25), 0 4px 20px rgba(0,0,0,0.6);
-  animation: sf-finder-pulse 3s ease-in-out infinite;
-  white-space: nowrap;
-">
-  <span style="font-size:14px;">✦</span>
-  StreamFinder
-  <span style="font-size:14px;">✦</span>
-</button>
-<style>
-  @keyframes sf-finder-pulse {
-    0%,100% { box-shadow: 0 0 20px rgba(198,120,221,0.25), 0 4px 20px rgba(0,0,0,0.6); border-color: rgba(198,120,221,0.5); }
-    50%      { box-shadow: 0 0 32px rgba(198,120,221,0.55), 0 4px 24px rgba(0,0,0,0.7); border-color: rgba(198,120,221,0.9); }
-  }
-  #sf-finder-btn:hover {
-    animation: none;
-    background: linear-gradient(135deg, #2a1040 0%, #0d2040 100%);
-    box-shadow: 0 0 40px rgba(198,120,221,0.6), 0 4px 24px rgba(0,0,0,0.7);
-    transform: translateX(-50%) translateY(-2px);
-  }
-</style>
-
-<!-- STREAMFINDER PANEL -->
+<!-- STREAMFINDER PANEL (hidden, kept for API compatibility) -->
 <div id="sf-finder-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.82);backdrop-filter:blur(14px);align-items:center;justify-content:center;">
   <div id="sf-finder-card" style="
     width: 75vw;
