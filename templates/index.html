@@ -1552,6 +1552,9 @@
     .amp-btn.playing .amp-svg rect:first-child { stroke: #4fc3f7; }
     @keyframes amp-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
     .amp-btn.playing .amp-led { fill: #4fc3f7 !important; opacity: 1 !important; animation: amp-pulse 1.8s ease-in-out infinite; }
+    @keyframes power-pulse { 0%,100%{opacity:1;filter:drop-shadow(0 0 4px #ff6b35)} 50%{opacity:0.6;filter:drop-shadow(0 0 8px #ff6b35)} }
+    .amp-btn.playing .amp-power-led { fill: #ff6b35 !important; opacity: 1 !important; animation: power-pulse 1.4s ease-in-out infinite !important; }
+    .amp-power-led { transition: opacity 0.3s; }
 
     /* EQ bar animations */
     .eq-bar { transform-box: fill-box; transform-origin: bottom center; }
@@ -4454,8 +4457,12 @@ renderWatchlist();
     <rect class="eq-bar" id="eq5" x="107" y="53" width="6" height="18" rx="1.5" fill="#ffb74d" opacity="0.9"/>
     <rect class="eq-bar" id="eq6" x="116" y="59" width="6" height="12" rx="1.5" fill="#ffd080" opacity="0.9"/>
     <line x1="69" y1="72" x2="124" y2="72" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
-    <!-- Power LED -->
-    <circle class="amp-led" cx="127" cy="23" r="3" fill="#4fc3f7" opacity="0.25"/>
+    <!-- Power button -->
+    <circle cx="127" cy="23" r="8" fill="#0d0a06" stroke="#ff6b35" stroke-width="1.5" opacity="0.9"/>
+    <circle class="amp-led amp-power-led" cx="127" cy="23" r="5" fill="#ff6b35" opacity="0.35"/>
+    <!-- Power symbol -->
+    <path d="M127 18.5 L127 21.5" stroke="#ff6b35" stroke-width="1.8" stroke-linecap="round" opacity="0.9"/>
+    <path d="M124.2 19.8 A4.2 4.2 0 1 0 129.8 19.8" stroke="#ff6b35" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.9"/>
     <!-- Cassette slot -->
     <rect x="70" y="74" width="50" height="5" rx="1.5" fill="#08090f" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
     <rect x="84" y="75.5" width="22" height="2" rx="1" fill="rgba(255,255,255,0.05)"/>
