@@ -1279,6 +1279,22 @@
       box-shadow: 0 0 10px rgba(34,197,94,0.5);
       pointer-events: none;
     }
+    .card-hot-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 4;
+      background: linear-gradient(135deg, #ff6b35 0%, #f7c59f 100%);
+      color: #1a0a00;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 20px;
+      box-shadow: 0 0 10px rgba(255,107,53,0.55);
+      pointer-events: none;
+    }
 
     .card-saved-banner {
       position: absolute;
@@ -3038,6 +3054,7 @@ function renderCard(item, rank) {
       <div class="card-poster-wrap">
         ${isSaved ? `<div class="card-saved-banner">🔖 Saved</div>` : ''}
         ${isNew ? `<div class="card-new-badge">New</div>` : ''}
+        ${item.trending && !isNew ? `<div class="card-hot-badge">🔥 Popular</div>` : ''}
         ${posterEl}
         <div class="${rankClass}">${rank}</div>
         <div class="save-bar ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleWannaSee(window._cardRegistry[${cardIndex}],this)">
