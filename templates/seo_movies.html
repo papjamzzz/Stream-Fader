@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Best Movies Streaming Right Now ({{ updated }}) — StreamFader</title>
+<meta name="description" content="The best new movies streaming on Netflix, Prime Video, Disney+, Apple TV+, Hulu and more — ranked by blending critic and audience scores. Updated {{ updated }}.">
+<meta name="keywords" content="best movies streaming now, best movies on Netflix, best movies on Prime Video, what to watch tonight, new movies streaming, top rated movies streaming {{ updated }}">
+<link rel="canonical" href="https://stream.creativekonsoles.com/best-movies-streaming-now">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://stream.creativekonsoles.com/best-movies-streaming-now">
+<meta property="og:title" content="Best Movies Streaming Right Now — StreamFader">
+<meta property="og:description" content="Top {{ movies|length }} movies streaming now, ranked by blending critic and audience scores. Updated {{ updated }}.">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Best Movies Streaming Right Now",
+  "description": "Top movies currently streaming, ranked by blending Rotten Tomatoes critic scores with IMDb audience ratings.",
+  "url": "https://stream.creativekonsoles.com/best-movies-streaming-now",
+  "numberOfItems": {{ movies|length }},
+  "itemListElement": [
+    {% for m in movies[:10] %}
+    {
+      "@type": "ListItem",
+      "position": {{ loop.index }},
+      "name": "{{ m.title | replace('"', '\\"') }}",
+      "url": "https://stream.creativekonsoles.com/"
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0d0f1a; color: #f0f2ff; font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; }
+a { color: inherit; text-decoration: none; }
+
+.site-header {
+  background: rgba(13,15,26,0.95);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 16px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 10;
+  backdrop-filter: blur(8px);
+}
+.logo { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+.logo span { color: #c678dd; }
+.header-cta {
+  font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+  padding: 8px 20px; border-radius: 40px;
+  background: rgba(198,120,221,0.12);
+  border: 1px solid rgba(198,120,221,0.35);
+  color: #c678dd; cursor: pointer;
+  transition: background 0.2s;
+}
+.header-cta:hover { background: rgba(198,120,221,0.22); }
+
+.hero {
+  max-width: 860px; margin: 0 auto;
+  padding: 56px 24px 32px;
+}
+.hero-eyebrow {
+  font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+  color: #c678dd; margin-bottom: 12px;
+}
+h1 {
+  font-size: clamp(28px, 5vw, 48px);
+  font-weight: 800; line-height: 1.15;
+  color: #f0f2ff; margin-bottom: 16px;
+}
+h1 em { color: #c678dd; font-style: normal; }
+.hero-desc {
+  font-size: 16px; color: rgba(240,242,255,0.55);
+  max-width: 600px; margin-bottom: 24px; line-height: 1.7;
+}
+.updated-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  color: rgba(240,242,255,0.35);
+  padding: 6px 14px; border-radius: 20px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 40px;
+}
+.updated-dot { width: 5px; height: 5px; border-radius: 50%; background: #22c55e; }
+
+.fader-explainer {
+  max-width: 860px; margin: 0 auto 40px;
+  padding: 0 24px;
+}
+.explainer-box {
+  background: rgba(198,120,221,0.05);
+  border: 1px solid rgba(198,120,221,0.15);
+  border-radius: 16px; padding: 24px 28px;
+  display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+}
+.fader-visual {
+  display: flex; align-items: center; gap: 0; flex: 1; min-width: 200px;
+}
+.fader-pole { font-size: 12px; letter-spacing: 1px; white-space: nowrap; }
+.fader-pole.critic { color: #4fc3f7; }
+.fader-pole.audience { color: #ffb74d; }
+.fader-track {
+  flex: 1; height: 6px; margin: 0 12px;
+  background: linear-gradient(90deg, #4fc3f7, #c678dd, #ffb74d);
+  border-radius: 3px; position: relative;
+}
+.fader-knob {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #c678dd; border: 2px solid #fff;
+  box-shadow: 0 0 10px rgba(198,120,221,0.6);
+}
+.explainer-text { flex: 2; min-width: 200px; }
+.explainer-text p { font-size: 14px; color: rgba(240,242,255,0.55); line-height: 1.6; }
+.explainer-text a { color: #c678dd; border-bottom: 1px solid rgba(198,120,221,0.3); }
+
+.movie-list {
+  max-width: 860px; margin: 0 auto;
+  padding: 0 24px 80px;
+}
+.section-label {
+  font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+  color: rgba(240,242,255,0.3); margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.movie-row {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.15s;
+}
+.movie-row:hover { background: rgba(255,255,255,0.02); border-radius: 8px; padding-left: 8px; }
+
+.movie-rank {
+  font-size: 22px; font-weight: 800;
+  min-width: 36px; text-align: center;
+  color: rgba(240,242,255,0.2);
+}
+.movie-rank.top3 { color: #c678dd; }
+
+.movie-poster {
+  width: 52px; height: 76px; border-radius: 6px;
+  object-fit: cover; background: rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+.movie-poster-placeholder {
+  width: 52px; height: 76px; border-radius: 6px;
+  background: rgba(255,255,255,0.04);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+
+.movie-info { flex: 1; min-width: 0; }
+.movie-title {
+  font-size: 16px; font-weight: 600; color: #f0f2ff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+.movie-meta {
+  font-size: 12px; color: rgba(240,242,255,0.35);
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  margin-bottom: 6px;
+}
+.movie-new { color: #22c55e; font-weight: 700; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+.movie-platforms { display: flex; gap: 5px; flex-wrap: wrap; }
+.platform-pill {
+  font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 20px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(240,242,255,0.45);
+  white-space: nowrap;
+}
+
+.movie-scores {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+  flex-shrink: 0;
+}
+.sf-score {
+  font-size: 26px; font-weight: 800; color: #c678dd; line-height: 1;
+}
+.sf-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: rgba(240,242,255,0.25); }
+.score-pills { display: flex; gap: 4px; }
+.score-pill {
+  font-size: 9px; padding: 2px 6px; border-radius: 4px;
+  font-weight: 700;
+}
+.score-pill.rt { background: rgba(250,76,12,0.15); color: #fa4c0c; }
+.score-pill.imdb { background: rgba(245,197,24,0.15); color: #f5c518; }
+
+.cta-section {
+  max-width: 860px; margin: 0 auto;
+  padding: 0 24px 80px; text-align: center;
+}
+.cta-box {
+  background: linear-gradient(135deg, rgba(79,195,247,0.06) 0%, rgba(198,120,221,0.08) 50%, rgba(255,183,77,0.06) 100%);
+  border: 1px solid rgba(198,120,221,0.2);
+  border-radius: 20px; padding: 48px 32px;
+}
+.cta-title { font-size: 28px; font-weight: 800; margin-bottom: 12px; }
+.cta-title em { color: #c678dd; font-style: normal; }
+.cta-desc { font-size: 15px; color: rgba(240,242,255,0.5); margin-bottom: 28px; line-height: 1.7; }
+.cta-btn {
+  display: inline-block;
+  font-size: 12px; letter-spacing: 3px; text-transform: uppercase;
+  padding: 16px 40px; border-radius: 40px;
+  background: rgba(198,120,221,0.15);
+  border: 1px solid rgba(198,120,221,0.45);
+  color: #c678dd; transition: all 0.2s; cursor: pointer;
+}
+.cta-btn:hover { background: rgba(198,120,221,0.28); }
+
+footer {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 24px; text-align: center;
+  font-size: 12px; color: rgba(240,242,255,0.25);
+}
+footer a { color: rgba(198,120,221,0.6); }
+
+@media (max-width: 540px) {
+  .movie-poster, .movie-poster-placeholder { width: 42px; height: 62px; }
+  .sf-score { font-size: 20px; }
+  .score-pills { display: none; }
+  .explainer-box { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="/" class="logo">Stream<span>Fader</span></a>
+  <a href="/" class="header-cta">Open the Fader →</a>
+</header>
+
+<section class="hero">
+  <div class="hero-eyebrow">Updated {{ updated }}</div>
+  <h1>Best Movies Streaming<br><em>Right Now</em></h1>
+  <p class="hero-desc">Ranked by blending critic scores (Rotten Tomatoes, Metacritic) with audience ratings (IMDb) at the sweet spot — the movies both sides agree are worth your time.</p>
+  <div class="updated-badge">
+    <div class="updated-dot"></div>
+    Refreshed daily · {{ movies|length }} titles ranked
+  </div>
+</section>
+
+<section class="fader-explainer">
+  <div class="explainer-box">
+    <div class="fader-visual">
+      <span class="fader-pole critic">◀ Critics</span>
+      <div class="fader-track"><div class="fader-knob"></div></div>
+      <span class="fader-pole audience">Audience ▶</span>
+    </div>
+    <div class="explainer-text">
+      <p>These rankings use a 50/50 blend — equal weight to critics and audiences. Want to shift it? <a href="/">Open StreamFader</a> and drag the fader to match exactly whose opinion you trust.</p>
+    </div>
+  </div>
+</section>
+
+<main class="movie-list">
+  <div class="section-label">Top {{ movies|length }} movies streaming now · Sweet spot blend</div>
+
+  {% for m in movies %}
+  {% set critic = m.critic_score or 50 %}
+  {% set audience = m.audience_score or 50 %}
+  {% set sf = ((critic * 0.5 + audience * 0.5) | round | int) %}
+  {% set year = (m.release or '')[:4] %}
+  {% set genre = (m.genres or [''])[0] %}
+  {% set is_new = m.release and ((m.release | string)[:10] >= (now_minus_7 | string)[:10]) %}
+
+  <article class="movie-row" itemscope itemtype="https://schema.org/Movie">
+    <div class="movie-rank {% if loop.index <= 3 %}top3{% endif %}">{{ loop.index }}</div>
+
+    {% if m.poster %}
+    <img class="movie-poster" src="{{ m.poster }}" alt="{{ m.title }} poster" loading="lazy" itemprop="image"
+         onerror="this.outerHTML='<div class=\'movie-poster-placeholder\'>🎬</div>'">
+    {% else %}
+    <div class="movie-poster-placeholder">🎬</div>
+    {% endif %}
+
+    <div class="movie-info">
+      <div class="movie-title" itemprop="name">{{ m.title }}</div>
+      <div class="movie-meta">
+        {% if year %}<span>{{ year }}</span>{% endif %}
+        {% if genre %}<span>{{ genre }}</span>{% endif %}
+        {% if is_new %}<span class="movie-new">● New</span>{% endif %}
+      </div>
+      {% if m.providers %}
+      <div class="movie-platforms">
+        {% for p in m.providers[:4] %}
+        <span class="platform-pill">{{ p }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="movie-scores">
+      <div class="sf-score" itemprop="aggregateRating" itemscope itemtype="https://schema.org/AggregateRating">
+        <meta itemprop="ratingValue" content="{{ sf }}">
+        <meta itemprop="bestRating" content="100">
+        {{ sf }}
+      </div>
+      <div class="sf-label">SF Score</div>
+      <div class="score-pills">
+        {% if m.rt_score %}<span class="score-pill rt">RT {{ m.rt_score }}%</span>{% endif %}
+        {% if m.imdb_score %}<span class="score-pill imdb">{{ "%.1f"|format(m.imdb_score) }}</span>{% endif %}
+      </div>
+    </div>
+  </article>
+  {% endfor %}
+</main>
+
+<section class="cta-section">
+  <div class="cta-box">
+    <div class="cta-title">Your opinion is the <em>fader</em></div>
+    <p class="cta-desc">This list uses a 50/50 blend. But you might trust critics more — or ignore them entirely. StreamFader lets you set the exact ratio and watch the rankings shift in real time.</p>
+    <a href="/" class="cta-btn">🎚️ Open StreamFader — Free</a>
+  </div>
+</section>
+
+<footer>
+  <p>© StreamFader by <a href="https://creativekonsoles.com">Creative Konsoles</a> · Free · No ads · No tracking · <a href="/">Back to the fader</a></p>
+</footer>
+
+</body>
+</html>

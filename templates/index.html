@@ -1263,6 +1263,23 @@
     .score-sf .sb-val   { color: #c77dff; font-size: 14px; font-weight: 900; }
 
     /* ── SAVED TITLE BANNER (absolute overlay at top of poster) ── */
+    .card-new-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 4;
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 20px;
+      box-shadow: 0 0 10px rgba(34,197,94,0.5);
+      pointer-events: none;
+    }
+
     .card-saved-banner {
       position: absolute;
       top: 0;
@@ -2928,10 +2945,16 @@ function renderCard(item, rank) {
   const safeImdbId = (item.imdb_id || '').replace(/"/g, '');
 
   const isSaved = isWannaSee(item.id || item.imdb_id);
+  const isNew = (() => {
+    if (!item.release) return false;
+    const d = new Date(item.release);
+    return !isNaN(d) && (Date.now() - d) < 7 * 24 * 60 * 60 * 1000;
+  })();
   return `
     <div class="title-row" id="card-${item.id}" data-id="${item.id}" onclick="openDetail(${cardIndex})">
       <div class="card-poster-wrap">
         ${isSaved ? `<div class="card-saved-banner">🔖 Saved</div>` : ''}
+        ${isNew ? `<div class="card-new-badge">New</div>` : ''}
         ${posterEl}
         <div class="${rankClass}">${rank}</div>
         <div class="save-bar ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleWannaSee(window._cardRegistry[${cardIndex}],this)">

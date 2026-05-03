@@ -453,6 +453,21 @@ def stats():
     return jsonify({'sessions': len(sessions), 'swipes': swipes, 'saves': saves, 'events': total})
 
 
+@app.route('/best-movies-streaming-now')
+def seo_movies():
+    from datetime import timedelta
+    cached = get_cached_content()
+    movies = cached.get('movies', []) if cached else []
+    def sweet_score(m):
+        c = m.get('critic_score') or 50
+        a = m.get('audience_score') or 50
+        return c * 0.5 + a * 0.5
+    top = sorted([m for m in movies if m.get('title')], key=sweet_score, reverse=True)[:25]
+    now = datetime.utcnow()
+    updated = now.strftime('%B %d, %Y')
+    now_minus_7 = (now - timedelta(days=7)).strftime('%Y-%m-%d')
+    return render_template('seo_movies.html', movies=top, updated=updated, now_minus_7=now_minus_7)
+
 @app.route('/robots.txt')
 def robots():
     return app.response_class(
@@ -466,6 +481,8 @@ def sitemap():
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
            '<url><loc>https://stream.creativekonsoles.com/</loc>'
            '<changefreq>daily</changefreq><priority>1.0</priority></url>'
+           '<url><loc>https://stream.creativekonsoles.com/best-movies-streaming-now</loc>'
+           '<changefreq>daily</changefreq><priority>0.9</priority></url>'
            '</urlset>')
     return app.response_class(xml, mimetype='application/xml')
 
