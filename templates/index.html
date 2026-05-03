@@ -1885,7 +1885,13 @@
       font-size: 15px;
     }
     /* ── GENRE FILTER BAR ── */
-    .genre-bar { display: none !important; } /* replaced by sidebar */
+    .genre-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px 4px;
+    }
     .genre-pill {
       flex-shrink: 0;
       padding: 13px 28px;
@@ -2433,9 +2439,7 @@
 <!-- ══════════════════════════════════════════════
      GENRE FILTER BAR
 ══════════════════════════════════════════════ -->
-<div class="genre-bar" id="genre-bar" style="display:none;">
-  <button class="genre-pill active" data-genre="all" onclick="setGenreFilter('all')">All</button>
-</div>
+<div class="genre-bar" id="genre-bar"></div>
 
 <!-- ══════════════════════════════════════════════
      CLAUDE TOP PICK
@@ -2934,7 +2938,7 @@ let fader     = parseInt(_ls.getItem('sf_fader') || '50');
 window._sfFader = fader;
 let allGenres = new Set();
 window._cardRegistry = [];
-let activeGenreFilter = 'all';
+let activeGenres = new Set(); // empty = show all
 
 const GENRE_MAP = {
   'Action':   ['action', 'action & adventure'],
@@ -2946,36 +2950,58 @@ const GENRE_MAP = {
 };
 
 function applyGenreFilter(items) {
-  if (activeGenreFilter === 'all') return items;
-  const targets = GENRE_MAP[activeGenreFilter]
-    || [activeGenreFilter.toLowerCase()];
-  return items.filter(item =>
-    (item.genres || []).some(g => targets.includes(g.toLowerCase()))
-  );
+  if (!activeGenres.size) return items;
+  return items.filter(item => {
+    const itemGenres = (item.genres || []).map(g => g.toLowerCase());
+    return [...activeGenres].some(genre => {
+      const targets = GENRE_MAP[genre] || [genre.toLowerCase()];
+      return itemGenres.some(g => targets.includes(g));
+    });
+  });
 }
 
 function setGenreFilter(genre) {
-  activeGenreFilter = genre;
+  if (genre === 'all') {
+    activeGenres.clear();
+  } else {
+    if (activeGenres.has(genre)) {
+      activeGenres.delete(genre);
+    } else {
+      activeGenres.add(genre);
+    }
+  }
   moviePage = 1; tvPage = 1;
-  document.querySelectorAll('.genre-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.genre === genre);
+  document.querySelectorAll('.genre-btn, .genre-pill').forEach(b => {
+    const g = b.dataset.genre;
+    if (g === 'all') {
+      b.classList.toggle('active', activeGenres.size === 0);
+    } else {
+      b.classList.toggle('active', activeGenres.has(g));
+    }
   });
   renderCards();
 }
 
 function buildGenrePills() {
-  const left = document.getElementById('genre-sidebar-left');
-  if (!left) return;
-
   const GENRES = ['All', 'Action', 'Comedy', 'Drama', 'Thriller', 'Horror', 'Sci-Fi'];
 
-  function btn(g, active) {
-    const key  = g === 'All' ? 'all' : g;
-    const safe = key.replace(/'/g, "\\'");
-    return `<button class="genre-btn${active ? ' active' : ''}" data-genre="${key}" onclick="setGenreFilter('${safe}')">${g}</button>`;
+  const sidebar = document.getElementById('genre-sidebar-left');
+  if (sidebar) {
+    sidebar.innerHTML = GENRES.map((g, i) => {
+      const key  = g === 'All' ? 'all' : g;
+      const safe = key.replace(/'/g, "\\'");
+      return `<button class="genre-btn${i === 0 ? ' active' : ''}" data-genre="${key}" onclick="setGenreFilter('${safe}')">${g}</button>`;
+    }).join('');
   }
 
-  left.innerHTML = GENRES.map((g, i) => btn(g, i === 0)).join('');
+  const bar = document.getElementById('genre-bar');
+  if (bar) {
+    bar.innerHTML = GENRES.map((g, i) => {
+      const key  = g === 'All' ? 'all' : g;
+      const safe = key.replace(/'/g, "\\'");
+      return `<button class="genre-pill${i === 0 ? ' active' : ''}" data-genre="${key}" onclick="setGenreFilter('${safe}')">${g}</button>`;
+    }).join('');
+  }
 }
 
 function toggleMoreGenres(e) {
