@@ -1827,46 +1827,53 @@
       color: var(--dim);
       font-size: 15px;
     }
-    /* ── GENRE FILTER PILLS ── */
+    /* ── GENRE FILTER BAR ── */
+    .genre-bar {
+      padding: 10px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      flex-wrap: nowrap;
+    }
+    .genre-bar::-webkit-scrollbar { display: none; }
     .genre-pill {
-      padding: 14px 28px;
-      border-radius: 50px;
-      border: 2px solid rgba(255,255,255,0.12);
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
       background: rgba(255,255,255,0.04);
       color: rgba(240,242,255,0.5);
       font-family: 'Inter', sans-serif;
-      font-size: 15px;
-      font-weight: 800;
-      letter-spacing: 0.06em;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
       cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
-      overflow: hidden;
+      transition: all 0.18s ease;
+      white-space: nowrap;
     }
-    .genre-pill::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 50px;
-      background: linear-gradient(135deg, rgba(79,195,247,0.08) 0%, rgba(198,120,221,0.08) 100%);
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .genre-pill:hover::before { opacity: 1; }
     .genre-pill:hover {
-      border-color: rgba(79,195,247,0.55);
-      color: #fff;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 24px rgba(79,195,247,0.18);
+      border-color: rgba(198,120,221,0.5);
+      color: rgba(240,242,255,0.9);
+      background: rgba(198,120,221,0.08);
+    }
+    .genre-pill.active {
+      background: rgba(198,120,221,0.18);
+      border-color: rgba(198,120,221,0.7);
+      color: #c678dd;
+      box-shadow: 0 0 12px rgba(198,120,221,0.2);
     }
     .genre-pill[data-genre="all"].active {
-      background: linear-gradient(135deg, rgba(79,195,247,0.25) 0%, rgba(198,120,221,0.2) 100%);
-      border-color: rgba(79,195,247,0.9);
-      color: #fff;
-      box-shadow: 0 0 20px rgba(79,195,247,0.35), 0 4px 16px rgba(79,195,247,0.2);
+      background: rgba(79,195,247,0.15);
+      border-color: rgba(79,195,247,0.6);
+      color: #4fc3f7;
+      box-shadow: 0 0 12px rgba(79,195,247,0.2);
     }
-    .genre-pill.active { transform: translateY(-2px); }
 
     /* ── SHOW MORE BUTTON ── */
     .show-more-btn {
@@ -2072,18 +2079,14 @@
         right: -100vw;
       }
 
-      /* ── Genre pills — horizontally scrollable row ── */
-      .genre-filter-wrap,
-      [id*="genre"],
-      .genre-pills-row {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        flex-wrap: nowrap !important;
-        scrollbar-width: none;
+      /* ── Genre bar — already scrollable, just tighten padding on mobile ── */
+      .genre-bar {
+        padding: 8px 12px;
+        gap: 5px;
       }
       .genre-pill {
-        padding: 10px 18px;
-        font-size: 12px;
+        padding: 5px 11px;
+        font-size: 11px;
         flex-shrink: 0;
       }
 
@@ -2261,13 +2264,7 @@
       .fader-section {
         position: sticky;
       }
-      /* Ensure genre pill containers scroll on tablets too */
-      .genre-filter-wrap,
-      .genre-pills-row {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-      }
+      .genre-bar { padding: 7px 10px; }
     }
   </style>
 </head>
@@ -2417,6 +2414,13 @@
 </section>
 
 <div id="results-anchor"></div>
+
+<!-- ══════════════════════════════════════════════
+     GENRE FILTER BAR
+══════════════════════════════════════════════ -->
+<div class="genre-bar" id="genre-bar" style="display:none;">
+  <button class="genre-pill active" data-genre="all" onclick="setGenreFilter('all')">All</button>
+</div>
 
 <!-- ══════════════════════════════════════════════
      CLAUDE TOP PICK
@@ -2736,13 +2740,38 @@ window._cardRegistry = [];
 let activeGenreFilter = 'all';
 
 function applyGenreFilter(items) {
-  return items;
+  if (activeGenreFilter === 'all') return items;
+  return items.filter(item =>
+    (item.genres || []).some(g => g.toLowerCase() === activeGenreFilter.toLowerCase())
+  );
 }
 
 function setGenreFilter(genre) {
   activeGenreFilter = genre;
   moviePage = 1; tvPage = 1;
+  document.querySelectorAll('#genre-bar .genre-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.genre === genre);
+  });
   renderCards();
+}
+
+function buildGenrePills() {
+  const bar = document.getElementById('genre-bar');
+  if (!bar) return;
+  const freq = {};
+  [...allMovies, ...allTV].forEach(item => {
+    (item.genres || []).forEach(g => { if (g) freq[g] = (freq[g] || 0) + 1; });
+  });
+  const genres = Object.entries(freq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12)
+    .map(([g]) => g);
+  if (!genres.length) return;
+  bar.innerHTML = `<button class="genre-pill active" data-genre="all" onclick="setGenreFilter('all')">All</button>` +
+    genres.map(g =>
+      `<button class="genre-pill" data-genre="${g}" onclick="setGenreFilter('${g.replace(/'/g, "\\'")}')">${g}</button>`
+    ).join('');
+  bar.style.display = 'flex';
 }
 
 // ── Preferences ─────────────────────────────────────
@@ -3177,6 +3206,7 @@ async function loadContent(force = false) {
     allMovies = data.movies || [];
     allTV     = data.tv     || [];
 
+    buildGenrePills();
     updateCards(true);
     document.dispatchEvent(new Event('sf:content-loaded'));
 
