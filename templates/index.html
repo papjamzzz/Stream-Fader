@@ -3171,38 +3171,31 @@ function topN(items, f, n) {
     return true;
   });
 
-  // Use RAW subscores for each pole — RT Tomatometer for critics, RT Audience/IMDb for audience.
-  // These diverge far more than the pre-blended composite scores, creating real card movement.
-  // Tiny deterministic jitter (from title length) nudges ties apart differently each film.
-  const rawC = i => {
-    const rt  = i.rt_score      ?? i.critic_score   ?? 50;
-    const aud = i.rt_audience   ?? i.audience_score  ?? 50;
-    const jitter = ((i.title || '').length % 7) * 0.4; // 0–2.4pt spread, stable per title
-    return rt * 1.6 - aud * 0.6 + jitter;
-  };
-  const rawA = i => {
-    const aud = i.rt_audience   ?? i.audience_score  ?? 50;
-    const rt  = i.rt_score      ?? i.critic_score    ?? 50;
-    const imdb = i.imdb_score != null ? i.imdb_score * 10 : aud;
-    const jitter = ((i.title || '').length % 7) * 0.4;
-    return (aud * 0.7 + imdb * 0.3) * 1.6 - rt * 0.6 + jitter;
-  };
-  const byC   = [...filtered].sort((a, b) => rawC(b) - rawC(a));
-  const byA   = [...filtered].sort((a, b) => rawA(b) - rawA(a));
-  const byPop = [...filtered].sort((a, b) => (b.popularity ?? 0)      - (a.popularity ?? 0));
-  const cRank   = new Map(byC.map((item, i)   => [item.id, i]));
-  const aRank   = new Map(byA.map((item, i)   => [item.id, i]));
-  const popRank = new Map(byPop.map((item, i) => [item.id, i]));
-
   const ratio = f / 100;
+
   return filtered
     .map(i => {
-      const scoreRank = (cRank.get(i.id) ?? 0) * (1 - ratio) + (aRank.get(i.id) ?? 0) * ratio;
-      const baseRank  = scoreRank * 0.85 + (popRank.get(i.id) ?? 0) * 0.15;
-      const affinityAdj = -(genreAffinityScore(i.genres || []) / 8);
-      return { ...i, blend: blendScore(i, f), _rank: baseRank + affinityAdj };
+      // Critic pole: RT Tomatometer, fallback to critic composite
+      const criticScore = i.rt_score ?? i.critic_score ?? 50;
+
+      // Audience pole: blend RT Audience + IMDb (×10), fallback chain
+      const imdbPct = i.imdb_score != null ? i.imdb_score * 10 : null;
+      const audienceScore = (i.rt_audience != null && imdbPct != null)
+        ? i.rt_audience * 0.5 + imdbPct * 0.5
+        : i.rt_audience ?? imdbPct ?? i.audience_score ?? 50;
+
+      // Direct score interpolation — creates genuine card movement at each pole
+      const blended = criticScore * (1 - ratio) + audienceScore * ratio;
+
+      // Tiny stable jitter breaks exact ties (derived from title, so never random)
+      const jitter = ((i.title || '').length % 7) * 0.1;
+
+      // Genre affinity nudge from user's seen/skip history
+      const affinityAdj = genreAffinityScore(i.genres || []) / 8;
+
+      return { ...i, blend: blendScore(i, f), _score: blended + jitter + affinityAdj };
     })
-    .sort((a, b) => a._rank - b._rank)
+    .sort((a, b) => b._score - a._score)
     .slice(0, n);
 }
 
