@@ -3522,13 +3522,18 @@ function openDetail(cardIndex) {
     ? `<img class="detail-poster" src="${item.poster}" alt="${item.title}">`
     : `<div class="detail-poster-placeholder">${item.media_type === 'movie' ? '🎬' : '📺'}</div>`;
 
-  // Scores
+  // Scores — show real sub-scores first, fall back to composites
   const scoreMap = [
-    { label: 'RT',          val: item.rt_score,    unit: '%', color: '#fa320a' },
-    { label: 'RT Audience', val: item.rt_audience, unit: '%', color: '#fca130' },
-    { label: 'Metacritic',  val: item.mc_score,    unit: '',  color: '#ffcc34' },
-    { label: 'IMDb',        val: item.imdb_score,  unit: '',  color: '#f5c518' },
-    { label: 'Letterboxd',  val: item.letterboxd,  unit: '%', color: '#00e054' },
+    { label: 'RT',           val: item.rt_score,       unit: '%', color: '#fa320a' },
+    { label: 'RT Audience',  val: item.rt_audience,    unit: '%', color: '#fca130' },
+    { label: 'Metacritic',   val: item.mc_score,       unit: '',  color: '#ffcc34' },
+    { label: 'IMDb',         val: item.imdb_score,     unit: '',  color: '#f5c518' },
+    { label: 'Letterboxd',   val: item.letterboxd,     unit: '%', color: '#00e054' },
+    // Always-available composites — only shown when the specific sources above are absent
+    ...(item.rt_score == null && item.mc_score == null
+      ? [{ label: 'Critic Score',   val: item.critic_score,   unit: '', color: '#4fc3f7' }] : []),
+    ...(item.rt_audience == null && item.imdb_score == null && item.letterboxd == null
+      ? [{ label: 'Audience Score', val: item.audience_score, unit: '', color: '#c678dd' }] : []),
   ];
   const scoreChips = scoreMap
     .filter(s => s.val != null)
