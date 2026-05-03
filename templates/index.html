@@ -2477,14 +2477,32 @@
     <div id="share-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;padding:20px;">
       <div style="background:#0d0f1a;border:1px solid rgba(198,120,221,0.25);border-radius:20px;max-width:520px;width:100%;padding:28px;position:relative;">
         <button onclick="closeShareModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:rgba(240,242,255,0.4);font-size:20px;cursor:pointer;line-height:1;">✕</button>
-        <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#c678dd;margin-bottom:8px;">Share</div>
+        <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#c678dd;margin-bottom:8px;">Share My Stream</div>
         <div style="font-size:18px;font-weight:600;color:#f0f2ff;margin-bottom:4px;" id="share-modal-title">Your StreamFader</div>
         <div style="font-size:12px;color:rgba(240,242,255,0.4);margin-bottom:20px;" id="share-modal-sub">—</div>
         <canvas id="share-canvas" style="width:100%;border-radius:12px;display:block;margin-bottom:20px;"></canvas>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button onclick="downloadShareCard()" style="flex:1;min-width:120px;background:rgba(198,120,221,0.12);border:1px solid rgba(198,120,221,0.35);color:#c678dd;font-size:10px;letter-spacing:3px;text-transform:uppercase;padding:11px 16px;border-radius:40px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(198,120,221,0.22)'" onmouseout="this.style.background='rgba(198,120,221,0.12)'">⬇ Download</button>
-          <button onclick="copyShareCard()" id="copy-btn" style="flex:1;min-width:120px;background:rgba(79,195,247,0.1);border:1px solid rgba(79,195,247,0.3);color:#4fc3f7;font-size:10px;letter-spacing:3px;text-transform:uppercase;padding:11px 16px;border-radius:40px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(79,195,247,0.2)'" onmouseout="this.style.background='rgba(79,195,247,0.1)'">⎘ Copy Image</button>
-          <button onclick="nativeShare()" id="native-share-btn" style="flex:1;min-width:120px;background:rgba(255,183,77,0.1);border:1px solid rgba(255,183,77,0.3);color:#ffb74d;font-size:10px;letter-spacing:3px;text-transform:uppercase;padding:11px 16px;border-radius:40px;cursor:pointer;transition:all 0.2s;display:none;" onmouseover="this.style.background='rgba(255,183,77,0.2)'" onmouseout="this.style.background='rgba(255,183,77,0.1)'">↑ Share</button>
+
+        <!-- Social row -->
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <button onclick="shareToX()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);color:#f0f2ff;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:13px 8px;border-radius:12px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(0,0,0,0.4)'">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.259 5.631L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            Post to X
+          </button>
+          <button onclick="shareToFacebook()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(24,119,242,0.15);border:1px solid rgba(24,119,242,0.35);color:#4a9eff;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:13px 8px;border-radius:12px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(24,119,242,0.28)'" onmouseout="this.style.background='rgba(24,119,242,0.15)'">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            Facebook
+          </button>
+          <button onclick="copyShareLink()" id="copy-link-btn" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:rgba(240,242,255,0.55);font-family:inherit;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:13px 8px;border-radius:12px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.09)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Copy Link
+          </button>
+        </div>
+
+        <!-- Image row -->
+        <div style="display:flex;gap:8px;">
+          <button onclick="downloadShareCard()" style="flex:1;background:rgba(198,120,221,0.1);border:1px solid rgba(198,120,221,0.25);color:#c678dd;font-family:inherit;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:10px 12px;border-radius:10px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(198,120,221,0.2)'" onmouseout="this.style.background='rgba(198,120,221,0.1)'">⬇ Save Image</button>
+          <button onclick="copyShareCard()" id="copy-btn" style="flex:1;background:rgba(79,195,247,0.08);border:1px solid rgba(79,195,247,0.2);color:#4fc3f7;font-family:inherit;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:10px 12px;border-radius:10px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(79,195,247,0.18)'" onmouseout="this.style.background='rgba(79,195,247,0.08)'">⎘ Copy Image</button>
+          <button onclick="nativeShare()" id="native-share-btn" style="flex:1;background:rgba(255,183,77,0.1);border:1px solid rgba(255,183,77,0.3);color:#ffb74d;font-family:inherit;font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:10px 12px;border-radius:10px;cursor:pointer;transition:all 0.2s;display:none;" onmouseover="this.style.background='rgba(255,183,77,0.2)'" onmouseout="this.style.background='rgba(255,183,77,0.1)'">↑ Share</button>
         </div>
       </div>
     </div>
@@ -4921,7 +4939,6 @@ document.addEventListener('DOMContentLoaded', () => {
           files: [file]
         });
       } catch(e) {
-        // User cancelled or files not supported — share without image
         try {
           await navigator.share({
             title: 'StreamFader',
@@ -4930,6 +4947,34 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         } catch(_) {}
       }
+    });
+  };
+
+  function _shareText() {
+    const criticPct = 100 - fader;
+    const audiencePct = fader;
+    return `My StreamFader is set ${criticPct}% Critics / ${audiencePct}% Audience — find your sweet spot 🎚️`;
+  }
+
+  window.shareToX = function() {
+    const text = encodeURIComponent(_shareText());
+    const url  = encodeURIComponent('https://stream.creativekonsoles.com');
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'width=560,height=420,noopener');
+  };
+
+  window.shareToFacebook = function() {
+    const url = encodeURIComponent('https://stream.creativekonsoles.com');
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'width=600,height=460,noopener');
+  };
+
+  window.copyShareLink = function() {
+    const btn = document.getElementById('copy-link-btn');
+    navigator.clipboard.writeText('https://stream.creativekonsoles.com').then(() => {
+      const orig = btn.innerHTML;
+      btn.textContent = '✓ Copied!';
+      btn.style.color = '#22c55e';
+      btn.style.borderColor = 'rgba(34,197,94,0.4)';
+      setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; btn.style.borderColor = ''; }, 2000);
     });
   };
 
