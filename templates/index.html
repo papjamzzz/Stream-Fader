@@ -2745,10 +2745,21 @@ let allGenres = new Set();
 window._cardRegistry = [];
 let activeGenreFilter = 'all';
 
+const GENRE_MAP = {
+  'Action':   ['action', 'action & adventure'],
+  'Comedy':   ['comedy'],
+  'Drama':    ['drama'],
+  'Thriller': ['thriller', 'crime', 'mystery'],
+  'Horror':   ['horror'],
+  'Sci-Fi':   ['sci-fi', 'sci-fi & fantasy', 'science fiction', 'science-fiction', 'fantasy'],
+};
+
 function applyGenreFilter(items) {
   if (activeGenreFilter === 'all') return items;
+  const targets = GENRE_MAP[activeGenreFilter]
+    || [activeGenreFilter.toLowerCase()];
   return items.filter(item =>
-    (item.genres || []).some(g => g.toLowerCase() === activeGenreFilter.toLowerCase())
+    (item.genres || []).some(g => targets.includes(g.toLowerCase()))
   );
 }
 
