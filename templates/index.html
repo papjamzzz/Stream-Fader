@@ -2373,9 +2373,45 @@
         <div id="blend-badge">You're The VJ Now</div>
         <div class="readout-side right" id="audience-pct">50% Audience</div>
       </div>
-      <div style="text-align:center;margin-top:12px;">
-        <button onclick="openShareModal()" style="background:rgba(198,120,221,0.12);border:1px solid rgba(198,120,221,0.35);color:#c678dd;font-family:inherit;font-size:11px;letter-spacing:3px;text-transform:uppercase;padding:9px 24px;border-radius:40px;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='rgba(198,120,221,0.22)'" onmouseout="this.style.background='rgba(198,120,221,0.12)'">🎚️ Share My Fader</button>
+      <div style="text-align:center;margin-top:16px;">
+        <button onclick="openShareModal()" id="share-stream-btn" style="
+          background: linear-gradient(135deg, rgba(255,183,77,0.18) 0%, rgba(255,160,20,0.12) 100%);
+          border: 1.5px solid rgba(255,183,77,0.55);
+          color: #ffb74d;
+          font-family: inherit;
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: 4px;
+          text-transform: uppercase;
+          padding: 16px 40px;
+          border-radius: 10px;
+          cursor: pointer;
+          transition: all 0.25s;
+          box-shadow: 0 0 18px rgba(255,183,77,0.2), 0 0 40px rgba(255,183,77,0.08);
+          animation: share-pulse 2.8s ease-in-out infinite;
+          display: inline-block;
+          min-width: 220px;
+        ">📡 Share My Stream</button>
       </div>
+      <style>
+        @keyframes share-pulse {
+          0%, 100% {
+            box-shadow: 0 0 18px rgba(255,183,77,0.2), 0 0 40px rgba(255,183,77,0.08);
+            border-color: rgba(255,183,77,0.55);
+          }
+          50% {
+            box-shadow: 0 0 28px rgba(255,183,77,0.45), 0 0 60px rgba(255,183,77,0.18);
+            border-color: rgba(255,183,77,0.9);
+          }
+        }
+        #share-stream-btn:hover {
+          background: linear-gradient(135deg, rgba(255,183,77,0.28) 0%, rgba(255,160,20,0.2) 100%) !important;
+          transform: translateY(-1px);
+          animation: none;
+          box-shadow: 0 0 36px rgba(255,183,77,0.5), 0 0 70px rgba(255,183,77,0.2) !important;
+        }
+        #share-stream-btn:active { transform: translateY(0); }
+      </style>
     </div>
 
     <!-- SHARE MODAL -->
@@ -4746,7 +4782,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update modal subtitle
     const modeStr = fader < 20 ? 'Critics Only' : fader > 80 ? 'Audience Only' : Math.abs(fader - 50) < 10 ? 'The Sweet Spot' : fader < 50 ? `${criticPct}% Critics` : `${audiencePct}% Audience`;
-    document.getElementById('share-modal-title').textContent = `My StreamFader: ${modeStr}`;
+    document.getElementById('share-modal-title').textContent = `My Stream: ${modeStr}`;
     document.getElementById('share-modal-sub').textContent = `Top 5 at this fader position · ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}`;
   }
 
