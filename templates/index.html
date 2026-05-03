@@ -2758,21 +2758,54 @@ function setGenreFilter(genre) {
 function buildGenrePills() {
   const bar = document.getElementById('genre-bar');
   if (!bar) return;
-  const freq = {};
+
+  const PRIMARY = ['Action', 'Comedy', 'Drama', 'Thriller', 'Horror', 'Sci-Fi'];
+
+  // Collect all genres present in the data
+  const available = new Set();
   [...allMovies, ...allTV].forEach(item => {
-    (item.genres || []).forEach(g => { if (g) freq[g] = (freq[g] || 0) + 1; });
+    (item.genres || []).forEach(g => { if (g) available.add(g); });
   });
-  const genres = Object.entries(freq)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 12)
-    .map(([g]) => g);
-  if (!genres.length) return;
-  bar.innerHTML = `<button class="genre-pill active" data-genre="all" onclick="setGenreFilter('all')">All</button>` +
-    genres.map(g =>
-      `<button class="genre-pill" data-genre="${g}" onclick="setGenreFilter('${g.replace(/'/g, "\\'")}')">${g}</button>`
-    ).join('');
+
+  // Extra genres = anything in data not in the primary list, sorted alphabetically
+  const extras = [...available]
+    .filter(g => !PRIMARY.includes(g))
+    .sort();
+
+  function pill(g, active) {
+    return `<button class="genre-pill${active ? ' active' : ''}" data-genre="${g}" onclick="setGenreFilter('${g.replace(/'/g, "\\'")}')">${g}</button>`;
+  }
+
+  let html = pill('all', true);
+  PRIMARY.forEach(g => { html += pill(g, false); });
+
+  if (extras.length) {
+    html += `<div style="position:relative;flex-shrink:0;">
+      <button class="genre-pill" id="genre-more-btn" onclick="toggleMoreGenres(event)" data-genre="__more__">More ▾</button>
+      <div id="genre-more-menu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:300;background:#0d0f1a;border:1px solid rgba(198,120,221,0.25);border-radius:10px;padding:6px;min-width:160px;display:none;flex-direction:column;gap:4px;box-shadow:0 8px 32px rgba(0,0,0,0.7);">
+        ${extras.map(g => `<button class="genre-pill" data-genre="${g}" style="border-radius:7px;text-align:left;" onclick="setGenreFilter('${g.replace(/'/g, "\\'")}');closeMoreGenres();">${g}</button>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  bar.innerHTML = html;
   bar.style.display = 'flex';
 }
+
+function toggleMoreGenres(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('genre-more-menu');
+  if (!menu) return;
+  const open = menu.style.display === 'flex';
+  menu.style.display = open ? 'none' : 'flex';
+}
+
+function closeMoreGenres() {
+  const menu = document.getElementById('genre-more-menu');
+  if (menu) menu.style.display = 'none';
+}
+
+document.addEventListener('click', () => closeMoreGenres());
 
 // ── Preferences ─────────────────────────────────────
 let userPrefs = [];
