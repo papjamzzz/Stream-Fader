@@ -116,6 +116,87 @@ def top10():
         })
 
 
+@app.route('/api/search')
+def search():
+    from engine import best_scores, STREAMING_PROVIDER_IDS
+    q = (request.args.get('q') or '').strip()
+    if not q or not TMDB_KEY:
+        return jsonify([])
+
+    try:
+        r = requests.get(
+            'https://api.themoviedb.org/3/search/multi',
+            params={'api_key': TMDB_KEY, 'query': q, 'include_adult': 'false', 'page': 1},
+            timeout=8
+        )
+        results = [x for x in r.json().get('results', []) if x.get('media_type') in ('movie', 'tv')][:12]
+    except Exception:
+        return jsonify([])
+
+    def enrich(item):
+        media = item.get('media_type', 'movie')
+        tmdb_id = item.get('id')
+        try:
+            det = requests.get(
+                f'https://api.themoviedb.org/3/{media}/{tmdb_id}',
+                params={'api_key': TMDB_KEY, 'append_to_response': 'external_ids,watch/providers'},
+                timeout=6
+            ).json()
+        except Exception:
+            det = item
+
+        imdb_id = (det.get('external_ids') or {}).get('imdb_id') or det.get('imdb_id') or ''
+        title   = det.get('title') or det.get('name') or ''
+        overview = det.get('overview', '')
+        poster  = f"https://image.tmdb.org/t/p/w300{det['poster_path']}" if det.get('poster_path') else None
+        release = det.get('release_date') or det.get('first_air_date') or ''
+        genres  = [g['name'] for g in (det.get('genres') or []) if g.get('name')][:3]
+
+        # US streaming providers
+        wp = (det.get('watch/providers') or {}).get('results', {}).get('US', {})
+        providers = [p['provider_name'] for p in (wp.get('flatrate') or [])[:4]]
+
+        scores = best_scores(imdb_id) if imdb_id else {}
+        blend_val = None
+        if scores.get('critic') is not None and scores.get('audience') is not None:
+            blend_val = round(scores['critic'] * 0.5 + scores['audience'] * 0.5)
+
+        return {
+            'id': imdb_id or str(tmdb_id),
+            'imdb_id': imdb_id,
+            'tmdb_id': tmdb_id,
+            'title': title,
+            'overview': overview,
+            'poster': poster,
+            'release': release,
+            'genres': genres,
+            'providers': providers,
+            'media_type': media,
+            'trending': False,
+            'popularity': item.get('popularity', 0),
+            'original_language': det.get('original_language', 'en'),
+            'vote_count': det.get('vote_count', 0),
+            'is_doc': False,
+            'rated': scores.get('rated', ''),
+            'critic_score': scores.get('critic'),
+            'audience_score': scores.get('audience'),
+            'rt_score': scores.get('rt'),
+            'rt_audience': scores.get('rt_audience'),
+            'mc_score': scores.get('mc'),
+            'imdb_score': scores.get('imdb_display'),
+            'letterboxd': scores.get('letterboxd'),
+            'trakt_score': scores.get('trakt'),
+            'tmdb_vote': scores.get('tmdb_vote'),
+            'blend': blend_val,
+        }
+
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=6) as ex:
+        enriched = list(ex.map(enrich, results))
+
+    return jsonify([e for e in enriched if e.get('title')])
+
+
 @app.route('/api/trailer')
 def trailer():
     """Return YouTube trailer URL for a given TMDb ID and media type."""

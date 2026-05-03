@@ -2296,6 +2296,54 @@
   </div>
 </header>
 
+<!-- ── SEARCH BAR ── -->
+<div id="search-bar" style="
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 32px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(240,242,255,0.35)" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;">
+    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+  </svg>
+  <input id="search-input" type="text" placeholder="Search any movie or show ever made…"
+    oninput="onSearchInput(this.value)"
+    onkeydown="if(event.key==='Escape')clearSearch()"
+    autocomplete="off" spellcheck="false"
+    style="
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      caret-color: #c678dd;
+    "
+  >
+  <button id="search-clear" onclick="clearSearch()" style="
+    display: none;
+    background: none;
+    border: none;
+    color: rgba(240,242,255,0.35);
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+  ">✕</button>
+</div>
+
+<!-- ── SEARCH RESULTS OVERLAY ── -->
+<div id="search-overlay" style="display:none;position:fixed;inset:0;z-index:190;background:var(--bg);overflow-y:auto;padding-top:130px;">
+  <div style="max-width:1400px;margin:0 auto;padding:24px 32px;">
+    <div id="search-status" style="font-size:13px;color:var(--dim);margin-bottom:20px;letter-spacing:0.05em;"></div>
+    <div id="search-results-grid" class="card-list"></div>
+  </div>
+</div>
+
 <!-- ── QUEUE DROPDOWN ── -->
 <div id="queue-backdrop" onclick="toggleQueueDropdown()"></div>
 <div id="queue-dropdown">
@@ -3859,6 +3907,79 @@ const _faderEl = document.getElementById('blend-fader');
 if (_faderEl) { _faderEl.value = fader; onFaderMove(fader); }
 
 loadPreferences().then(() => loadContent(false));
+
+// ── Universal Search ─────────────────────────────────────────────────────────
+let _searchTimer = null;
+let _searchActive = false;
+
+function onSearchInput(val) {
+  const clearBtn = document.getElementById('search-clear');
+  if (clearBtn) clearBtn.style.display = val.length ? 'block' : 'none';
+
+  clearTimeout(_searchTimer);
+  if (!val.trim()) { closeSearchOverlay(); return; }
+  _searchTimer = setTimeout(() => runSearch(val.trim()), 350);
+}
+
+async function runSearch(q) {
+  showSearchOverlay();
+  const status = document.getElementById('search-status');
+  const grid   = document.getElementById('search-results-grid');
+  if (status) status.textContent = `Searching for "${q}"…`;
+  if (grid)   grid.innerHTML = shimmerCards(6);
+
+  try {
+    const res  = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+
+    if (!data.length) {
+      if (status) status.textContent = `No results for "${q}"`;
+      if (grid)   grid.innerHTML = `<div style="color:var(--dim);padding:32px 0;font-size:15px;">Nothing found. Try a different title.</div>`;
+      return;
+    }
+
+    if (status) status.textContent = `${data.length} result${data.length !== 1 ? 's' : ''} for "${q}"`;
+
+    // Score each result at current fader position then render
+    const scored = data.map(item => {
+      const c = item.critic_score, a = item.audience_score;
+      item.blend = (c != null && a != null) ? c * (1 - fader/100) + a * (fader/100) : null;
+      return item;
+    });
+
+    window._cardRegistry = window._cardRegistry || [];
+    if (grid) grid.innerHTML = scored.map((item, i) => renderCard(item, i + 1)).join('');
+
+  } catch(e) {
+    if (status) status.textContent = 'Search failed — try again';
+    if (grid)   grid.innerHTML = '';
+  }
+}
+
+function shimmerCards(n) {
+  return Array(n).fill(`<div class="title-row" style="aspect-ratio:2/3;"><div class="shimmer" style="width:100%;height:100%;"></div></div>`).join('');
+}
+
+function showSearchOverlay() {
+  _searchActive = true;
+  const overlay = document.getElementById('search-overlay');
+  if (overlay) overlay.style.display = 'block';
+}
+
+function closeSearchOverlay() {
+  _searchActive = false;
+  const overlay = document.getElementById('search-overlay');
+  const input   = document.getElementById('search-input');
+  const clear   = document.getElementById('search-clear');
+  if (overlay) overlay.style.display = 'none';
+  if (input)   input.value = '';
+  if (clear)   clear.style.display = 'none';
+}
+
+function clearSearch() {
+  closeSearchOverlay();
+  document.getElementById('search-input')?.focus();
+}
 
 // ── Fader stroll: auto-animate on first visit to show the mechanic ───────────
 function faderStroll(onDone) {
