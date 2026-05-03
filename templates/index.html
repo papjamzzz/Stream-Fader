@@ -375,50 +375,6 @@
       padding: 24px 16px 40px;
     }
     /* Genre sidebar — fixed in left viewport margin, never touches the card grid */
-    .genre-sidebar {
-      position: fixed;
-      left: 16px;
-      top: 160px;
-      bottom: 80px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-evenly;
-      align-items: stretch;
-      width: 130px;
-      z-index: 50;
-    }
-    .genre-btn {
-      display: block;
-      width: 100%;
-      padding: 11px 14px;
-      background: rgba(79,195,247,0.06);
-      border: 1.5px solid rgba(79,195,247,0.25);
-      border-radius: 50px;
-      color: rgba(79,195,247,0.55);
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.18s;
-      white-space: nowrap;
-    }
-    .genre-btn:hover {
-      background: rgba(79,195,247,0.14);
-      border-color: rgba(79,195,247,0.6);
-      color: #4fc3f7;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(79,195,247,0.18);
-    }
-    .genre-btn.active {
-      background: rgba(79,195,247,0.2);
-      border-color: #4fc3f7;
-      color: #4fc3f7;
-      box-shadow: 0 0 16px rgba(79,195,247,0.35);
-      transform: translateY(-1px);
-    }
     /* Star — fixed between left sidebar and content */
     .star-col {
       position: fixed;
@@ -2447,7 +2403,6 @@
 
 
 <!-- Fixed genre sidebars — live in viewport margins, outside layout -->
-<div class="genre-sidebar" id="genre-sidebar-left"></div>
 
 <!-- Fixed share star -->
 <div class="star-col">
@@ -2927,7 +2882,7 @@ function setGenreFilter(genre) {
     }
   }
   moviePage = 1; tvPage = 1;
-  document.querySelectorAll('.genre-btn, .genre-pill').forEach(b => {
+  document.querySelectorAll('.genre-pill').forEach(b => {
     const g = b.dataset.genre;
     if (g === 'all') {
       b.classList.toggle('active', activeGenres.size === 0);
@@ -2940,15 +2895,6 @@ function setGenreFilter(genre) {
 
 function buildGenrePills() {
   const GENRES = ['All', 'Action', 'Comedy', 'Drama', 'Thriller', 'Horror', 'Sci-Fi'];
-
-  const sidebar = document.getElementById('genre-sidebar-left');
-  if (sidebar) {
-    sidebar.innerHTML = GENRES.map((g, i) => {
-      const key  = g === 'All' ? 'all' : g;
-      const safe = key.replace(/'/g, "\\'");
-      return `<button class="genre-btn${i === 0 ? ' active' : ''}" data-genre="${key}" onclick="setGenreFilter('${safe}')">${g}</button>`;
-    }).join('');
-  }
 
   const bar = document.getElementById('genre-bar');
   if (bar) {
