@@ -3077,19 +3077,13 @@ function topN(items, f, n) {
 
   return filtered
     .map(i => {
-      // Critic pole: RT Tomatometer, fallback to critic composite
-      const criticScore = i.rt_score ?? i.critic_score ?? 50;
+      // Use the two composite scores the API actually provides — they diverge meaningfully
+      const criticScore   = i.critic_score   ?? 50;
+      const audienceScore = i.audience_score ?? 50;
 
-      // Audience pole: blend RT Audience + IMDb (×10), fallback chain
-      const imdbPct = i.imdb_score != null ? i.imdb_score * 10 : null;
-      const audienceScore = (i.rt_audience != null && imdbPct != null)
-        ? i.rt_audience * 0.5 + imdbPct * 0.5
-        : i.rt_audience ?? imdbPct ?? i.audience_score ?? 50;
-
-      // Direct score interpolation — creates genuine card movement at each pole
       const blended = criticScore * (1 - ratio) + audienceScore * ratio;
 
-      // Tiny stable jitter breaks exact ties (derived from title, so never random)
+      // Tiny stable jitter breaks exact ties
       const jitter = ((i.title || '').length % 7) * 0.1;
 
       // Genre affinity nudge from user's seen/skip history
