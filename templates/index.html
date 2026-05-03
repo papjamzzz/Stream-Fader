@@ -3317,10 +3317,10 @@ function showError(type) {
   const err = type === 'missing_keys'
     ? `<div class="empty-state"><p>API keys are missing. Check server configuration.</p></div>`
     : `<div class="empty-state"><p>Couldn't load titles — refresh to try again.</p></div>`;
-  document.getElementById('movie-list').innerHTML = err;
-  document.getElementById('tv-list').innerHTML = err;
-  document.getElementById('movie-count').textContent = '—';
-  document.getElementById('tv-count').textContent = '—';
+  const ml = document.getElementById('movie-list'); if (ml) ml.innerHTML = err;
+  const tl = document.getElementById('tv-list');    if (tl) tl.innerHTML = err;
+  const mc = document.getElementById('movie-count'); if (mc) mc.textContent = '—';
+  const tc = document.getElementById('tv-count');    if (tc) tc.textContent = '—';
 }
 
 async function loadContent(force = false) {
