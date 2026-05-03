@@ -3013,7 +3013,7 @@ function renderCard(item, rank) {
       <div class="card-poster-wrap">
         ${isSaved ? `<div class="card-saved-banner">🔖 Saved</div>` : ''}
         ${isNew ? `<div class="card-new-badge">New</div>` : ''}
-        ${item.trending && !isNew ? `<div class="card-hot-badge">🔥 Popular</div>` : ''}
+        ${item.trending && !isNew ? `<div class="card-hot-badge">🔥 Trending</div>` : ''}
         ${posterEl}
         <div class="${rankClass}">${rank}</div>
         <div class="save-bar ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleWannaSee(window._cardRegistry[${cardIndex}],this)">
