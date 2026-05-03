@@ -116,6 +116,128 @@ def top10():
         })
 
 
+@app.route('/api/streamfinder', methods=['POST'])
+def streamfinder():
+    import anthropic as _anthropic
+    from engine import best_scores
+
+    body  = request.get_json(force=True, silent=True) or {}
+    words = (body.get('words') or '').strip()[:120]
+    fader_pos = max(0, min(100, int(body.get('fader', 50))))
+
+    if not words or not TMDB_KEY:
+        return jsonify({'error': 'missing_input'}), 400
+
+    ANTHROPIC_KEY = os.getenv('ANTHROPIC_API_KEY', '')
+    if not ANTHROPIC_KEY:
+        return jsonify({'error': 'no_ai_key'}), 503
+
+    # Translate fader into a taste description
+    if fader_pos <= 20:
+        taste = "critically acclaimed, award-worthy, artistically bold"
+    elif fader_pos <= 40:
+        taste = "critically strong with some audience appeal"
+    elif fader_pos <= 60:
+        taste = "balanced — loved by both critics and general audiences"
+    elif fader_pos <= 80:
+        taste = "crowd-pleasing, highly entertaining, audience favorites"
+    else:
+        taste = "pure audience favorites, blockbusters, feel-good hits"
+
+    prompt = f"""You are StreamFinder, an expert at matching people to films and TV shows.
+
+The user described their mood in three words: "{words}"
+Their taste profile: {taste}
+
+Return EXACTLY this JSON — no markdown, no explanation:
+{{
+  "movies": ["Title 1", "Title 2", "Title 3", "Title 4", "Title 5"],
+  "tv": ["Title 1", "Title 2", "Title 3", "Title 4", "Title 5"]
+}}
+
+Rules:
+- Real titles only, spelled correctly
+- Match both the mood words AND the taste profile
+- Mix well-known and hidden-gem titles
+- No duplicates between movies and tv lists"""
+
+    try:
+        client = _anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+        msg = client.messages.create(
+            model='claude-haiku-4-5-20251001',
+            max_tokens=300,
+            messages=[{'role': 'user', 'content': prompt}]
+        )
+        import re as _re
+        raw = msg.content[0].text.strip()
+        raw = _re.sub(r'^```(?:json)?\n?', '', raw)
+        raw = _re.sub(r'\n?```$', '', raw)
+        parsed = json.loads(raw)
+        movie_titles = parsed.get('movies', [])[:5]
+        tv_titles    = parsed.get('tv', [])[:5]
+    except Exception as e:
+        app.logger.error(f"StreamFinder AI error: {e}")
+        return jsonify({'error': 'ai_failed'}), 500
+
+    def resolve_title(title, media_type):
+        try:
+            r = requests.get(
+                'https://api.themoviedb.org/3/search/multi',
+                params={'api_key': TMDB_KEY, 'query': title, 'include_adult': 'false'},
+                timeout=6
+            )
+            results = [x for x in r.json().get('results', []) if x.get('media_type') in ('movie', 'tv')]
+            if not results:
+                return None
+            item = results[0]
+            tmdb_id = item.get('id')
+            actual_type = item.get('media_type', media_type)
+            det = requests.get(
+                f'https://api.themoviedb.org/3/{actual_type}/{tmdb_id}',
+                params={'api_key': TMDB_KEY, 'append_to_response': 'external_ids,watch/providers'},
+                timeout=6
+            ).json()
+            imdb_id  = (det.get('external_ids') or {}).get('imdb_id') or ''
+            name     = det.get('title') or det.get('name') or title
+            poster   = f"https://image.tmdb.org/t/p/w300{det['poster_path']}" if det.get('poster_path') else None
+            release  = det.get('release_date') or det.get('first_air_date') or ''
+            genres   = [g['name'] for g in (det.get('genres') or []) if g.get('name')][:3]
+            wp       = (det.get('watch/providers') or {}).get('results', {}).get('US', {})
+            providers = [p['provider_name'] for p in (wp.get('flatrate') or [])[:4]]
+            scores   = best_scores(imdb_id) if imdb_id else {}
+            c, a     = scores.get('critic'), scores.get('audience')
+            blend    = round(c * (1 - fader_pos/100) + a * (fader_pos/100)) if c is not None and a is not None else None
+            return {
+                'id': imdb_id or str(tmdb_id), 'imdb_id': imdb_id, 'tmdb_id': tmdb_id,
+                'title': name, 'overview': det.get('overview', ''), 'poster': poster,
+                'release': release, 'genres': genres, 'providers': providers,
+                'media_type': actual_type, 'trending': False,
+                'popularity': item.get('popularity', 0), 'original_language': det.get('original_language', 'en'),
+                'vote_count': det.get('vote_count', 0), 'is_doc': False, 'rated': scores.get('rated', ''),
+                'critic_score': c, 'audience_score': a,
+                'rt_score': scores.get('rt'), 'rt_audience': scores.get('rt_audience'),
+                'mc_score': scores.get('mc'), 'imdb_score': scores.get('imdb_display'),
+                'letterboxd': scores.get('letterboxd'), 'trakt_score': scores.get('trakt'),
+                'tmdb_vote': scores.get('tmdb_vote'), 'blend': blend,
+            }
+        except Exception:
+            return None
+
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=10) as ex:
+        movie_futs = [ex.submit(resolve_title, t, 'movie') for t in movie_titles]
+        tv_futs    = [ex.submit(resolve_title, t, 'tv')    for t in tv_titles]
+        movies = [f.result() for f in movie_futs]
+        tv     = [f.result() for f in tv_futs]
+
+    return jsonify({
+        'movies': [m for m in movies if m],
+        'tv':     [t for t in tv     if t],
+        'words':  words,
+        'taste':  taste,
+    })
+
+
 @app.route('/api/search')
 def search():
     from engine import best_scores, STREAMING_PROVIDER_IDS
