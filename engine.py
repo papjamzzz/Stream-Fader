@@ -389,7 +389,6 @@ def fetch_movies():
                 'page': page,
             })
             for m in data.get('results', []):
-                m['_trending'] = True
                 candidates.append(('tmdb_movie', m))
 
         # ── POOL 1b: Popular on streaming — 3yr window for back catalog ──
@@ -404,7 +403,6 @@ def fetch_movies():
                 'page': page,
             })
             for m in data.get('results', []):
-                m['_trending'] = True
                 candidates.append(('tmdb_movie', m))
 
         # ── POOL 2: Critic darlings — Drama/Thriller/Indie, last 3yr ──
@@ -500,12 +498,11 @@ def fetch_movies():
                 for m in data.get('results', []):
                     candidates.append(('tmdb_movie', m))
 
-    for t in trakt_trending_movies(50):
+    for t in trakt_trending_movies(25):
         t['_trending'] = True
         candidates.append(('trakt_movie', t))
 
     for t in trakt_popular_movies(50):
-        t['_trending'] = True
         candidates.append(('trakt_movie', t))
 
     # Deduplicate by TMDb ID before enrichment
@@ -673,7 +670,6 @@ def fetch_tv():
                 sid = str(s.get('id'))
                 if sid and sid not in seen_ids:
                     seen_ids.add(sid)
-                    s['_trending'] = True
                     candidates.append(('tmdb_tv', s))
 
         # ── Top-rated shows with RECENT episodes — high bar, still active ──
@@ -781,7 +777,7 @@ def fetch_tv():
         except Exception:
             continue
 
-    for t in trakt_trending_shows(50):
+    for t in trakt_trending_shows(25):
         imdb_id = (t.get('ids') or {}).get('imdb')
         if imdb_id and imdb_id not in seen_ids:
             seen_ids.add(imdb_id)
