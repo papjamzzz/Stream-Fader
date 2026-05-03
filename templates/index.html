@@ -1829,12 +1829,13 @@
     }
     /* ── GENRE FILTER BAR ── */
     .genre-bar {
-      padding: 10px 24px;
+      padding: 12px 24px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      gap: 7px;
       overflow-x: auto;
       scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
@@ -1843,36 +1844,43 @@
     .genre-bar::-webkit-scrollbar { display: none; }
     .genre-pill {
       flex-shrink: 0;
-      padding: 6px 14px;
+      padding: 7px 16px;
       border-radius: 20px;
       border: 1px solid rgba(255,255,255,0.1);
       background: rgba(255,255,255,0.04);
-      color: rgba(240,242,255,0.5);
+      color: rgba(240,242,255,0.45);
       font-family: 'Inter', sans-serif;
       font-size: 12px;
       font-weight: 700;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       cursor: pointer;
-      transition: all 0.18s ease;
+      transition: all 0.2s ease;
       white-space: nowrap;
     }
+
+    /* Per-genre accent colors — idle state tint */
+    .genre-pill[data-genre="all"]      { --gc: 79,195,247; }
+    .genre-pill[data-genre="Action"]   { --gc: 255,100,80; }
+    .genre-pill[data-genre="Comedy"]   { --gc: 255,214,0; }
+    .genre-pill[data-genre="Drama"]    { --gc: 198,120,221; }
+    .genre-pill[data-genre="Thriller"] { --gc: 255,140,0; }
+    .genre-pill[data-genre="Horror"]   { --gc: 220,60,100; }
+    .genre-pill[data-genre="Sci-Fi"]   { --gc: 80,220,200; }
+
     .genre-pill:hover {
-      border-color: rgba(198,120,221,0.5);
-      color: rgba(240,242,255,0.9);
-      background: rgba(198,120,221,0.08);
+      border-color: rgba(var(--gc, 198,120,221), 0.6);
+      color: rgb(var(--gc, 198,120,221));
+      background: rgba(var(--gc, 198,120,221), 0.1);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(var(--gc, 198,120,221), 0.18);
     }
     .genre-pill.active {
-      background: rgba(198,120,221,0.18);
-      border-color: rgba(198,120,221,0.7);
-      color: #c678dd;
-      box-shadow: 0 0 12px rgba(198,120,221,0.2);
-    }
-    .genre-pill[data-genre="all"].active {
-      background: rgba(79,195,247,0.15);
-      border-color: rgba(79,195,247,0.6);
-      color: #4fc3f7;
-      box-shadow: 0 0 12px rgba(79,195,247,0.2);
+      background: rgba(var(--gc, 198,120,221), 0.15);
+      border-color: rgba(var(--gc, 198,120,221), 0.75);
+      color: rgb(var(--gc, 198,120,221));
+      box-shadow: 0 0 14px rgba(var(--gc, 198,120,221), 0.3), 0 2px 8px rgba(var(--gc, 198,120,221), 0.15);
+      transform: translateY(-1px);
     }
 
     /* ── SHOW MORE BUTTON ── */
