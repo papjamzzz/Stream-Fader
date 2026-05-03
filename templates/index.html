@@ -4151,6 +4151,20 @@ function clearSearch() {
   document.getElementById('search-input')?.focus();
 }
 
+function consensusBadge(item) {
+  const c = item.consensus, n = item.n_models;
+  if (!c || !n || n < 2) return '';
+  const dots = Array(n).fill(0).map((_, i) =>
+    `<span style="width:7px;height:7px;border-radius:50%;background:${i < c ? '#c678dd' : 'rgba(198,120,221,0.18)'};display:inline-block;"></span>`
+  ).join('');
+  const label = c === n ? 'All models agree' : c > 1 ? `${c}/${n} models` : '';
+  if (!label) return '';
+  return `<div style="text-align:center;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:4px;">
+    ${dots}
+    <span style="font-size:9px;color:rgba(198,120,221,0.6);font-weight:700;letter-spacing:1px;text-transform:uppercase;">${label}</span>
+  </div>`;
+}
+
 // ── StreamFinder ─────────────────────────────────────────────────────────────
 function _sfTasteLabel(f) {
   if (f <= 20) return 'Taste: Critics mode';
@@ -4237,8 +4251,13 @@ async function runStreamFinder() {
     const tvGrid    = document.getElementById('sf-tv-grid');
 
     window._cardRegistry = window._cardRegistry || [];
-    movieGrid.innerHTML = (data.movies || []).map((item, i) => renderCard(item, i + 1)).join('');
-    tvGrid.innerHTML    = (data.tv    || []).map((item, i) => renderCard(item, i + 1)).join('');
+    movieGrid.innerHTML = (data.movies || []).map((item, i) => renderCard(item, i + 1) + consensusBadge(item)).join('');
+    tvGrid.innerHTML    = (data.tv    || []).map((item, i) => renderCard(item, i + 1) + consensusBadge(item)).join('');
+
+    const n = data.n_models || 1;
+    document.getElementById('sf-finder-taste').textContent =
+      `${n} AI model${n !== 1 ? 's' : ''} consulted · ranked by consensus`;
+    document.getElementById('sf-finder-taste').style.color = 'rgba(240,242,255,0.35)';
 
     results.style.display = 'block';
 
