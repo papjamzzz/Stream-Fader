@@ -1268,15 +1268,15 @@
       top: 8px;
       right: 8px;
       z-index: 4;
-      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-      color: #fff;
-      font-size: 9px;
+      background: #00ff88;
+      color: #001a0e;
+      font-size: 10px;
       font-weight: 900;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      padding: 3px 8px;
+      padding: 4px 10px;
       border-radius: 20px;
-      box-shadow: 0 0 10px rgba(34,197,94,0.5);
+      box-shadow: 0 0 14px rgba(0,255,136,0.9), 0 0 28px rgba(0,255,136,0.4);
       pointer-events: none;
     }
     .card-hot-badge {
@@ -1284,15 +1284,15 @@
       top: 8px;
       left: 8px;
       z-index: 4;
-      background: linear-gradient(135deg, #ff6b35 0%, #f7c59f 100%);
-      color: #1a0a00;
-      font-size: 9px;
+      background: #ff3d00;
+      color: #fff;
+      font-size: 10px;
       font-weight: 900;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      padding: 3px 8px;
+      padding: 4px 10px;
       border-radius: 20px;
-      box-shadow: 0 0 10px rgba(255,107,53,0.55);
+      box-shadow: 0 0 14px rgba(255,61,0,0.9), 0 0 28px rgba(255,61,0,0.45);
       pointer-events: none;
     }
 
@@ -1844,15 +1844,15 @@
     .genre-bar::-webkit-scrollbar { display: none; }
     .genre-pill {
       flex-shrink: 0;
-      padding: 7px 16px;
-      border-radius: 20px;
+      padding: 13px 28px;
+      border-radius: 30px;
       border: 1px solid rgba(255,255,255,0.1);
       background: rgba(255,255,255,0.04);
       color: rgba(240,242,255,0.45);
       font-family: 'Inter', sans-serif;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -2343,42 +2343,41 @@
         <div id="blend-badge">Tune Your Taste</div>
         <div class="readout-side right" id="audience-pct">50% Audience</div>
       </div>
-      <div style="text-align:center;margin-top:16px;">
+      <div style="text-align:center;margin-top:14px;">
         <button onclick="openShareModal()" id="share-stream-btn" style="
-          background: linear-gradient(135deg, rgba(255,183,77,0.18) 0%, rgba(255,160,20,0.12) 100%);
-          border: 1.5px solid rgba(255,183,77,0.55);
+          background: rgba(255,183,77,0.07);
+          border: 1px solid rgba(255,183,77,0.35);
           color: #ffb74d;
           font-family: inherit;
-          font-size: 13px;
-          font-weight: 600;
-          letter-spacing: 4px;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 3px;
           text-transform: uppercase;
-          padding: 16px 40px;
-          border-radius: 10px;
+          padding: 8px 28px;
+          border-radius: 6px;
           cursor: pointer;
           transition: all 0.25s;
-          box-shadow: 0 0 18px rgba(255,183,77,0.2), 0 0 40px rgba(255,183,77,0.08);
-          animation: share-pulse 2.8s ease-in-out infinite;
-          display: inline-block;
-          min-width: 220px;
-        ">📡 Share My Stream</button>
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          animation: share-pulse 3s ease-in-out infinite;
+        ">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 0 0 0 7"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M5.5 5.5a10 10 0 0 0 0 13"/><path d="M18.5 5.5a10 10 0 0 1 0 13"/></svg>
+          Share My Stream
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5a5 5 0 0 0 0 7"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M5.5 5.5a10 10 0 0 0 0 13"/><path d="M18.5 5.5a10 10 0 0 1 0 13"/></svg>
+        </button>
       </div>
       <style>
         @keyframes share-pulse {
-          0%, 100% {
-            box-shadow: 0 0 18px rgba(255,183,77,0.2), 0 0 40px rgba(255,183,77,0.08);
-            border-color: rgba(255,183,77,0.55);
-          }
-          50% {
-            box-shadow: 0 0 28px rgba(255,183,77,0.45), 0 0 60px rgba(255,183,77,0.18);
-            border-color: rgba(255,183,77,0.9);
-          }
+          0%, 100% { border-color: rgba(255,183,77,0.35); box-shadow: 0 0 10px rgba(255,183,77,0.1); }
+          50%       { border-color: rgba(255,183,77,0.7);  box-shadow: 0 0 18px rgba(255,183,77,0.25); }
         }
         #share-stream-btn:hover {
-          background: linear-gradient(135deg, rgba(255,183,77,0.28) 0%, rgba(255,160,20,0.2) 100%) !important;
-          transform: translateY(-1px);
+          background: rgba(255,183,77,0.14) !important;
+          border-color: rgba(255,183,77,0.8) !important;
+          box-shadow: 0 0 24px rgba(255,183,77,0.35) !important;
           animation: none;
-          box-shadow: 0 0 36px rgba(255,183,77,0.5), 0 0 70px rgba(255,183,77,0.2) !important;
+          transform: translateY(-1px);
         }
         #share-stream-btn:active { transform: translateY(0); }
       </style>
