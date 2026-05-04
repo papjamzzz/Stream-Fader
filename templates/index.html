@@ -3077,9 +3077,16 @@ function topN(items, f, n) {
 
   return filtered
     .map(i => {
-      // Use the two composite scores the API actually provides — they diverge meaningfully
-      const criticScore   = i.critic_score   ?? 50;
-      const audienceScore = i.audience_score ?? 50;
+      // Critic pole: composite critic score
+      const criticScore = i.critic_score ?? 50;
+
+      // Audience pole: prefer real IMDb rating; penalize movies with no actual audience data
+      // (pre-release/hype items have audience_score == critic_score with no real votes)
+      const audienceScore = i.imdb_score != null
+        ? Math.round(i.imdb_score * 10)
+        : (i.vote_count > 0 || (i.popularity ?? 0) > 1)
+          ? (i.audience_score ?? 50)
+          : (i.audience_score ?? 50) * 0.65;
 
       const blended = criticScore * (1 - ratio) + audienceScore * ratio;
 
