@@ -1,123 +1,159 @@
-# StreamFader — Streaming Aggregator with DJ-Style Crossfader
+# StreamFader
 
-> **The fader is the product.**
+**A live movie and TV discovery app powered by a critic-to-audience crossfader.**
 
-![StreamFader dashboard](static/screenshots/dashboard.png)
-
-A local dashboard that ranks the best new streaming content by blending critic and audience scores through a DJ-style crossfader. Pull left for the critics. Pull right for the crowd. Find the sweet spot in the middle.
+🌐 **[stream.creativekonsoles.com](https://stream.creativekonsoles.com/)** — Public Beta
 
 ---
 
 ## What It Does
 
-StreamFader pulls the top movies and TV shows from major streaming platforms (released in the last 90 days) and lets you score them however you want — by critic consensus, audience reaction, or any blend between the two.
+StreamFader lets you slide between two scoring philosophies in real time. Pull the fader left and critics take over — Rotten Tomatoes and Metacritic dominate the rankings. Pull it right and the audience wins — IMDb, Letterboxd, and RT Audience scores push crowd favorites to the top. Everything in between is a blend you control.
 
-Move the fader. The rankings change in real time.
+No accounts. No algorithms deciding for you. Just the fader.
 
 ---
 
-## The Fader
+## Product Snapshot
+
+| | |
+|---|---|
+| **Status** | Public Beta / Launch Candidate |
+| **Live URL** | https://stream.creativekonsoles.com/ |
+| **Stack** | Python · Flask · Vanilla JS |
+| **Data** | TMDb · MDBList · Trakt · TVmaze |
+| **AI (optional)** | Anthropic · OpenAI · Gemini |
+| **Part of** | [Creative Konsoles](https://creativekonsoles.com) |
+
+---
+
+## Key Features
+
+- **Critic ↔ Audience Fader** — real-time score blending across all visible titles
+- **Movie & TV Discovery** — separate ranked feeds updated every 6 hours
+- **Genre Filtering** — pill-based multi-select genre filter
+- **Watch Queue** — save titles to a persistent local watchlist
+- **Seen It / No Thanks** — personalize your feed by dismissing titles you've watched or skipped
+- **Share My Stream** — share your current fader position and genre filters via link
+- **StreamFinder** — AI-assisted discovery from a three-word prompt (Claude / GPT / Gemini)
+- **Trailer Lookup** — watch trailers in-app via TMDb
+- **Cast & Actor Browse** — view full cast and browse an actor's filmography
+- **5i AI Top Pick** — daily consensus recommendation from multiple AI personas
+- **Brevo Email Capture** — optional newsletter signup (requires `BREVO_API_KEY`)
+- **Anonymous Analytics** — lightweight engagement tracking, no PII stored
+- **SEO Ready** — Open Graph tags, `robots.txt`, `sitemap.xml`
+
+---
+
+## How the Fader Works
 
 ```
-← Critics                                     Audience →
-   [RT + Metacritic avg]      [IMDB rating × 10]
-          blue                      amber
-                      purple
-                   (sweet spot)
+SF Score = critic_score × (1 − fader) + audience_score × fader
 ```
 
-The fader blends your score: `blend = critic × (1 - fader) + audience × fader`
-
-At the sweet spot (center), you get movies that critics and audiences both love — the ones worth your time.
+- **Critic pole (left):** Rotten Tomatoes Tomatometer + Metacritic, averaged
+- **Audience pole (right):** RT Audience Score (50%) + IMDb (25%) + Letterboxd (15%) + Trakt (10%)
+- Titles with no real audience data are penalized at the audience pole to prevent pre-release films from ranking above established crowd favorites
 
 ---
 
 ## Data Sources
 
-- **TMDb** (free) — streaming platform availability, movie discovery, posters
-- **OMDb** (free, 1000/day) — Rotten Tomatoes %, Metacritic, IMDB scores
-- **TVmaze** (free, no key) — currently airing TV show discovery
-- Cache: `data/cache.json`, 6-hour TTL — no API hammering
+| Source | Used For |
+|---|---|
+| **TMDb** | Catalog, posters, streaming providers, trailers, cast, genres |
+| **MDBList** | RT Tomatometer, Metacritic, RT Audience, Letterboxd, Trakt scores |
+| **Trakt** | Trending signals and supplemental scores |
+| **TVmaze** | New TV releases dropped this week on streaming |
+| **Anthropic / OpenAI / Gemini** | StreamFinder recommendations, Top Pick (all optional) |
+| **Brevo** | Email capture (optional) |
 
 ---
 
-## Platforms Tracked
+## Project Status
 
-Netflix · Prime Video · Apple TV+ · Disney+ · Hulu · Paramount+ · Max · Peacock
-
----
-
-## Features
-
-- Live fader re-ranking (no page reload)
-- Genre filter pills
-- Critic score (RT + MC avg) and audience score (IMDB) shown per card
-- Streaming platform badges with platform colors
-- Movie posters
-- 90-day recency window — only what's actually new
+StreamFader is in **public beta**. Core features are stable and live. The scoring engine, fader logic, and personalization layer are all production-ready. Active development continues on the roadmap below.
 
 ---
 
-## Stack
+## Roadmap
 
-- Python + Flask, port 5556, localhost only
-- No external frameworks — custom CSS, Inter font
-- Color palette: critic blue `#4fc3f7` · audience amber `#ffb74d` · sweet spot purple `#c678dd`
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan.
+
+**Near term:**
+- Watch Heat / trending proxy layer
+- "Why this ranked here" explanations
+- Stronger streaming provider badges
+- StreamFinder grounded in cached candidates
+- Improved Open Graph share cards
+
+**Later:**
+- Cross-device profiles
+- Weekly personalized picks email
+- Advanced mood modes
 
 ---
 
-## Setup
+## Tech Stack
 
-You need two free API keys:
-- **TMDb**: [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api)
-- **OMDb**: [omdbapi.com/apikey.aspx](https://www.omdbapi.com/apikey.aspx)
+- **Backend:** Python 3.11+, Flask, Gunicorn
+- **Frontend:** Vanilla JS, CSS custom properties, no frameworks
+- **Caching:** File-based JSON cache (6h TTL for content, 7d for scores)
+- **Deployment:** Railway (production), compatible with any Python host
+
+---
+
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `TMDB_API_KEY` | ✅ | TMDb v3 API key |
+| `MDBLIST_API_KEY` | ✅ | MDBList key for RT/MC/Letterboxd/Trakt scores |
+| `TRAKT_CLIENT_ID` | Recommended | Trakt trending data |
+| `TRAKT_CLIENT_SECRET` | Recommended | Trakt auth |
+| `ANTHROPIC_API_KEY` | Optional | Claude for StreamFinder + Top Pick |
+| `OPENAI_API_KEY` | Optional | GPT for StreamFinder |
+| `GOOGLE_API_KEY` | Optional | Gemini for StreamFinder |
+| `BREVO_API_KEY` | Optional | Email capture via Brevo |
+
+Copy `.env.example` to `.env` and fill in your keys.
+
+---
+
+## Local Development
 
 ```bash
-git clone https://github.com/papjamzzz/stream-fader.git
-cd stream-fader
-cp .env.example .env
-# Add your TMDB_API_KEY and OMDB_API_KEY to .env
-make setup
-make run
+git clone https://github.com/papjamzzz/Stream-Fader.git
+cd Stream-Fader
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # add your keys
+python app.py
 ```
 
-Then open **http://localhost:5556** in your browser.
+Open http://localhost:5556
 
 ---
 
-## Project Structure
+## Privacy Notes
 
-```
-streamfader/
-├── app.py              ← Flask server (port 5556)
-├── engine.py           ← TMDb + OMDb + TVmaze + caching
-├── templates/
-│   └── index.html      ← Dashboard + fader UI
-├── static/             ← Logo assets
-├── data/               ← cache.json (auto-generated)
-├── requirements.txt
-├── launch.command      ← Mac double-click launcher
-├── Makefile
-└── .env.example
-```
+See [docs/PRIVACY.md](docs/PRIVACY.md). StreamFader does not collect personal information. Analytics are anonymous. No user accounts are required.
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Issues and PRs welcome.
 
 ---
 
 ## License
 
-MIT
-
----
-
-*See what critics love. See what audiences love. Find what's actually worth watching.*
-
+MIT — see [LICENSE](LICENSE).
+Copyright © 2026 Jeremiah S. Smith
 
 ---
 
 ## Part of Creative Konsoles
 
-Built by [Creative Konsoles](https://creativekonsoles.com) — tools built using thought.
-
-**[creativekonsoles.com](https://creativekonsoles.com)** &nbsp;·&nbsp; support@creativekonsoles.com
-
-<!-- repo maintenance: 2026-04-10 -->
+StreamFader is one project in the [Creative Konsoles](https://creativekonsoles.com) ecosystem — a suite of AI-powered tools built for discovery, creativity, and independent thinking.
