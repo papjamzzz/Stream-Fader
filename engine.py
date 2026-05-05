@@ -3,7 +3,7 @@ StreamFader V2 Engine
 Sources: TMDb · OMDb (RT/MC/IMDb scores) · TVmaze · Trakt · MDBList
 AI:      Claude Top Pick via Anthropic API
 """
-import os, json, time, requests, re, anthropic
+import os, json, time, requests, re, anthropic, random
 from collections import Counter
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -557,6 +557,7 @@ def fetch_movies():
         + x['pop_score']
         + x['recognition_boost']
         + x['trending_boost']
+        + random.uniform(-8, 8)
     ), reverse=True)
     return enriched[:500]
 
@@ -831,6 +832,7 @@ def fetch_tv():
         + x['pop_score']
         + x['recognition_boost']
         + x['trending_boost']
+        + random.uniform(-8, 8)
     ), reverse=True)
     return deduped[:500]
 
