@@ -57,7 +57,19 @@ threading.Thread(target=_startup, daemon=True).start()
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    seo_movies, seo_tv = [], []
+    try:
+        cached = get_cached_content()
+        if cached:
+            def _pick(items, n=8):
+                scored = [i for i in items if i.get('critic_score') and i.get('audience_score')]
+                scored.sort(key=lambda x: (x.get('critic_score', 0) + x.get('audience_score', 0)) / 2, reverse=True)
+                return scored[:n]
+            seo_movies = _pick(cached.get('movies', []))
+            seo_tv     = _pick(cached.get('tv', []))
+    except Exception:
+        pass
+    return render_template('index.html', seo_movies=seo_movies, seo_tv=seo_tv)
 
 @app.route('/api/content')
 def content():

@@ -5131,5 +5131,71 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+
+{% if seo_movies or seo_tv %}
+<section id="seo-shelf" aria-label="Top Rated Movies and TV Shows" style="
+  max-width:960px; margin:40px auto 0; padding:0 20px 60px;
+  font-family:Inter,-apple-system,sans-serif; color:#e5e7eb;">
+  <style>
+    #seo-shelf h2 { font-size:1.25rem; font-weight:700; margin:0 0 16px; color:#fff; }
+    #seo-shelf h3 { font-size:0.95rem; font-weight:600; margin:0 0 4px; color:#f3f4f6; }
+    #seo-shelf .seo-grid {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+      gap:16px; margin-bottom:36px;
+    }
+    #seo-shelf .seo-card {
+      background:#111827; border-radius:10px; padding:14px;
+      border:1px solid #1f2937;
+    }
+    #seo-shelf .seo-scores { font-size:0.78rem; color:#9ca3af; margin-bottom:6px; }
+    #seo-shelf .seo-scores span { color:#4fc3f7; font-weight:600; }
+    #seo-shelf .seo-genres { font-size:0.72rem; color:#6b7280; margin-bottom:6px; }
+    #seo-shelf .seo-overview { font-size:0.78rem; color:#9ca3af; line-height:1.45; }
+    #seo-shelf.js-loaded { display:none !important; }
+  </style>
+
+  {% if seo_movies %}
+  <h2>Top Movies Right Now</h2>
+  <div class="seo-grid">
+    {% for m in seo_movies %}
+    <div class="seo-card">
+      <h3>{{ m.title }} {% if m.release %}({{ m.release }}){% endif %}</h3>
+      <div class="seo-genres">{{ m.genres | join(', ') }}</div>
+      <div class="seo-scores">
+        Critics: <span>{{ m.critic_score }}</span> &nbsp;·&nbsp;
+        Audience: <span>{{ m.audience_score }}</span>
+      </div>
+      <div class="seo-overview">{{ (m.overview or '')[:160] }}{% if (m.overview or '') | length > 160 %}…{% endif %}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if seo_tv %}
+  <h2>Top TV Shows Right Now</h2>
+  <div class="seo-grid">
+    {% for s in seo_tv %}
+    <div class="seo-card">
+      <h3>{{ s.title }} {% if s.release %}({{ s.release }}){% endif %}</h3>
+      <div class="seo-genres">{{ s.genres | join(', ') }}</div>
+      <div class="seo-scores">
+        Critics: <span>{{ s.critic_score }}</span> &nbsp;·&nbsp;
+        Audience: <span>{{ s.audience_score }}</span>
+      </div>
+      <div class="seo-overview">{{ (s.overview or '')[:160] }}{% if (s.overview or '') | length > 160 %}…{% endif %}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <p style="font-size:0.8rem;color:#6b7280;margin-top:8px;">
+    SF Score blends critic ratings (Rotten Tomatoes, Metacritic) with audience scores (IMDb) using a DJ-style crossfader.
+    Slide left for critical consensus, slide right for crowd favorites, or find the sweet spot where both agree.
+    Free, no account required. Updated every 6 hours.
+  </p>
+</section>
+<script>document.getElementById('seo-shelf').classList.add('js-loaded');</script>
+{% endif %}
+
 </body>
 </html>
