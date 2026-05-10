@@ -393,7 +393,7 @@ def fetch_movies():
 
     if TMDB_KEY:
         cutoff_1yr  = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
-        cutoff_3yr  = (datetime.now() - timedelta(days=1095)).strftime('%Y-%m-%d')
+        cutoff_2yr  = (datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d')
 
         # ── POOL 0: Now Playing in theaters — no streaming gate ──────────────
         # Catches theatrical releases before they hit streaming platforms
@@ -422,19 +422,6 @@ def fetch_movies():
             for m in data.get('results', []):
                 candidates.append(('tmdb_movie', m))
 
-        # ── POOL 0c: All-time popular — no streaming gate, massive vote counts ─
-        # Catches beloved classics that aren't currently on streaming
-        for page in range(1, 6):
-            data = tmdb_get('/discover/movie', {
-                'sort_by': 'popularity.desc',
-                'without_genres': MOVIE_EXCLUDED_GENRES,
-                'vote_count.gte': 15000,
-                'vote_average.gte': 6.5,
-                'page': page,
-            })
-            for m in data.get('results', []):
-                candidates.append(('tmdb_movie', m))
-
         # ── POOL 1: Popular on streaming — recent 1yr, main popularity pool ──
         for page in range(1, 12):
             data = tmdb_get('/discover/movie', {
@@ -456,7 +443,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_3yr,
+                'primary_release_date.gte': cutoff_2yr,
                 'vote_count.gte': 1500,
                 'page': page,
             })
@@ -470,7 +457,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_3yr,
+                'primary_release_date.gte': cutoff_2yr,
                 'vote_count.gte': 150,
                 'vote_average.gte': 7.0,
                 'with_genres': '18,53,36,10752',  # Drama, Thriller, History, War
@@ -486,7 +473,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_3yr,
+                'primary_release_date.gte': cutoff_2yr,
                 'with_genres': str(DOC_GENRE_ID),
                 'vote_count.gte': 50,
                 'page': page,
@@ -502,7 +489,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_3yr,
+                'primary_release_date.gte': cutoff_2yr,
                 'vote_count.gte': 150,
                 'with_genres': '28,27,35,16,878',  # Action, Horror, Comedy, Animation, Sci-Fi
                 'page': page,
@@ -517,7 +504,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_3yr,
+                'primary_release_date.gte': cutoff_2yr,
                 'vote_count.gte': 200,
                 'vote_average.gte': 7.2,
                 'page': page,
@@ -531,7 +518,7 @@ def fetch_movies():
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'primary_release_date.gte': cutoff_3yr,
+                'primary_release_date.gte': cutoff_2yr,
                 'with_genres': '10751',  # Family
                 'vote_count.gte': 100,
                 'page': page,
@@ -547,7 +534,7 @@ def fetch_movies():
                     'watch_region': 'US',
                     'with_watch_providers': STREAMING_PROVIDER_IDS,
                     'without_genres': MOVIE_EXCLUDED_GENRES,
-                    'primary_release_date.gte': cutoff_3yr,
+                    'primary_release_date.gte': cutoff_2yr,
                     'with_original_language': lang,
                     'vote_count.gte': 75,
                     'vote_average.gte': 6.2,
@@ -607,8 +594,24 @@ def fetch_movies():
         x['recognition_boost'] = 30 if votes >= 100000 else 20 if votes >= 50000 else 10 if votes >= 10000 else 0
         base = ((x.get('critic_score') or 50) + (x.get('audience_score') or 50)) / 2
         x['trending_boost'] = round(base * 0.10) if x.get('trending') else 0
-        # Theatrical boost — surface now-playing films prominently
         x['theatrical_boost'] = 15 if x.get('theatrical') else 0
+        # Recency boost — newer titles rank higher, sliding scale over 24 months
+        try:
+            rel = str(x.get('release') or '')[:7]  # 'YYYY-MM' or 'YYYY'
+            if len(rel) >= 4:
+                rel_year  = int(rel[:4])
+                rel_month = int(rel[5:7]) if len(rel) >= 7 else 6
+                now = datetime.now()
+                months_old = (now.year - rel_year) * 12 + (now.month - rel_month)
+                if months_old <= 3:   x['recency_boost'] = 30
+                elif months_old <= 6: x['recency_boost'] = 24
+                elif months_old <= 12: x['recency_boost'] = 16
+                elif months_old <= 18: x['recency_boost'] = 8
+                else:                  x['recency_boost'] = 2
+            else:
+                x['recency_boost'] = 0
+        except Exception:
+            x['recency_boost'] = 0
 
     enriched.sort(key=lambda x: (
         ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
@@ -617,7 +620,8 @@ def fetch_movies():
         + x['recognition_boost']
         + x['trending_boost']
         + x['theatrical_boost']
-        + random.uniform(-8, 8)
+        + x['recency_boost']
+        + random.uniform(-6, 6)
     ), reverse=True)
     return enriched[:500]
 
@@ -710,7 +714,7 @@ def _movie_record(uid, imdb_id, title, overview, poster, release, providers, gen
 
 # ── TV Shows ───────────────────────────────────────────────────────────────────
 
-TV_RECENCY_CUTOFF = (datetime.now() - timedelta(days=243)).strftime('%Y-%m-%d')  # 8 months
+TV_RECENCY_CUTOFF = (datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d')  # 2 years
 
 
 def fetch_tv():
