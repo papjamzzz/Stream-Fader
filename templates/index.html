@@ -1866,13 +1866,30 @@
     }
 
     /* Per-genre accent colors — idle state tint */
-    .genre-pill[data-genre="all"]      { --gc: 79,195,247; }
-    .genre-pill[data-genre="Action"]   { --gc: 255,100,80; }
-    .genre-pill[data-genre="Comedy"]   { --gc: 255,214,0; }
-    .genre-pill[data-genre="Drama"]    { --gc: 198,120,221; }
-    .genre-pill[data-genre="Thriller"] { --gc: 255,140,0; }
-    .genre-pill[data-genre="Horror"]   { --gc: 220,60,100; }
-    .genre-pill[data-genre="Sci-Fi"]   { --gc: 80,220,200; }
+    .genre-pill[data-genre="all"]         { --gc: 79,195,247; }
+    .genre-pill[data-genre="Action"]      { --gc: 255,100,80; }
+    .genre-pill[data-genre="Comedy"]      { --gc: 255,214,0; }
+    .genre-pill[data-genre="Drama"]       { --gc: 198,120,221; }
+    .genre-pill[data-genre="Thriller"]    { --gc: 255,140,0; }
+    .genre-pill[data-genre="Horror"]      { --gc: 220,60,100; }
+    .genre-pill[data-genre="Sci-Fi"]      { --gc: 80,220,200; }
+    .genre-pill[data-genre="Crime"]       { --gc: 255,90,130; }
+    .genre-pill[data-genre="Documentary"] { --gc: 100,200,120; }
+    .genre-pill[data-genre="Animation"]   { --gc: 255,180,50; }
+    .genre-pill[data-genre="Romance"]     { --gc: 255,120,180; }
+    .genre-pill[data-genre="Family"]      { --gc: 120,210,255; }
+    .genre-pill[data-genre="History"]     { --gc: 200,160,100; }
+    .genre-pill[data-genre="Western"]     { --gc: 210,140,60; }
+    .genre-pill[data-genre="Adventure"]   { --gc: 100,220,160; }
+
+    .pill-count {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      opacity: 0.6;
+      margin-left: 4px;
+      letter-spacing: 0;
+    }
 
     .genre-pill:hover {
       border-color: rgba(var(--gc, 198,120,221), 0.6);
@@ -2847,17 +2864,24 @@ let allMovies = [];
 let allTV     = [];
 let fader     = parseInt(_ls.getItem('sf_fader') || '50');
 window._sfFader = fader;
-let allGenres = new Set();
 window._cardRegistry = [];
 let activeGenres = new Set(); // empty = show all
 
 const GENRE_MAP = {
-  'Action':   ['action', 'action & adventure'],
-  'Comedy':   ['comedy'],
-  'Drama':    ['drama'],
-  'Thriller': ['thriller', 'crime', 'mystery'],
-  'Horror':   ['horror'],
-  'Sci-Fi':   ['sci-fi', 'sci-fi & fantasy', 'science fiction', 'science-fiction', 'fantasy'],
+  'Action':      ['action', 'action & adventure'],
+  'Comedy':      ['comedy'],
+  'Drama':       ['drama', 'soap'],
+  'Thriller':    ['thriller', 'mystery'],
+  'Horror':      ['horror'],
+  'Sci-Fi':      ['sci-fi', 'sci-fi & fantasy', 'science fiction', 'science-fiction', 'fantasy'],
+  'Crime':       ['crime', 'mystery'],
+  'Documentary': ['documentary'],
+  'Animation':   ['animation'],
+  'Romance':     ['romance'],
+  'Family':      ['family', 'kids'],
+  'History':     ['history', 'war', 'war & politics'],
+  'Western':     ['western'],
+  'Adventure':   ['adventure'],
 };
 
 function applyGenreFilter(items) {
@@ -2894,32 +2918,34 @@ function setGenreFilter(genre) {
 }
 
 function buildGenrePills() {
-  const GENRES = ['All', 'Action', 'Comedy', 'Drama', 'Thriller', 'Horror', 'Sci-Fi'];
-
   const bar = document.getElementById('genre-bar');
-  if (bar) {
-    bar.innerHTML = GENRES.map((g, i) => {
-      const key  = g === 'All' ? 'all' : g;
-      const safe = key.replace(/'/g, "\\'");
-      return `<button class="genre-pill${i === 0 ? ' active' : ''}" data-genre="${key}" onclick="setGenreFilter('${safe}')">${g}</button>`;
-    }).join('');
+  if (!bar) return;
+
+  // Count how many items exist per genre across movies + tv
+  const allItems = [...(window._movies || []), ...(window._tv || [])];
+  const counts = {};
+  for (const genre of Object.keys(GENRE_MAP)) {
+    const targets = GENRE_MAP[genre];
+    counts[genre] = allItems.filter(item =>
+      (item.genres || []).some(g => targets.includes(g.toLowerCase()))
+    ).length;
   }
+
+  // Only show genres that actually have content, sorted by count desc
+  const available = Object.keys(GENRE_MAP)
+    .filter(g => counts[g] > 0)
+    .sort((a, b) => counts[b] - counts[a]);
+
+  const pills = [
+    `<button class="genre-pill active" data-genre="all" onclick="setGenreFilter('all')">All</button>`,
+    ...available.map(g => {
+      const safe = g.replace(/'/g, "\\'");
+      return `<button class="genre-pill" data-genre="${g}" onclick="setGenreFilter('${safe}')">${g} <span class="pill-count">${counts[g]}</span></button>`;
+    })
+  ];
+  bar.innerHTML = pills.join('');
 }
 
-function toggleMoreGenres(e) {
-  e.stopPropagation();
-  const menu = document.getElementById('genre-more-menu');
-  if (!menu) return;
-  const open = menu.style.display === 'flex';
-  menu.style.display = open ? 'none' : 'flex';
-}
-
-function closeMoreGenres() {
-  const menu = document.getElementById('genre-more-menu');
-  if (menu) menu.style.display = 'none';
-}
-
-document.addEventListener('click', () => closeMoreGenres());
 
 // ── Preferences ─────────────────────────────────────
 let userPrefs = [];
@@ -3138,6 +3164,14 @@ function onFaderMove(val) {
     document.getElementById('sweet-label').classList.remove('active');
   }
 
+  // Fader glow — track glows with blend color as you drag
+  const faderEl = document.getElementById('blend-fader');
+  if (faderEl) {
+    const glowColor = blendColor(fader);
+    faderEl.style.setProperty('--fader-glow', glowColor);
+    faderEl.style.boxShadow = `0 0 12px ${glowColor}66, 0 0 24px ${glowColor}33`;
+  }
+
   updateCards(false);
 }
 
@@ -3210,15 +3244,19 @@ function renderCard(item, rank) {
 }
 
 function flipSort(container, sortedItems, renderFn) {
-  // First: record positions
+  // Capture current positions and rank order before re-render
   const cards = Array.from(container.children);
   const firstPos = {};
-  cards.forEach(card => {
+  const firstRank = {};
+  cards.forEach((card, i) => {
     const id = card.dataset.id;
-    if (id) firstPos[id] = card.getBoundingClientRect().top;
+    if (id) {
+      firstPos[id]  = card.getBoundingClientRect().top;
+      firstRank[id] = i;
+    }
   });
 
-  // Clear and re-render in new order
+  // Re-render in new sorted order
   container.innerHTML = '';
   sortedItems.forEach(item => {
     const div = document.createElement('div');
@@ -3227,17 +3265,51 @@ function flipSort(container, sortedItems, renderFn) {
     if (node) container.appendChild(node);
   });
 
-  // Last + Invert + Play
-  Array.from(container.children).forEach(card => {
+  // FLIP: invert + play with 3D cascade stagger
+  Array.from(container.children).forEach((card, newRank) => {
     const id = card.dataset.id;
-    if (id && firstPos[id] !== undefined) {
-      const newPos = card.getBoundingClientRect().top;
-      const delta = firstPos[id] - newPos;
-      card.style.transform = `translateY(${delta}px)`;
+    if (!id) return;
+
+    const rankDelta = firstRank[id] !== undefined ? firstRank[id] - newRank : 0;
+    const moved     = firstPos[id] !== undefined;
+
+    if (moved) {
+      const newPos  = card.getBoundingClientRect().top;
+      const deltaY  = firstPos[id] - newPos;
+      const stagger = newRank * 28; // ms between each card
+
+      // Start: snapped to old position, rotated slightly based on movement direction
+      const tiltDeg = Math.sign(rankDelta) * Math.min(Math.abs(rankDelta) * 2, 8);
       card.style.transition = 'none';
+      card.style.transform  = `translateY(${deltaY}px) perspective(600px) rotateX(${tiltDeg}deg)`;
+      card.style.opacity    = '0.7';
+
       requestAnimationFrame(() => {
-        card.style.transition = 'transform 0.4s ease';
-        card.style.transform = 'none';
+        requestAnimationFrame(() => {
+          const ease = newRank === 0 ? 'cubic-bezier(0.22,1,0.36,1)' : 'cubic-bezier(0.4,0,0.2,1)';
+          card.style.transition = `transform 0.45s ${ease} ${stagger}ms, opacity 0.3s ease ${stagger}ms, box-shadow 0.3s ease ${stagger}ms`;
+          card.style.transform  = 'translateY(0) perspective(600px) rotateX(0deg)';
+          card.style.opacity    = '1';
+
+          // Rank-1 gets a brief glow pulse
+          if (newRank === 0) {
+            card.style.boxShadow = '0 0 28px rgba(79,195,247,0.55), 0 8px 32px rgba(0,0,0,0.6)';
+            setTimeout(() => { card.style.boxShadow = ''; }, 800);
+          }
+        });
+      });
+    } else {
+      // New card entering — fade + rise in
+      const stagger = newRank * 28;
+      card.style.transition = 'none';
+      card.style.transform  = 'translateY(16px) perspective(600px) rotateX(6deg)';
+      card.style.opacity    = '0';
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          card.style.transition = `transform 0.4s cubic-bezier(0.22,1,0.36,1) ${stagger}ms, opacity 0.35s ease ${stagger}ms`;
+          card.style.transform  = 'translateY(0) perspective(600px) rotateX(0deg)';
+          card.style.opacity    = '1';
+        });
       });
     }
   });
@@ -3346,6 +3418,8 @@ async function loadContent(force = false) {
 
     allMovies = data.movies || [];
     allTV     = data.tv     || [];
+    window._movies = allMovies;
+    window._tv     = allTV;
 
     buildGenrePills();
     updateCards(true);

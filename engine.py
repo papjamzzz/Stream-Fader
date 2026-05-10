@@ -351,6 +351,25 @@ TITLE_BLOCKLIST = {
 }
 
 
+_GENRE_NORMALIZE = {
+    'science fiction': 'Sci-Fi',
+    'sci-fi & fantasy': 'Sci-Fi',
+    'sci-fi': 'Sci-Fi',
+    'action & adventure': 'Action',
+    'war & politics': 'War',
+    'kids': 'Family',
+    'mystery': 'Crime',
+    'soap': 'Drama',
+    'talk': 'Drama',
+}
+
+def _norm_genre(name):
+    """Normalize TMDb genre names to consistent display strings."""
+    if not name:
+        return name
+    lower = name.lower().strip()
+    return _GENRE_NORMALIZE.get(lower, name.strip())
+
 def _passes_filters(item):
     """Return True if a TMDb movie item clears popularity/vote thresholds."""
     if item.get('vote_count', 0) < MIN_VOTES:
@@ -374,8 +393,47 @@ def fetch_movies():
 
     if TMDB_KEY:
         cutoff_1yr  = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
-        cutoff_2yr  = (datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d')
         cutoff_3yr  = (datetime.now() - timedelta(days=1095)).strftime('%Y-%m-%d')
+
+        # ── POOL 0: Now Playing in theaters — no streaming gate ──────────────
+        # Catches theatrical releases before they hit streaming platforms
+        for page in range(1, 6):
+            data = tmdb_get('/movie/now_playing', {
+                'language': 'en-US',
+                'region': 'US',
+                'page': page,
+            })
+            for m in data.get('results', []):
+                m['_theatrical'] = True
+                candidates.append(('tmdb_movie', m))
+
+        # ── POOL 0b: Recent blockbusters — no streaming gate, high vote count ─
+        # Catches major releases in the last 18 months regardless of platform
+        cutoff_18mo = (datetime.now() - timedelta(days=548)).strftime('%Y-%m-%d')
+        for page in range(1, 10):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'popularity.desc',
+                'without_genres': MOVIE_EXCLUDED_GENRES,
+                'primary_release_date.gte': cutoff_18mo,
+                'vote_count.gte': 3000,   # Only genuine wide-release films
+                'with_original_language': 'en',
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
+        # ── POOL 0c: All-time popular — no streaming gate, massive vote counts ─
+        # Catches beloved classics that aren't currently on streaming
+        for page in range(1, 6):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'popularity.desc',
+                'without_genres': MOVIE_EXCLUDED_GENRES,
+                'vote_count.gte': 15000,
+                'vote_average.gte': 6.5,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
 
         # ── POOL 1: Popular on streaming — recent 1yr, main popularity pool ──
         for page in range(1, 12):
@@ -514,7 +572,7 @@ def fetch_movies():
             seen_cand.add(cid)
             deduped.append((src, item))
 
-    candidates = deduped[:2500]
+    candidates = deduped[:3500]
 
     # ── Bulk-prefetch MDBList scores before parallel enrichment ───────────────
     # Collects IMDb IDs from Trakt candidates (tmdb candidates need a detail call first).
@@ -529,7 +587,7 @@ def fetch_movies():
         mdblist_bulk_prefetch(bulk_imdb_ids)
 
     enriched = []
-    with ThreadPoolExecutor(max_workers=2) as ex:
+    with ThreadPoolExecutor(max_workers=4) as ex:
         futures = {ex.submit(_enrich_movie, src, item): (src, item) for src, item in candidates}
         for future in as_completed(futures):
             result = future.result()
@@ -547,9 +605,10 @@ def fetch_movies():
         x['pop_score'] = min(60, round((pop ** 0.50)))
         votes = x.get('vote_count', 0) or 0
         x['recognition_boost'] = 30 if votes >= 100000 else 20 if votes >= 50000 else 10 if votes >= 10000 else 0
-        # 10% trending bump — titles from popularity/trending pools surface over comparable non-trending titles
         base = ((x.get('critic_score') or 50) + (x.get('audience_score') or 50)) / 2
         x['trending_boost'] = round(base * 0.10) if x.get('trending') else 0
+        # Theatrical boost — surface now-playing films prominently
+        x['theatrical_boost'] = 15 if x.get('theatrical') else 0
 
     enriched.sort(key=lambda x: (
         ((x['critic_score'] or 50) + (x['audience_score'] or 50)) / 2
@@ -557,6 +616,7 @@ def fetch_movies():
         + x['pop_score']
         + x['recognition_boost']
         + x['trending_boost']
+        + x['theatrical_boost']
         + random.uniform(-8, 8)
     ), reverse=True)
     return enriched[:500]
@@ -591,15 +651,18 @@ def _enrich_movie(source, item):
             poster = f"https://image.tmdb.org/t/p/w500{item['poster_path']}" if item.get('poster_path') else None
             title    = details.get('title') or item.get('title', 'Unknown')
             overview = (details.get('overview') or item.get('overview') or '')[:600]
-            genres   = [g['name'] for g in (details.get('genres') or []) if g.get('name')][:3]
+            genres   = [_norm_genre(g['name']) for g in (details.get('genres') or []) if g.get('name')][:3]
             orig_lang = details.get('original_language') or item.get('original_language', 'en')
-            return _movie_record(imdb_id or str(tmdb_id), imdb_id, title, overview,
+            rec = _movie_record(imdb_id or str(tmdb_id), imdb_id, title, overview,
                                  poster, item.get('release_date', ''), providers, genres, scores,
                                  is_doc=item.get('_is_doc', False),
                                  popularity=item.get('popularity', 0),
                                  original_language=orig_lang,
                                  vote_count=item.get('vote_count', 0) or details.get('vote_count', 0),
                                  trending=item.get('_trending', False))
+            if rec and item.get('_theatrical'):
+                rec['theatrical'] = True
+            return rec
 
         elif source == 'trakt_movie':
             ids = item.get('ids') or {}
@@ -908,7 +971,7 @@ def _enrich_tv(source, item):
             title = f"{base_title} — S{current_season}" if num_seasons > 1 else base_title
 
             overview  = (details.get('overview') or item.get('overview') or '')[:600]
-            genres    = [g['name'] for g in (details.get('genres') or [])][:3]
+            genres    = [_norm_genre(g['name']) for g in (details.get('genres') or [])][:3]
             release   = last_air or details.get('first_air_date', '')
 
             orig_lang  = details.get('original_language') or item.get('original_language', 'en')
