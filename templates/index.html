@@ -2868,20 +2868,12 @@ window._cardRegistry = [];
 let activeGenres = new Set(); // empty = show all
 
 const GENRE_MAP = {
-  'Action':      ['action', 'action & adventure'],
+  'Action':      ['action', 'action & adventure', 'adventure'],
   'Comedy':      ['comedy'],
-  'Drama':       ['drama', 'soap'],
-  'Thriller':    ['thriller', 'mystery'],
-  'Horror':      ['horror'],
+  'Drama':       ['drama', 'romance', 'soap'],
+  'Thriller':    ['thriller', 'crime', 'mystery', 'horror'],
   'Sci-Fi':      ['sci-fi', 'sci-fi & fantasy', 'science fiction', 'science-fiction', 'fantasy'],
-  'Crime':       ['crime', 'mystery'],
   'Documentary': ['documentary'],
-  'Animation':   ['animation'],
-  'Romance':     ['romance'],
-  'Family':      ['family', 'kids'],
-  'History':     ['history', 'war', 'war & politics'],
-  'Western':     ['western'],
-  'Adventure':   ['adventure'],
 };
 
 function applyGenreFilter(items) {
