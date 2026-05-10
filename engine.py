@@ -393,7 +393,7 @@ def fetch_movies():
 
     if TMDB_KEY:
         cutoff_1yr  = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
-        cutoff_2yr  = (datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d')
+        cutoff_1yr  = (datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d')
 
         # ── POOL 0: Now Playing in theaters — no streaming gate ──────────────
         # Catches theatrical releases before they hit streaming platforms
@@ -443,7 +443,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_2yr,
+                'primary_release_date.gte': cutoff_1yr,
                 'vote_count.gte': 1500,
                 'page': page,
             })
@@ -457,7 +457,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_2yr,
+                'primary_release_date.gte': cutoff_1yr,
                 'vote_count.gte': 150,
                 'vote_average.gte': 7.0,
                 'with_genres': '18,53,36,10752',  # Drama, Thriller, History, War
@@ -473,7 +473,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_2yr,
+                'primary_release_date.gte': cutoff_1yr,
                 'with_genres': str(DOC_GENRE_ID),
                 'vote_count.gte': 50,
                 'page': page,
@@ -489,7 +489,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_2yr,
+                'primary_release_date.gte': cutoff_1yr,
                 'vote_count.gte': 150,
                 'with_genres': '28,27,35,16,878',  # Action, Horror, Comedy, Animation, Sci-Fi
                 'page': page,
@@ -504,7 +504,7 @@ def fetch_movies():
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_2yr,
+                'primary_release_date.gte': cutoff_1yr,
                 'vote_count.gte': 200,
                 'vote_average.gte': 7.2,
                 'page': page,
@@ -518,7 +518,7 @@ def fetch_movies():
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'primary_release_date.gte': cutoff_2yr,
+                'primary_release_date.gte': cutoff_1yr,
                 'with_genres': '10751',  # Family
                 'vote_count.gte': 100,
                 'page': page,
@@ -534,7 +534,7 @@ def fetch_movies():
                     'watch_region': 'US',
                     'with_watch_providers': STREAMING_PROVIDER_IDS,
                     'without_genres': MOVIE_EXCLUDED_GENRES,
-                    'primary_release_date.gte': cutoff_2yr,
+                    'primary_release_date.gte': cutoff_1yr,
                     'with_original_language': lang,
                     'vote_count.gte': 75,
                     'vote_average.gte': 6.2,
@@ -543,12 +543,15 @@ def fetch_movies():
                 for m in data.get('results', []):
                     candidates.append(('tmdb_movie', m))
 
+    min_year = datetime.now().year - 1
     for t in trakt_trending_movies(25):
-        t['_trending'] = True
-        candidates.append(('trakt_movie', t))
+        if (t.get('year') or 0) >= min_year:
+            t['_trending'] = True
+            candidates.append(('trakt_movie', t))
 
     for t in trakt_popular_movies(50):
-        candidates.append(('trakt_movie', t))
+        if (t.get('year') or 0) >= min_year:
+            candidates.append(('trakt_movie', t))
 
     # Deduplicate by TMDb ID before enrichment
     seen_cand = set()
@@ -573,6 +576,8 @@ def fetch_movies():
     if bulk_imdb_ids:
         mdblist_bulk_prefetch(bulk_imdb_ids)
 
+    hard_cutoff = (datetime.now() - timedelta(days=548)).strftime('%Y-%m-%d')  # 18 months
+
     enriched = []
     with ThreadPoolExecutor(max_workers=4) as ex:
         futures = {ex.submit(_enrich_movie, src, item): (src, item) for src, item in candidates}
@@ -580,6 +585,10 @@ def fetch_movies():
             result = future.result()
             if result and _passes_score_floor(result):
                 if (result.get('title') or '').lower().strip() in TITLE_BLOCKLIST:
+                    continue
+                # Hard recency gate — drop anything older than 18 months unless theatrical
+                rel = str(result.get('release') or '')
+                if not result.get('theatrical') and len(rel) >= 7 and rel[:7] < hard_cutoff[:7]:
                     continue
                 key = result.get('imdb_id') or result.get('id')
                 if key and key not in seen_imdb:
