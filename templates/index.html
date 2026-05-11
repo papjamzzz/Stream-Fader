@@ -3086,6 +3086,7 @@ function topN(items, f, n) {
   const dismissed = getDismissedIds();
   const filtered = items.filter(i => {
     if (!i) return false;
+    if (!i.poster) return false;
     if (i.id      && dismissed.has(i.id))      return false;
     if (i.imdb_id && dismissed.has(i.imdb_id)) return false;
     return true;
