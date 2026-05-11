@@ -392,11 +392,9 @@ def fetch_movies():
     candidates = []
 
     if TMDB_KEY:
-        cutoff_1yr  = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
-        cutoff_1yr  = (datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d')
+        cutoff_6mo  = (datetime.now() - timedelta(days=183)).strftime('%Y-%m-%d')
 
         # ── POOL 0: Now Playing in theaters — no streaming gate ──────────────
-        # Catches theatrical releases before they hit streaming platforms
         for page in range(1, 6):
             data = tmdb_get('/movie/now_playing', {
                 'language': 'en-US',
@@ -407,126 +405,142 @@ def fetch_movies():
                 m['_theatrical'] = True
                 candidates.append(('tmdb_movie', m))
 
-        # ── POOL 0b: Recent blockbusters — no streaming gate, high vote count ─
-        # Catches major releases in the last 18 months regardless of platform
-        cutoff_18mo = (datetime.now() - timedelta(days=548)).strftime('%Y-%m-%d')
+        # ── POOL 0b: Recent releases — no streaming gate, last 6 months ──────
         for page in range(1, 10):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'popularity.desc',
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_18mo,
-                'vote_count.gte': 3000,   # Only genuine wide-release films
+                'primary_release_date.gte': cutoff_6mo,
+                'vote_count.gte': 500,
                 'with_original_language': 'en',
                 'page': page,
             })
             for m in data.get('results', []):
                 candidates.append(('tmdb_movie', m))
 
-        # ── POOL 1: Popular on streaming — recent 1yr, main popularity pool ──
+        # ── POOL R: Re-releases — streaming/digital drops of any film in last 6mo ──
+        # Uses release_date (not primary_release_date) to catch older films
+        # newly added to streaming, theatrical re-releases, anniversary cuts, etc.
+        for page in range(1, 10):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'popularity.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'without_genres': MOVIE_EXCLUDED_GENRES,
+                'release_date.gte': cutoff_6mo,
+                'with_release_type': '4|5|6',  # Digital, Physical, TV — streaming drops
+                'vote_count.gte': 300,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                m['_rerelease'] = True
+                candidates.append(('tmdb_movie', m))
+
+        # ── POOL 1: Popular on streaming — last 6 months ─────────────────────
         for page in range(1, 12):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_1yr,
-                'vote_count.gte': MIN_VOTES,
-                'page': page,
-            })
-            for m in data.get('results', []):
-                candidates.append(('tmdb_movie', m))
-
-        # ── POOL 1b: Popular on streaming — 3yr window for back catalog ──
-        for page in range(1, 8):
-            data = tmdb_get('/discover/movie', {
-                'sort_by': 'popularity.desc',
-                'watch_region': 'US',
-                'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_1yr,
-                'vote_count.gte': 1500,
-                'page': page,
-            })
-            for m in data.get('results', []):
-                candidates.append(('tmdb_movie', m))
-
-        # ── POOL 2: Critic darlings — Drama/Thriller/Indie, last 3yr ──
-        for page in range(1, 10):
-            data = tmdb_get('/discover/movie', {
-                'sort_by': 'vote_average.desc',
-                'watch_region': 'US',
-                'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_1yr,
-                'vote_count.gte': 150,
-                'vote_average.gte': 7.0,
-                'with_genres': '18,53,36,10752',  # Drama, Thriller, History, War
-                'page': page,
-            })
-            for m in data.get('results', []):
-                candidates.append(('tmdb_movie', m))
-
-        # ── POOL 3: Documentaries — last 3yr ──
-        for page in range(1, 8):
-            data = tmdb_get('/discover/movie', {
-                'sort_by': 'vote_average.desc',
-                'watch_region': 'US',
-                'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_1yr,
-                'with_genres': str(DOC_GENRE_ID),
-                'vote_count.gte': 50,
-                'page': page,
-            })
-            for m in data.get('results', []):
-                m['_is_doc'] = True
-                candidates.append(('tmdb_movie', m))
-
-        # ── POOL 4: Audience favorites — Action/Horror/Comedy/Sci-Fi, last 3yr ──
-        for page in range(1, 12):
-            data = tmdb_get('/discover/movie', {
-                'sort_by': 'popularity.desc',
-                'watch_region': 'US',
-                'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_1yr,
-                'vote_count.gte': 150,
-                'with_genres': '28,27,35,16,878',  # Action, Horror, Comedy, Animation, Sci-Fi
-                'page': page,
-            })
-            for m in data.get('results', []):
-                candidates.append(('tmdb_movie', m))
-
-        # ── POOL 5: Award season — high vote_average, last 3yr ──
-        for page in range(1, 10):
-            data = tmdb_get('/discover/movie', {
-                'sort_by': 'vote_average.desc',
-                'watch_region': 'US',
-                'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'without_genres': MOVIE_EXCLUDED_GENRES,
-                'primary_release_date.gte': cutoff_1yr,
+                'primary_release_date.gte': cutoff_6mo,
                 'vote_count.gte': 200,
-                'vote_average.gte': 7.2,
                 'page': page,
             })
             for m in data.get('results', []):
                 candidates.append(('tmdb_movie', m))
 
-        # ── POOL 6: Family — last 3yr ──
-        for page in range(1, 6):
+        # ── POOL 1b: Popular on streaming — broader vote floor for newer titles ──
+        for page in range(1, 8):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'popularity.desc',
                 'watch_region': 'US',
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'primary_release_date.gte': cutoff_1yr,
-                'with_genres': '10751',  # Family
+                'without_genres': MOVIE_EXCLUDED_GENRES,
+                'primary_release_date.gte': cutoff_6mo,
                 'vote_count.gte': 100,
                 'page': page,
             })
             for m in data.get('results', []):
                 candidates.append(('tmdb_movie', m))
 
-        # ── POOL 7: Foreign language — best rated non-English, last 3yr ──
+        # ── POOL 2: Critic darlings — Drama/Thriller/Indie, last 6mo ─────────
+        for page in range(1, 10):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'vote_average.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'without_genres': MOVIE_EXCLUDED_GENRES,
+                'primary_release_date.gte': cutoff_6mo,
+                'vote_count.gte': 80,
+                'vote_average.gte': 6.8,
+                'with_genres': '18,53,36,10752',  # Drama, Thriller, History, War
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
+        # ── POOL 3: Documentaries — last 6mo ─────────────────────────────────
+        for page in range(1, 8):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'vote_average.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'without_genres': MOVIE_EXCLUDED_GENRES,
+                'primary_release_date.gte': cutoff_6mo,
+                'with_genres': str(DOC_GENRE_ID),
+                'vote_count.gte': 30,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                m['_is_doc'] = True
+                candidates.append(('tmdb_movie', m))
+
+        # ── POOL 4: Audience favorites — Action/Horror/Comedy/Sci-Fi, last 6mo ─
+        for page in range(1, 12):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'popularity.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'without_genres': MOVIE_EXCLUDED_GENRES,
+                'primary_release_date.gte': cutoff_6mo,
+                'vote_count.gte': 80,
+                'with_genres': '28,27,35,16,878',  # Action, Horror, Comedy, Animation, Sci-Fi
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
+        # ── POOL 5: Award contenders — high rating, last 6mo ─────────────────
+        for page in range(1, 10):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'vote_average.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'without_genres': MOVIE_EXCLUDED_GENRES,
+                'primary_release_date.gte': cutoff_6mo,
+                'vote_count.gte': 100,
+                'vote_average.gte': 7.0,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
+        # ── POOL 6: Family — last 6mo ─────────────────────────────────────────
+        for page in range(1, 6):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'popularity.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'primary_release_date.gte': cutoff_6mo,
+                'with_genres': '10751',  # Family
+                'vote_count.gte': 50,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
+        # ── POOL 7: Foreign language — best rated non-English, last 6mo ──────
         for lang in ['ko', 'fr', 'es', 'ja', 'it', 'de', 'hi', 'pt', 'zh']:
             for page in range(1, 5):
                 data = tmdb_get('/discover/movie', {
@@ -534,16 +548,18 @@ def fetch_movies():
                     'watch_region': 'US',
                     'with_watch_providers': STREAMING_PROVIDER_IDS,
                     'without_genres': MOVIE_EXCLUDED_GENRES,
-                    'primary_release_date.gte': cutoff_1yr,
+                    'primary_release_date.gte': cutoff_6mo,
                     'with_original_language': lang,
-                    'vote_count.gte': 75,
-                    'vote_average.gte': 6.2,
+                    'vote_count.gte': 40,
+                    'vote_average.gte': 6.0,
                     'page': page,
                 })
                 for m in data.get('results', []):
                     candidates.append(('tmdb_movie', m))
 
-    min_year = datetime.now().year - 1
+    # For Trakt (year-only dates): accept last 2 years and let hard_cutoff handle precision
+    now = datetime.now()
+    min_year = now.year if now.month >= 7 else now.year - 1
     for t in trakt_trending_movies(25):
         if (t.get('year') or 0) >= min_year:
             t['_trending'] = True
@@ -576,7 +592,7 @@ def fetch_movies():
     if bulk_imdb_ids:
         mdblist_bulk_prefetch(bulk_imdb_ids)
 
-    hard_cutoff = (datetime.now() - timedelta(days=548)).strftime('%Y-%m-%d')  # 18 months
+    hard_cutoff = (datetime.now() - timedelta(days=183)).strftime('%Y-%m-%d')  # 6 months
 
     enriched = []
     with ThreadPoolExecutor(max_workers=4) as ex:
@@ -612,11 +628,10 @@ def fetch_movies():
                 rel_month = int(rel[5:7]) if len(rel) >= 7 else 6
                 now = datetime.now()
                 months_old = (now.year - rel_year) * 12 + (now.month - rel_month)
-                if months_old <= 3:   x['recency_boost'] = 30
-                elif months_old <= 6: x['recency_boost'] = 24
-                elif months_old <= 12: x['recency_boost'] = 16
-                elif months_old <= 18: x['recency_boost'] = 8
-                else:                  x['recency_boost'] = 2
+                if months_old <= 1:   x['recency_boost'] = 36
+                elif months_old <= 3: x['recency_boost'] = 28
+                elif months_old <= 6: x['recency_boost'] = 18
+                else:                  x['recency_boost'] = 4  # re-releases / edge cases
             else:
                 x['recency_boost'] = 0
         except Exception:
@@ -723,7 +738,7 @@ def _movie_record(uid, imdb_id, title, overview, poster, release, providers, gen
 
 # ── TV Shows ───────────────────────────────────────────────────────────────────
 
-TV_RECENCY_CUTOFF = (datetime.now() - timedelta(days=730)).strftime('%Y-%m-%d')  # 2 years
+TV_RECENCY_CUTOFF = (datetime.now() - timedelta(days=183)).strftime('%Y-%m-%d')  # 6 months
 
 
 def fetch_tv():
