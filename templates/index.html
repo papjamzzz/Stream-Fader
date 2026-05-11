@@ -3098,9 +3098,9 @@ function topN(items, f, n) {
       // Critic pole: composite critic score
       const criticScore = i.critic_score ?? 50;
 
-      // Audience pole: prefer real IMDb rating; penalize movies with no actual audience data
-      // (pre-release/hype items have audience_score == critic_score with no real votes)
-      const audienceScore = i.imdb_score != null
+      // Audience pole: only trust imdb_score when vote_count >= 100 (enough signal)
+      // Low-vote films get a penalized audience_score to prevent fake-perfect scores dominating
+      const audienceScore = (i.imdb_score != null && (i.vote_count ?? 0) >= 100)
         ? Math.round(i.imdb_score * 10)
         : (i.vote_count > 0 || (i.popularity ?? 0) > 1)
           ? (i.audience_score ?? 50)
