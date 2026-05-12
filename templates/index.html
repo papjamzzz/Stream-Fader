@@ -3107,7 +3107,14 @@ function topN(items, f, n) {
           ? (i.audience_score ?? 50)
           : (i.audience_score ?? 50) * 0.65;
 
-      const blended = criticScore * (1 - ratio) + audienceScore * ratio;
+      // Amplified divergence scoring — makes the fader actually shuffle cards dramatically.
+      // Instead of a linear blend, we amplify how much each film DIVERGES between poles.
+      // Films critics love but audiences hate (or vice versa) swing hard across the deck.
+      const AMP = 2.8;
+      const divergence  = criticScore - audienceScore;
+      const base        = (criticScore + audienceScore) / 2;
+      const polarBoost  = (0.5 - ratio) * divergence * AMP;
+      const blended     = Math.max(0, Math.min(100, base + polarBoost));
 
       // Tiny stable jitter breaks exact ties
       const jitter = ((i.title || '').length % 7) * 0.1;
