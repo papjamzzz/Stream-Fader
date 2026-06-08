@@ -380,7 +380,11 @@ def _passes_filters(item):
 
 
 def _passes_score_floor(result):
-    """Drop cards where both scores are very low — not worth showing."""
+    """Drop cards with no real critic coverage or scores that are too low to rank."""
+    # Require at least one real critic source — RT or Metacritic.
+    # IMDB-only means RT/MC never reviewed it; the fader can't blend anything meaningful.
+    if result.get('rt_score') is None and result.get('mc_score') is None:
+        return False
     critic   = result.get('critic_score') or 0
     audience = result.get('audience_score') or 0
     combined = (critic + audience) / 2 if (critic and audience) else max(critic, audience)
