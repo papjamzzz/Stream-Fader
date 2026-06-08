@@ -4788,7 +4788,7 @@ renderWatchlist();
     <text x="100" y="86" font-family="monospace" font-size="5" text-anchor="middle" fill="rgba(198,120,221,0.4)" letter-spacing="1.5">STREAM FADER</text>
   </svg>
 </button>
-<audio id="ampAudio" loop preload="auto" src="/static/theme.mp3"></audio>
+<audio id="ampAudio" loop preload="auto" src="/static/mango-tree-man.mp3"></audio>
 <div class="vst-popup" id="vstPopup">
   <div class="vst-header">
     <div style="display:flex;align-items:center;gap:8px;">
@@ -4799,29 +4799,29 @@ renderWatchlist();
   </div>
   <div class="vst-body">
     <div class="knob-wrap">
-      <div class="knob" id="knob-vol" data-param="vol" data-min="0" data-max="1.5" data-val="0.35"><div class="knob-dot"></div></div>
+      <div class="knob" id="knob-vol" data-param="vol" data-min="0" data-max="1.5" data-val="0.75"><div class="knob-dot"></div></div>
       <div class="knob-label">VOL</div>
-      <div class="knob-val" id="kval-vol">35%</div>
+      <div class="knob-val" id="kval-vol">50%</div>
     </div>
     <div class="knob-wrap">
-      <div class="knob" id="knob-gain" data-param="gain" data-min="0" data-max="400" data-val="0"><div class="knob-dot"></div></div>
+      <div class="knob" id="knob-gain" data-param="gain" data-min="0" data-max="400" data-val="200"><div class="knob-dot"></div></div>
       <div class="knob-label">DRIVE</div>
-      <div class="knob-val" id="kval-gain">0</div>
+      <div class="knob-val" id="kval-gain">50%</div>
     </div>
     <div class="knob-wrap">
-      <div class="knob" id="knob-pitch" data-param="pitch" data-min="0.7" data-max="1.4" data-val="1.0"><div class="knob-dot"></div></div>
+      <div class="knob" id="knob-pitch" data-param="pitch" data-min="0.7" data-max="1.4" data-val="1.05"><div class="knob-dot"></div></div>
       <div class="knob-label">PITCH</div>
-      <div class="knob-val" id="kval-pitch">0</div>
+      <div class="knob-val" id="kval-pitch">+5st</div>
     </div>
     <div class="knob-wrap">
-      <div class="knob" id="knob-sw1" data-param="sw1" data-min="0" data-max="1" data-val="0"><div class="knob-dot"></div></div>
+      <div class="knob" id="knob-sw1" data-param="sw1" data-min="0" data-max="1" data-val="0.5"><div class="knob-dot"></div></div>
       <div class="knob-label">BAND</div>
-      <div class="knob-val" id="kval-sw1">—</div>
+      <div class="knob-val" id="kval-sw1">50%</div>
     </div>
     <div class="knob-wrap">
-      <div class="knob" id="knob-sw2" data-param="sw2" data-min="0" data-max="1" data-val="0"><div class="knob-dot"></div></div>
+      <div class="knob" id="knob-sw2" data-param="sw2" data-min="0" data-max="1" data-val="0.5"><div class="knob-dot"></div></div>
       <div class="knob-label">CUTOFF</div>
-      <div class="knob-val" id="kval-sw2">—</div>
+      <div class="knob-val" id="kval-sw2">50%</div>
     </div>
   </div>
   <div class="vst-footer">
@@ -4843,7 +4843,7 @@ function _initAudio() {
   const audio = document.getElementById('ampAudio');
   _actx = new (window.AudioContext || window.webkitAudioContext)();
   _src  = _actx.createMediaElementSource(audio);
-  _gain = _actx.createGain(); _gain.gain.value = 0.35;
+  _gain = _actx.createGain(); _gain.gain.value = 0.75;
   _dist = _actx.createWaveShaper(); _dist.curve = _makeDistCurve(0); _dist.oversample = '4x';
   _filt1 = _actx.createBiquadFilter(); _filt1.type = 'bandpass'; _filt1.frequency.value = 1200; _filt1.Q.value = 3;
   _bp_dry = _actx.createGain(); _bp_dry.gain.value = 1;
