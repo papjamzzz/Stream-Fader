@@ -1852,35 +1852,39 @@
       flex-shrink: 0;
       padding: 13px 28px;
       border-radius: 30px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.04);
-      color: rgba(240,242,255,0.45);
+      border: 1.5px solid rgba(var(--gc, 79,195,247), 0.45);
+      background: rgba(var(--gc, 79,195,247), 0.09);
+      color: rgba(var(--gc, 79,195,247), 0.85);
       font-family: 'Inter', sans-serif;
       font-size: 13px;
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.22s ease;
       white-space: nowrap;
+      box-shadow:
+        0 0 10px rgba(var(--gc, 79,195,247), 0.18),
+        0 0 22px rgba(var(--gc, 79,195,247), 0.08),
+        inset 0 0 10px rgba(var(--gc, 79,195,247), 0.05);
     }
 
-    /* Per-genre accent colors — idle state tint */
+    /* Per-genre accent colors */
     .genre-pill[data-genre="all"]         { --gc: 79,195,247; }
-    .genre-pill[data-genre="Action"]      { --gc: 255,100,80; }
+    .genre-pill[data-genre="Action"]      { --gc: 255,80,60; }
     .genre-pill[data-genre="Comedy"]      { --gc: 255,214,0; }
     .genre-pill[data-genre="Drama"]       { --gc: 198,120,221; }
     .genre-pill[data-genre="Thriller"]    { --gc: 255,140,0; }
-    .genre-pill[data-genre="Horror"]      { --gc: 220,60,100; }
-    .genre-pill[data-genre="Sci-Fi"]      { --gc: 80,220,200; }
+    .genre-pill[data-genre="Horror"]      { --gc: 220,40,90; }
+    .genre-pill[data-genre="Sci-Fi"]      { --gc: 60,230,210; }
     .genre-pill[data-genre="Crime"]       { --gc: 255,90,130; }
-    .genre-pill[data-genre="Documentary"] { --gc: 100,200,120; }
-    .genre-pill[data-genre="Animation"]   { --gc: 255,180,50; }
-    .genre-pill[data-genre="Romance"]     { --gc: 255,120,180; }
-    .genre-pill[data-genre="Family"]      { --gc: 120,210,255; }
-    .genre-pill[data-genre="History"]     { --gc: 200,160,100; }
-    .genre-pill[data-genre="Western"]     { --gc: 210,140,60; }
-    .genre-pill[data-genre="Adventure"]   { --gc: 100,220,160; }
+    .genre-pill[data-genre="Documentary"] { --gc: 80,210,110; }
+    .genre-pill[data-genre="Animation"]   { --gc: 255,175,40; }
+    .genre-pill[data-genre="Romance"]     { --gc: 255,100,190; }
+    .genre-pill[data-genre="Family"]      { --gc: 100,200,255; }
+    .genre-pill[data-genre="History"]     { --gc: 210,165,90; }
+    .genre-pill[data-genre="Western"]     { --gc: 215,130,50; }
+    .genre-pill[data-genre="Adventure"]   { --gc: 80,230,155; }
 
     .pill-count {
       display: inline-block;
@@ -1892,18 +1896,26 @@
     }
 
     .genre-pill:hover {
-      border-color: rgba(var(--gc, 198,120,221), 0.6);
-      color: rgb(var(--gc, 198,120,221));
-      background: rgba(var(--gc, 198,120,221), 0.1);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 14px rgba(var(--gc, 198,120,221), 0.18);
+      border-color: rgba(var(--gc, 79,195,247), 0.9);
+      color: rgb(var(--gc, 79,195,247));
+      background: rgba(var(--gc, 79,195,247), 0.18);
+      transform: translateY(-2px);
+      box-shadow:
+        0 0 18px rgba(var(--gc, 79,195,247), 0.5),
+        0 0 42px rgba(var(--gc, 79,195,247), 0.22),
+        0 4px 16px rgba(var(--gc, 79,195,247), 0.15),
+        inset 0 0 14px rgba(var(--gc, 79,195,247), 0.08);
     }
     .genre-pill.active {
-      background: rgba(var(--gc, 198,120,221), 0.15);
-      border-color: rgba(var(--gc, 198,120,221), 0.75);
-      color: rgb(var(--gc, 198,120,221));
-      box-shadow: 0 0 14px rgba(var(--gc, 198,120,221), 0.3), 0 2px 8px rgba(var(--gc, 198,120,221), 0.15);
-      transform: translateY(-1px);
+      background: rgba(var(--gc, 79,195,247), 0.2);
+      border-color: rgb(var(--gc, 79,195,247));
+      color: rgb(var(--gc, 79,195,247));
+      transform: translateY(-2px);
+      box-shadow:
+        0 0 24px rgba(var(--gc, 79,195,247), 0.7),
+        0 0 55px rgba(var(--gc, 79,195,247), 0.35),
+        0 0 90px rgba(var(--gc, 79,195,247), 0.12),
+        inset 0 0 18px rgba(var(--gc, 79,195,247), 0.1);
     }
 
     /* ── SHOW MORE BUTTON ── */
