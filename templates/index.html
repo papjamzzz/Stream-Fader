@@ -3126,12 +3126,11 @@ function topN(items, f, n) {
                      : i.mc_score != null ? i.mc_score
                      : 50;
 
-      // RIGHT pole: raw IMDb×10 (min 100 votes), fallback audience_score
-      const rightPole = (i.imdb_score != null && (i.vote_count ?? 0) >= 100)
-        ? Math.round(i.imdb_score * 10)
-        : i.audience_score != null
-          ? i.audience_score * ((i.vote_count ?? 0) > 0 ? 1 : 0.65)
-          : 50;
+      // RIGHT pole: RT audience score first, fallback IMDb×10, fallback audience_score
+      const rightPole = i.rt_audience != null ? i.rt_audience
+                      : (i.imdb_score != null && (i.vote_count ?? 0) >= 100) ? Math.round(i.imdb_score * 10)
+                      : i.audience_score != null ? i.audience_score
+                      : 50;
 
       // CENTER pole: min(left, right) — only films critics AND audiences both love rank high here
       const centerScore = Math.min(leftPole, rightPole);
