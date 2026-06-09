@@ -3148,7 +3148,7 @@ function top12(items, f) {
 }
 
 // ── Fader UI ──────────────────────────────────────────
-let _faderGaTimer = null;
+let _faderGaTimer = null, _faderCardTimer = null;
 function onFaderMove(val) {
   fader = parseInt(val);
   window._sfFader = fader;
@@ -3187,7 +3187,8 @@ function onFaderMove(val) {
     faderEl.style.boxShadow = `0 0 12px ${glowColor}66, 0 0 24px ${glowColor}33`;
   }
 
-  updateCards(false);
+  clearTimeout(_faderCardTimer);
+  _faderCardTimer = setTimeout(() => updateCards(true), 90);
 }
 
 // ── Render ────────────────────────────────────────────
@@ -3291,7 +3292,7 @@ function flipSort(container, sortedItems, renderFn) {
     if (moved) {
       const newPos  = card.getBoundingClientRect().top;
       const deltaY  = firstPos[id] - newPos;
-      const stagger = newRank * 28; // ms between each card
+      const stagger = Math.min(newRank * 14, 160);
 
       // Start: snapped to old position, rotated slightly based on movement direction
       const tiltDeg = Math.sign(rankDelta) * Math.min(Math.abs(rankDelta) * 2, 8);
