@@ -1,6 +1,6 @@
 import threading, os, requests, json, hashlib
 from datetime import datetime
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, make_response
 from engine import get_top_content, get_cached_content, generate_top10
 
 TMDB_KEY = os.getenv('TMDB_API_KEY', '')
@@ -69,7 +69,9 @@ def index():
             seo_tv     = _pick(cached.get('tv', []))
     except Exception:
         pass
-    return render_template('index.html', seo_movies=seo_movies, seo_tv=seo_tv)
+    resp = make_response(render_template('index.html', seo_movies=seo_movies, seo_tv=seo_tv))
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    return resp
 
 @app.route('/api/content')
 def content():
