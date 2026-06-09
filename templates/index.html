@@ -3121,29 +3121,26 @@ function topN(items, f, n) {
 
   return filtered
     .map(i => {
-      // Critic pole: composite critic score
-      const criticScore = i.critic_score ?? 50;
+      // LEFT pole: raw RT tomatometer — never use critic_score (inflated with imdb for RT-missing films)
+      const leftPole = i.rt_score != null ? i.rt_score
+                     : i.mc_score != null ? i.mc_score
+                     : 50;
 
-      // Audience pole: only trust imdb_score when vote_count >= 100 (enough signal)
-      // Low-vote films get a penalized audience_score to prevent fake-perfect scores dominating
-      const audienceScore = (i.imdb_score != null && (i.vote_count ?? 0) >= 100)
+      // RIGHT pole: raw IMDb×10 (min 100 votes), fallback audience_score
+      const rightPole = (i.imdb_score != null && (i.vote_count ?? 0) >= 100)
         ? Math.round(i.imdb_score * 10)
-        : (i.vote_count > 0 || (i.popularity ?? 0) > 1)
-          ? (i.audience_score ?? 50)
-          : (i.audience_score ?? 50) * 0.65;
+        : i.audience_score != null
+          ? i.audience_score * ((i.vote_count ?? 0) > 0 ? 1 : 0.65)
+          : 50;
 
-      // Polarizing films swing hard across the deck as the fader moves.
-      const AMP = 3.2;
-      const divergence = criticScore - audienceScore;
-      const base       = (criticScore + audienceScore) / 2;
-      const polarBoost = (0.5 - ratio) * divergence * AMP;
+      // CENTER pole: min(left, right) — only films critics AND audiences both love rank high here
+      const centerScore = Math.min(leftPole, rightPole);
 
-      // Universal quality anchor — films BOTH critics and audiences love stay near the top
-      // regardless of fader position. The higher the floor score, the stronger the anchor.
-      const mutualFloor   = Math.min(criticScore, audienceScore);
-      const universalBonus = mutualFloor > 70 ? (mutualFloor - 70) * 0.5 : 0;
-
-      const blended = Math.max(0, Math.min(100, base + polarBoost + universalBonus));
+      // Three-pole tent: fader sweeps left → center → right (0 → 50 → 100)
+      const leftW   = Math.max(0, 1 - ratio * 2);
+      const rightW  = Math.max(0, ratio * 2 - 1);
+      const centerW = 1 - leftW - rightW;
+      const blended = leftPole * leftW + centerScore * centerW + rightPole * rightW;
 
       // Tiny stable jitter breaks exact ties
       const jitter = ((i.title || '').length % 7) * 0.1;
