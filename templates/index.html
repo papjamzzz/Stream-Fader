@@ -3101,8 +3101,9 @@ function blendScore(item, f) {
 
 let moviePage = 1;
 let tvPage = 1;
-const PAGE_SIZE        = 100;
-const MOBILE_PAGE_SIZE = 10;
+const PAGE_SIZE        = 24;
+const PAGE_INCREMENT   = 12;
+const MOBILE_PAGE_SIZE = 12;
 const isMobile = () => window.innerWidth <= 480;
 
 function topN(items, f, n) {
@@ -3349,7 +3350,7 @@ function renderList(containerId, items, countId, page) {
   const el = document.getElementById(containerId);
   const count = document.getElementById(countId);
   const all = topN(items, fader, items.length);
-  const limit = isMobile() ? MOBILE_PAGE_SIZE : page * PAGE_SIZE;
+  const limit = isMobile() ? MOBILE_PAGE_SIZE : PAGE_SIZE + (page - 1) * PAGE_INCREMENT;
   const shown = all.slice(0, limit);
 
   if (shown.length === 0) {
@@ -3390,9 +3391,9 @@ function loadMoreTV() {
   renderList('tv-list', applyGenreFilter(allTV), 'tv-count', tvPage);
 }
 
-function updateCards() {
+function updateCards(fromFader) {
   window._cardRegistry = [];
-  moviePage = 1; tvPage = 1;
+  if (!fromFader) { moviePage = 1; tvPage = 1; }
   renderList('movie-list', applyGenreFilter(allMovies), 'movie-count', moviePage);
   renderList('tv-list',    applyGenreFilter(allTV),    'tv-count',    tvPage);
 }
