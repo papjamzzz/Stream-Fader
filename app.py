@@ -1,7 +1,7 @@
 import threading, os, requests, json, hashlib
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request, make_response
-from engine import get_top_content, get_cached_content, generate_top10
+from engine import get_top_content, get_cached_content, generate_top10, _score_cache, CACHE_FILE
 
 TMDB_KEY = os.getenv('TMDB_API_KEY', '')
 
@@ -496,6 +496,45 @@ def actor_credits(actor_id):
         return jsonify({'person': person, 'credits': results})
     except Exception:
         return jsonify({'person': {}, 'credits': []})
+
+
+@app.route('/api/patch-scores')
+def patch_scores():
+    """Apply seed/cached RT scores to existing cache.json without a full rebuild."""
+    import time as _time
+    cached_raw = None
+    try:
+        with open(CACHE_FILE) as f:
+            cached_raw = json.load(f)
+    except Exception:
+        return jsonify({'error': 'no cache'}), 503
+
+    patched = 0
+    for item in cached_raw['data'].get('movies', []) + cached_raw['data'].get('tv', []):
+        iid = item.get('imdb_id')
+        if not iid or iid not in _score_cache:
+            continue
+        s = _score_cache[iid]
+        if s.get('rt') is not None:
+            item['rt_score']     = s['rt'];      patched += 1
+        if s.get('rt_audience') is not None:
+            item['rt_audience']  = s['rt_audience']
+        if s.get('mc') is not None:
+            item['mc_score']     = s['mc']
+        if s.get('imdb_display') is not None:
+            item['imdb_score']   = s['imdb_display']
+        if s.get('critic') is not None:
+            item['critic_score'] = s['critic']
+        if s.get('audience') is not None:
+            item['audience_score'] = s['audience']
+
+    try:
+        with open(CACHE_FILE, 'w') as f:
+            json.dump(cached_raw, f)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    return jsonify({'patched': patched, 'seed_size': len(_score_cache)})
 
 
 @app.route('/api/score-debug')
