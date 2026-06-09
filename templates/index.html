@@ -1066,16 +1066,17 @@
     }
 
     /* card entry animations */
-    @keyframes cardInTop {
-      0%   { opacity: 0; transform: translateY(-10px) scale(0.96); }
-      65%  { opacity: 1; transform: translateY(3px) scale(1.02); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
+    @keyframes cardFlipTop {
+      0%   { opacity: 0; transform: perspective(700px) rotateY(-90deg) scale(0.95); }
+      55%  { opacity: 1; transform: perspective(700px) rotateY(8deg) scale(1.02); }
+      100% { opacity: 1; transform: perspective(700px) rotateY(0deg) scale(1); }
     }
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
+    @keyframes cardFlip {
+      0%   { opacity: 0; transform: perspective(700px) rotateY(-90deg); }
+      55%  { opacity: 1; transform: perspective(700px) rotateY(4deg); }
+      100% { opacity: 1; transform: perspective(700px) rotateY(0deg); }
     }
-    .card-list .title-row { animation: cardIn 0.26s ease both; }
+    .card-list .title-row { animation: cardFlip 0.35s cubic-bezier(0.22,1,0.36,1) both; }
 
     /* ── DISMISS BUTTONS ── */
     .dismiss-bar {
@@ -3365,15 +3366,12 @@ function renderList(containerId, items, countId, page) {
   el.innerHTML = shown.map((item, i) => renderCard(item, i + 1)).join('');
   Array.from(el.children).forEach((card, i) => {
     if (!card.dataset.id) return;
-    if (i < 3) {
-      card.style.animationName     = 'cardInTop';
-      card.style.animationDuration = '0.38s';
-      card.style.animationDelay    = (i * 55) + 'ms';
-      card.style.animationTimingFunction = 'cubic-bezier(0.22,1,0.36,1)';
-      card.style.animationFillMode = 'both';
-    } else {
-      card.style.animationDelay = (165 + (i - 3) * 13) + 'ms';
-    }
+    const delay = i < 3 ? i * 35 : 100 + (i - 3) * 15;
+    card.style.animationName           = i < 3 ? 'cardFlipTop' : 'cardFlip';
+    card.style.animationDuration       = i < 3 ? '0.42s' : '0.35s';
+    card.style.animationDelay          = delay + 'ms';
+    card.style.animationTimingFunction = 'cubic-bezier(0.22,1,0.36,1)';
+    card.style.animationFillMode       = 'both';
   });
 
   if (count) count.textContent = all.length + ' titles';
