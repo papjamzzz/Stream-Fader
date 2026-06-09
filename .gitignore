@@ -5,6 +5,7 @@
 
 # Runtime data — never commit these
 data/*.json
+!data/score_seed.json
 data/*.jsonl
 data/cache*
 data/preferences*

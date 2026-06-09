@@ -18,6 +18,7 @@ ANTHROPIC_KEY = os.getenv('ANTHROPIC_API_KEY', '')
 
 CACHE_FILE       = 'data/cache.json'
 SCORE_CACHE_FILE = 'data/score_cache.json'  # per-title score cache — survives content rebuilds
+SCORE_SEED_FILE  = 'data/score_seed.json'   # committed seed scores — bootstraps Railway on first deploy
 TOPPICK_FILE     = 'data/toppick.json'
 CACHE_TTL        = 6 * 3600    # 6 hours — refresh frequently for fresher data
 TOPPICK_TTL      = 12 * 3600
@@ -28,18 +29,30 @@ _score_cache = {}
 
 def _load_score_cache():
     global _score_cache
+    # Bootstrap from committed seed file (Railway first deploy / empty cache)
+    seed = {}
+    try:
+        if os.path.exists(SCORE_SEED_FILE):
+            with open(SCORE_SEED_FILE) as f:
+                seed = json.load(f)
+    except Exception:
+        pass
+
+    live = {}
     try:
         if os.path.exists(SCORE_CACHE_FILE):
             with open(SCORE_CACHE_FILE) as f:
                 raw = json.load(f)
-            # Evict entries older than SCORE_CACHE_TTL so scores refresh weekly
             now = time.time()
-            _score_cache = {
+            live = {
                 k: v for k, v in raw.items()
                 if now - v.get('_cached_at', 0) < SCORE_CACHE_TTL
             }
     except Exception:
-        _score_cache = {}
+        pass
+
+    # Merge: seed fills gaps; live data wins when present
+    _score_cache = {**seed, **live}
 
 def _save_score_cache():
     try:
@@ -1325,15 +1338,35 @@ def get_top_content(force=False):
     movies = fetch_movies()
     tv     = fetch_tv()
 
-    # Post-build bulk score top-up: grab RT/MC for any tmdb items that still
-    # lack critic scores (their imdb_ids were only known after the detail call).
-    # A second bulk pass fills them in for the next cache read — costs just 1-2 API calls.
+    # Post-build bulk score top-up: grab RT/MC for any items missing RT scores.
+    # Also covers items that were individually fetched while MDBList was rate-limited
+    # (those land in _score_cache with rt=None and need a retry).
     missing_ids = [
         item['imdb_id'] for item in movies + tv
-        if item.get('imdb_id') and item.get('rt_score') is None and item.get('imdb_id') not in _score_cache
+        if item.get('imdb_id') and item.get('rt_score') is None
+        and _score_cache.get(item['imdb_id'], {}).get('rt') is None
     ]
     if missing_ids:
         mdblist_bulk_prefetch(missing_ids)
+
+    # Back-fill records with scores now in cache (seed data or fresh bulk fetch)
+    for item in movies + tv:
+        iid = item.get('imdb_id')
+        if not iid or iid not in _score_cache:
+            continue
+        s = _score_cache[iid]
+        if s.get('rt') is not None:
+            item['rt_score']    = s['rt']
+        if s.get('rt_audience') is not None:
+            item['rt_audience'] = s['rt_audience']
+        if s.get('mc') is not None:
+            item['mc_score']    = s['mc']
+        if s.get('imdb_display') is not None:
+            item['imdb_score']  = s['imdb_display']
+        if s.get('critic') is not None:
+            item['critic_score'] = s['critic']
+        if s.get('audience') is not None:
+            item['audience_score'] = s['audience']
 
     pick   = generate_top_pick(movies, tv)
 
