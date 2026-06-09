@@ -4262,7 +4262,7 @@ function showTour() {
   if (_ls.getItem(TOUR_KEY)) return;
 
   let current = 0;
-  let tourEl, spotEl, arrowEl, skipEl;
+  let tourEl, spotEl, arrowEl, skipEl, arrowTimer;
 
   // Confetti burst
   function burst(x, y, color) {
@@ -4370,7 +4370,8 @@ function showTour() {
     }, 50);
 
     // Arrow — wait for smooth scroll to settle, then measure real position
-    setTimeout(() => {
+    if (arrowTimer) { clearTimeout(arrowTimer); arrowTimer = null; }
+    arrowTimer = setTimeout(() => {
       arrowEl = buildArrow();
       positionArrow(arrowEl, s.target);
       // Burst at the target element's settled position
@@ -4517,6 +4518,7 @@ function showTour() {
   }
 
   function endTour() {
+    if (arrowTimer) { clearTimeout(arrowTimer); arrowTimer = null; }
     if (arrowEl) arrowEl.remove();
     if (skipEl)  skipEl.remove();
     tourEl.style.transition = 'opacity 0.3s, transform 0.3s';
