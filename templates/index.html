@@ -1065,9 +1065,12 @@
       50%       { opacity: 0.4; box-shadow: 0 0 2px #66bb6a; }
     }
 
-    /* card fade-swap animation */
-    .card-list.swapping { opacity: 0; transition: opacity 0.15s; }
-    .card-list.swapping-in { opacity: 1; transition: opacity 0.25s; }
+    /* card entry animation — fires on every DOM insert */
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card-list .title-row { animation: cardIn 0.28s ease both; }
 
     /* ── DISMISS BUTTONS ── */
     .dismiss-bar {
@@ -3347,16 +3350,10 @@ function renderList(containerId, items, countId, page) {
     return;
   }
 
-  // Use FLIP animation for re-sorts when cards already exist
-  const existingCards = Array.from(el.children).filter(c => c.dataset.id);
-  if (existingCards.length > 0) {
-    flipSort(el, shown, (item) => {
-      const rank = shown.indexOf(item) + 1;
-      return renderCard(item, rank);
-    });
-  } else {
-    el.innerHTML = shown.map((item, i) => renderCard(item, i + 1)).join('');
-  }
+  el.innerHTML = shown.map((item, i) => renderCard(item, i + 1)).join('');
+  Array.from(el.children).forEach((card, i) => {
+    if (card.dataset.id) card.style.animationDelay = Math.min(i * 14, 160) + 'ms';
+  });
 
   if (count) count.textContent = all.length + ' titles';
   const btn = document.getElementById(containerId + '-more-btn');
@@ -3373,32 +3370,11 @@ function loadMoreTV() {
   renderList('tv-list', applyGenreFilter(allTV), 'tv-count', tvPage);
 }
 
-function updateCards(animate = true) {
-  window._cardRegistry = []; // reset registry on each render
-  const movieList = document.getElementById('movie-list');
-  const tvList    = document.getElementById('tv-list');
-
-  if (animate) {
-    movieList.classList.add('swapping');
-    tvList.classList.add('swapping');
-    setTimeout(() => {
-      moviePage = 1; tvPage = 1;
-      renderList('movie-list', applyGenreFilter(allMovies), 'movie-count', moviePage);
-      renderList('tv-list',    applyGenreFilter(allTV),    'tv-count',    tvPage);
-      movieList.classList.remove('swapping');
-      tvList.classList.remove('swapping');
-      movieList.classList.add('swapping-in');
-      tvList.classList.add('swapping-in');
-      setTimeout(() => {
-        movieList.classList.remove('swapping-in');
-        tvList.classList.remove('swapping-in');
-      }, 250);
-    }, 150);
-  } else {
-    moviePage = 1; tvPage = 1;
-    renderList('movie-list', applyGenreFilter(allMovies), 'movie-count', moviePage);
-    renderList('tv-list',    applyGenreFilter(allTV),    'tv-count',    tvPage);
-  }
+function updateCards() {
+  window._cardRegistry = [];
+  moviePage = 1; tvPage = 1;
+  renderList('movie-list', applyGenreFilter(allMovies), 'movie-count', moviePage);
+  renderList('tv-list',    applyGenreFilter(allTV),    'tv-count',    tvPage);
 }
 
 // ── Data load ────────────────────────────────────────────
