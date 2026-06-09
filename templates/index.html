@@ -1907,15 +1907,16 @@
         inset 0 0 14px rgba(var(--gc, 79,195,247), 0.08);
     }
     .genre-pill.active {
-      background: rgba(var(--gc, 79,195,247), 0.2);
+      background: rgba(var(--gc, 79,195,247), 0.55);
       border-color: rgb(var(--gc, 79,195,247));
-      color: rgb(var(--gc, 79,195,247));
+      color: #ffffff;
       transform: translateY(-2px);
+      text-shadow: 0 0 10px rgba(255,255,255,0.6);
       box-shadow:
-        0 0 24px rgba(var(--gc, 79,195,247), 0.7),
-        0 0 55px rgba(var(--gc, 79,195,247), 0.35),
-        0 0 90px rgba(var(--gc, 79,195,247), 0.12),
-        inset 0 0 18px rgba(var(--gc, 79,195,247), 0.1);
+        0 0 28px rgba(var(--gc, 79,195,247), 0.9),
+        0 0 60px rgba(var(--gc, 79,195,247), 0.5),
+        0 0 100px rgba(var(--gc, 79,195,247), 0.2),
+        inset 0 0 24px rgba(var(--gc, 79,195,247), 0.35);
     }
 
     /* ── SHOW MORE BUTTON ── */
@@ -2905,8 +2906,9 @@ function setGenreFilter(genre) {
     activeGenres.clear();
   } else {
     if (activeGenres.has(genre)) {
-      activeGenres.delete(genre);
+      activeGenres.clear(); // clicking active genre → back to all
     } else {
+      activeGenres.clear(); // single-select: always replace
       activeGenres.add(genre);
     }
   }
@@ -4876,6 +4878,9 @@ function toggleAmpPower() {
   const led   = document.getElementById('vstLed');
   if (audio.paused) {
     _initAudio();
+    document.querySelectorAll('.knob').forEach(k => {
+      _applyParam(k.dataset.param, parseFloat(k.dataset.current ?? k.dataset.val));
+    });
     const doPlay = () => audio.play().then(() => { _ampPlaying = true; led.classList.add('on'); }).catch(e => console.warn('play failed', e));
     if (_actx.state === 'suspended') _actx.resume().then(doPlay);
     else doPlay();
@@ -4884,7 +4889,7 @@ function toggleAmpPower() {
   }
 }
 function _applyParam(param, raw) {
-  _initAudio();
+  if (!_actx) return;
   const audio = document.getElementById('ampAudio');
   if (param === 'vol')   { _gain.gain.value = raw; }
   if (param === 'gain')  { _dist.curve = _makeDistCurve(raw); }
@@ -5209,7 +5214,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const param = knob.dataset.param, min = parseFloat(knob.dataset.min), max = parseFloat(knob.dataset.max), defaultVal = parseFloat(knob.dataset.val);
     let val = defaultVal;
     const dot = knob.querySelector('.knob-dot'), valEl = document.getElementById('kval-' + param);
-    const setKnob = v => { val = Math.min(max, Math.max(min, v)); dot.style.transform = `translateX(-50%) rotate(${_knobRotation(val,min,max)}deg)`; if (valEl) valEl.textContent = _formatVal(param, val); _applyParam(param, val); };
+    const setKnob = v => { val = Math.min(max, Math.max(min, v)); knob.dataset.current = String(val); dot.style.transform = `translateX(-50%) rotate(${_knobRotation(val,min,max)}deg)`; if (valEl) valEl.textContent = _formatVal(param, val); _applyParam(param, val); };
     setKnob(val);
     knob.addEventListener('dblclick', e => { e.preventDefault(); setKnob(defaultVal); });
     let dragging = false, startY = 0, startVal = 0;
