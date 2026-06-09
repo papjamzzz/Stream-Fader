@@ -69,7 +69,16 @@ def index():
             seo_tv     = _pick(cached.get('tv', []))
     except Exception:
         pass
-    resp = make_response(render_template('index.html', seo_movies=seo_movies, seo_tv=seo_tv))
+    aff = {
+        'amazon':    os.getenv('AFFILIATE_AMAZON', ''),
+        'apple':     os.getenv('AFFILIATE_APPLE', ''),
+        'hulu':      os.getenv('AFFILIATE_HULU', ''),
+        'disney':    os.getenv('AFFILIATE_DISNEY', ''),
+        'paramount': os.getenv('AFFILIATE_PARAMOUNT', ''),
+        'max':       os.getenv('AFFILIATE_MAX', ''),
+        'peacock':   os.getenv('AFFILIATE_PEACOCK', ''),
+    }
+    resp = make_response(render_template('index.html', seo_movies=seo_movies, seo_tv=seo_tv, aff=aff))
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
     return resp
 

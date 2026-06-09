@@ -2798,18 +2798,38 @@ const PLATFORM_URLS = {
   'fubo':       'https://www.fubo.tv',
 };
 
+// Affiliate tags — set via Railway env vars, empty = no tracking param
+const AFF = {
+  amazon:    '{{ aff.amazon }}',
+  apple:     '{{ aff.apple }}',
+  hulu:      '{{ aff.hulu }}',
+  disney:    '{{ aff.disney }}',
+  paramount: '{{ aff.paramount }}',
+  max:       '{{ aff.max }}',
+  peacock:   '{{ aff.peacock }}',
+};
+
+function _aff(base, params) {
+  // params = {tag:'amazon-id'} or {at:'apple-token'} etc.
+  // Only appends if the affiliate value is non-empty
+  const kv = Object.entries(params).filter(([, v]) => v);
+  if (!kv.length) return base;
+  const sep = base.includes('?') ? '&' : '?';
+  return base + sep + kv.map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+}
+
 // Search URL builders — take the user directly to that title on each platform
 const PLATFORM_SEARCH = {
   'netflix':    t => `https://www.netflix.com/search?q=${encodeURIComponent(t)}`,
-  'prime':      t => `https://www.amazon.com/s?k=${encodeURIComponent(t)}&i=instant-video`,
-  'amazon':     t => `https://www.amazon.com/s?k=${encodeURIComponent(t)}&i=instant-video`,
-  'apple':      t => `https://tv.apple.com/search?term=${encodeURIComponent(t)}`,
-  'disney':     t => `https://www.disneyplus.com/search/${encodeURIComponent(t)}`,
-  'hulu':       t => `https://www.hulu.com/search?q=${encodeURIComponent(t)}`,
-  'max':        t => `https://play.max.com/search?q=${encodeURIComponent(t)}`,
-  'hbo':        t => `https://play.max.com/search?q=${encodeURIComponent(t)}`,
-  'paramount':  t => `https://www.paramountplus.com/search/?q=${encodeURIComponent(t)}`,
-  'peacock':    t => `https://www.peacocktv.com/watch/search?q=${encodeURIComponent(t)}`,
+  'prime':      t => _aff(`https://www.amazon.com/s?k=${encodeURIComponent(t)}&i=instant-video`, {tag: AFF.amazon}),
+  'amazon':     t => _aff(`https://www.amazon.com/s?k=${encodeURIComponent(t)}&i=instant-video`, {tag: AFF.amazon}),
+  'apple':      t => _aff(`https://tv.apple.com/search?term=${encodeURIComponent(t)}`, {at: AFF.apple, ct: AFF.apple ? 'streamfader' : ''}),
+  'disney':     t => _aff(`https://www.disneyplus.com/search/${encodeURIComponent(t)}`, {cid: AFF.disney}),
+  'hulu':       t => _aff(`https://www.hulu.com/search?q=${encodeURIComponent(t)}`, {cmp: AFF.hulu}),
+  'max':        t => _aff(`https://play.max.com/search?q=${encodeURIComponent(t)}`, {cmp: AFF.max}),
+  'hbo':        t => _aff(`https://play.max.com/search?q=${encodeURIComponent(t)}`, {cmp: AFF.max}),
+  'paramount':  t => _aff(`https://www.paramountplus.com/search/?q=${encodeURIComponent(t)}`, {cmp: AFF.paramount}),
+  'peacock':    t => _aff(`https://www.peacocktv.com/watch/search?q=${encodeURIComponent(t)}`, {cmp: AFF.peacock}),
   'showtime':   t => `https://www.sho.com/search?q=${encodeURIComponent(t)}`,
   'amc':        t => `https://www.amcplus.com/search?q=${encodeURIComponent(t)}`,
   'mubi':       t => `https://mubi.com/en/us/films?q=${encodeURIComponent(t)}`,
