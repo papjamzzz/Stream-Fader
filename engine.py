@@ -380,8 +380,9 @@ def _passes_filters(item):
 
 
 def _passes_score_floor(result):
-    """Drop cards where the combined score is too low to rank, or with no RT score."""
-    if result.get('rt_score') is None:
+    """Drop cards where the combined score is too low to rank."""
+    # Drop non-English films with no RT score — foreign/obscure content without critic coverage
+    if result.get('rt_score') is None and result.get('original_language', 'en') != 'en':
         return False
     critic   = result.get('critic_score') or 0
     audience = result.get('audience_score') or 0
