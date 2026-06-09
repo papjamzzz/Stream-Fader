@@ -4873,14 +4873,13 @@ function toggleVST() {
 function toggleAmpPower() {
   const audio = document.getElementById('ampAudio');
   const led   = document.getElementById('vstLed');
+  _initAudio();
+  document.querySelectorAll('.knob').forEach(k => {
+    _applyParam(k.dataset.param, parseFloat(k.dataset.current ?? k.dataset.val));
+  });
+  if (_actx.state === 'suspended') _actx.resume();
   if (audio.paused) {
-    _initAudio();
-    document.querySelectorAll('.knob').forEach(k => {
-      _applyParam(k.dataset.param, parseFloat(k.dataset.current ?? k.dataset.val));
-    });
-    const doPlay = () => audio.play().then(() => { _ampPlaying = true; led.classList.add('on'); }).catch(e => console.warn('play failed', e));
-    if (_actx.state === 'suspended') _actx.resume().then(doPlay);
-    else doPlay();
+    audio.play().then(() => { _ampPlaying = true; led.classList.add('on'); }).catch(() => {});
   } else {
     audio.pause(); _ampPlaying = false; led.classList.remove('on');
   }
