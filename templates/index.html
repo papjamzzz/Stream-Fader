@@ -1065,12 +1065,17 @@
       50%       { opacity: 0.4; box-shadow: 0 0 2px #66bb6a; }
     }
 
-    /* card entry animation — fires on every DOM insert */
+    /* card entry animations */
+    @keyframes cardInTop {
+      0%   { opacity: 0; transform: translateY(-10px) scale(0.96); }
+      65%  { opacity: 1; transform: translateY(3px) scale(1.02); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
     @keyframes cardIn {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(8px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .card-list .title-row { animation: cardIn 0.28s ease both; }
+    .card-list .title-row { animation: cardIn 0.26s ease both; }
 
     /* ── DISMISS BUTTONS ── */
     .dismiss-bar {
@@ -3125,14 +3130,18 @@ function topN(items, f, n) {
           ? (i.audience_score ?? 50)
           : (i.audience_score ?? 50) * 0.65;
 
-      // Amplified divergence scoring — makes the fader actually shuffle cards dramatically.
-      // Instead of a linear blend, we amplify how much each film DIVERGES between poles.
-      // Films critics love but audiences hate (or vice versa) swing hard across the deck.
-      const AMP = 2.8;
-      const divergence  = criticScore - audienceScore;
-      const base        = (criticScore + audienceScore) / 2;
-      const polarBoost  = (0.5 - ratio) * divergence * AMP;
-      const blended     = Math.max(0, Math.min(100, base + polarBoost));
+      // Polarizing films swing hard across the deck as the fader moves.
+      const AMP = 3.2;
+      const divergence = criticScore - audienceScore;
+      const base       = (criticScore + audienceScore) / 2;
+      const polarBoost = (0.5 - ratio) * divergence * AMP;
+
+      // Universal quality anchor — films BOTH critics and audiences love stay near the top
+      // regardless of fader position. The higher the floor score, the stronger the anchor.
+      const mutualFloor   = Math.min(criticScore, audienceScore);
+      const universalBonus = mutualFloor > 70 ? (mutualFloor - 70) * 0.5 : 0;
+
+      const blended = Math.max(0, Math.min(100, base + polarBoost + universalBonus));
 
       // Tiny stable jitter breaks exact ties
       const jitter = ((i.title || '').length % 7) * 0.1;
@@ -3352,7 +3361,16 @@ function renderList(containerId, items, countId, page) {
 
   el.innerHTML = shown.map((item, i) => renderCard(item, i + 1)).join('');
   Array.from(el.children).forEach((card, i) => {
-    if (card.dataset.id) card.style.animationDelay = Math.min(i * 14, 160) + 'ms';
+    if (!card.dataset.id) return;
+    if (i < 3) {
+      card.style.animationName     = 'cardInTop';
+      card.style.animationDuration = '0.38s';
+      card.style.animationDelay    = (i * 55) + 'ms';
+      card.style.animationTimingFunction = 'cubic-bezier(0.22,1,0.36,1)';
+      card.style.animationFillMode = 'both';
+    } else {
+      card.style.animationDelay = (165 + (i - 3) * 13) + 'ms';
+    }
   });
 
   if (count) count.textContent = all.length + ' titles';
