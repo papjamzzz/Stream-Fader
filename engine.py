@@ -701,7 +701,7 @@ def _enrich_movie(source, item):
             genres   = [_norm_genre(g['name']) for g in (details.get('genres') or []) if g.get('name')][:3]
             orig_lang = details.get('original_language') or item.get('original_language', 'en')
             rec = _movie_record(imdb_id or str(tmdb_id), imdb_id, title, overview,
-                                 poster, item.get('release_date', ''), providers, genres, scores,
+                                 poster, details.get('release_date') or item.get('release_date', ''), providers, genres, scores,
                                  is_doc=item.get('_is_doc', False),
                                  popularity=item.get('popularity', 0),
                                  original_language=orig_lang,
