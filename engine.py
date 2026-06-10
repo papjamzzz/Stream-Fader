@@ -361,6 +361,8 @@ TVMAZE_EXCLUDED_GENRES = {
 # Titles manually blocked from appearing in results (normalized lowercase)
 TITLE_BLOCKLIST = {
     'predator: killer of killers',
+    'top gun',
+    'top gun: maverick',
 }
 
 
@@ -621,10 +623,16 @@ def fetch_movies():
             if result and _passes_score_floor(result):
                 if (result.get('title') or '').lower().strip() in TITLE_BLOCKLIST:
                     continue
-                # Hard recency gate — drop anything older than 18 months unless theatrical
+                # Hard recency gate — drop anything older than 6 months unless theatrical
                 rel = str(result.get('release') or '')
                 if not result.get('theatrical') and len(rel) >= 7 and rel[:7] < hard_cutoff[:7]:
                     continue
+                # Absolute year cap — drop anything originally released 3+ years ago
+                try:
+                    if not result.get('theatrical') and int(rel[:4]) < (datetime.now().year - 2):
+                        continue
+                except (ValueError, TypeError):
+                    pass
                 key = result.get('imdb_id') or result.get('id')
                 if key and key not in seen_imdb:
                     seen_imdb.add(key)
