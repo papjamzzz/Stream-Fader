@@ -409,6 +409,7 @@ def fetch_movies():
 
     if TMDB_KEY:
         cutoff_6mo  = (datetime.now() - timedelta(days=183)).strftime('%Y-%m-%d')
+        cutoff_3yr  = (datetime.now() - timedelta(days=365*3)).strftime('%Y-%m-%d')
 
         # ── POOL 0: Now Playing in theaters — no streaming gate ──────────────
         for page in range(1, 6):
@@ -434,9 +435,10 @@ def fetch_movies():
             for m in data.get('results', []):
                 candidates.append(('tmdb_movie', m))
 
-        # ── POOL R: Re-releases — streaming/digital drops of any film in last 6mo ──
+        # ── POOL R: Re-releases — streaming/digital drops of films from last 3 years ──
         # Uses release_date (not primary_release_date) to catch older films
         # newly added to streaming, theatrical re-releases, anniversary cuts, etc.
+        # primary_release_date.gte caps at 3 years to exclude classics like Top Gun 1986.
         for page in range(1, 10):
             data = tmdb_get('/discover/movie', {
                 'sort_by': 'popularity.desc',
@@ -444,6 +446,7 @@ def fetch_movies():
                 'with_watch_providers': STREAMING_PROVIDER_IDS,
                 'without_genres': MOVIE_EXCLUDED_GENRES,
                 'release_date.gte': cutoff_6mo,
+                'primary_release_date.gte': cutoff_3yr,
                 'with_release_type': '4|5|6',  # Digital, Physical, TV — streaming drops
                 'vote_count.gte': 300,
                 'page': page,
