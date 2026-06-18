@@ -774,10 +774,51 @@ def seo_movies():
 
 @app.route('/robots.txt')
 def robots():
-    return app.response_class(
-        "User-agent: *\nAllow: /\nSitemap: https://stream.creativekonsoles.com/sitemap.xml\n",
-        mimetype='text/plain'
+    content = (
+        "User-agent: *\nAllow: /\n\n"
+        "User-agent: GPTBot\nAllow: /\n\n"
+        "User-agent: ClaudeBot\nAllow: /\n\n"
+        "User-agent: PerplexityBot\nAllow: /\n\n"
+        "User-agent: Google-Extended\nAllow: /\n\n"
+        "User-agent: OAI-SearchBot\nAllow: /\n\n"
+        "User-agent: Applebot-Extended\nAllow: /\n\n"
+        "User-agent: CCBot\nAllow: /\n\n"
+        "Sitemap: https://stream.creativekonsoles.com/sitemap.xml\n"
     )
+    return app.response_class(content, mimetype='text/plain')
+
+@app.route('/llms.txt')
+def llms_txt():
+    content = """# StreamFader
+
+> Blend critic and audience scores with a DJ-style crossfader. Find the perfect movie or TV show to watch tonight.
+
+StreamFader combines critic scores (Rotten Tomatoes, Metacritic) with audience ratings (IMDb) using a crossfader you control. Slide left for what critics love. Slide right for what audiences love. Find the sweet spot where both agree.
+
+## What it does
+
+- Crossfader: blend critic and audience scores in real time (0–100% weight)
+- Movie and TV show discovery: powered by TMDb + OMDb data
+- Genre filtering: filter by genre, content type, and streaming platform
+- Blended score: critic × (1 - fader) + audience × fader, normalized to 0–100
+- Free to use, no account required
+
+## How the scores work
+
+- Critic score: average of Rotten Tomatoes and Metacritic (normalized)
+- Audience score: IMDb rating × 10
+- Blended score: weighted average based on your fader position
+
+## Links
+
+- [StreamFader](https://stream.creativekonsoles.com): Live app
+- [Best Movies Streaming Now](https://stream.creativekonsoles.com/best-movies-streaming-now): Editorial picks
+- [Creative Konsoles](https://creativekonsoles.com): Parent company
+- [Contact](mailto:support@creativekonsoles.com): support@creativekonsoles.com
+"""
+    resp = app.response_class(content, mimetype='text/plain')
+    resp.headers['Cache-Control'] = 'public, max-age=86400'
+    return resp
 
 @app.route('/sitemap.xml')
 def sitemap():
