@@ -1085,36 +1085,24 @@
     .dismiss-bar {
       display: flex;
       gap: 4px;
-      padding: 6px 6px 0;
+      padding: 5px 6px 0;
       flex-shrink: 0;
     }
     .dismiss-btn {
       flex: 1;
-      padding: 8px 6px;
+      padding: 5px 4px;
       border: none;
-      border-radius: 6px;
+      border-radius: 5px;
       cursor: pointer;
       font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      line-height: 1;
+      text-align: center;
       transition: opacity 0.15s, transform 0.1s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1px;
     }
     .dismiss-btn:hover { opacity: 0.85; transform: translateY(-1px); }
-    .dismiss-label {
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      line-height: 1.2;
-    }
-    .dismiss-sub {
-      font-size: 11px;
-      font-weight: 500;
-      opacity: 0.85;
-      letter-spacing: 0.01em;
-      line-height: 1.2;
-    }
     .dismiss-seen {
       background: rgba(102,187,106,0.15);
       color: #66bb6a;
@@ -2239,13 +2227,10 @@
         padding: 5px 6px;
       }
 
-      /* ── Dismiss buttons — bigger tap targets ── */
+      /* ── Dismiss buttons — mobile tap targets ── */
       .dismiss-btn {
-        padding: 12px 6px;
-        min-height: 44px;
-      }
-      .dismiss-label {
-        font-size: 14px;
+        padding: 7px 4px;
+        min-height: 30px;
       }
 
       /* ── Fader thumb — big enough for thumbs ── */
@@ -3322,13 +3307,8 @@ function renderCard(item, rank) {
         </div>
       </div>
       <div class="dismiss-bar" onclick="event.stopPropagation()">
-        <button class="dismiss-btn dismiss-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'seen','${item.media_type||'movie'}')">
-          <span class="dismiss-label">✓ Seen it</span>
-        </button>
-        <button class="dismiss-btn dismiss-nope" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'nope');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'skip','${item.media_type||'movie'}')">
-          <span class="dismiss-label" style="font-size:30px;font-weight:900;">✗ NO</span>
-          <span class="dismiss-sub">thanks</span>
-        </button>
+        <button class="dismiss-btn dismiss-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'seen','${item.media_type||'movie'}')">✓ Seen it</button>
+        <button class="dismiss-btn dismiss-nope" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'nope');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'skip','${item.media_type||'movie'}')">✗ No thanks</button>
       </div>
       <div class="card-body">
         <div class="row-title">${item.title}</div>
