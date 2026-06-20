@@ -113,7 +113,8 @@
 
     /* ── HEADER ── */
     .header {
-      background: linear-gradient(180deg, #0e1020 0%, #08090d 100%);
+      background-color: #0d0f1c;
+      background-image: linear-gradient(180deg, #0e1020 0%, #08090d 100%);
       border-bottom: 1px solid rgba(79,195,247,0.1);
       padding: 13px 28px;
       display: flex;
@@ -122,7 +123,6 @@
       position: sticky;
       top: 0;
       z-index: 200;
-      backdrop-filter: blur(20px);
       box-shadow: 0 1px 0 rgba(79,195,247,0.06), 0 8px 32px rgba(0,0,0,0.6);
     }
     .header::before {
@@ -375,7 +375,7 @@
     .content-area {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 24px 16px 40px;
+      padding: 24px 16px 56px;
     }
     /* Genre sidebar — fixed in left viewport margin, never touches the card grid */
     /* Star — fixed between left sidebar and content */
@@ -1090,7 +1090,7 @@
     }
     .dismiss-btn {
       flex: 1;
-      padding: 14px 9px 12px;
+      padding: 8px 6px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
@@ -1103,13 +1103,13 @@
     }
     .dismiss-btn:hover { opacity: 0.85; transform: translateY(-1px); }
     .dismiss-label {
-      font-size: 26px;
+      font-size: 13px;
       font-weight: 700;
       letter-spacing: 0.02em;
       line-height: 1.2;
     }
     .dismiss-sub {
-      font-size: 21px;
+      font-size: 11px;
       font-weight: 500;
       opacity: 0.85;
       letter-spacing: 0.01em;
@@ -1569,7 +1569,6 @@
       background: transparent; border: none; cursor: pointer;
       padding: 0; display: flex; align-items: center; flex-shrink: 0;
       border-radius: 8px; transition: filter 0.2s, transform 0.15s;
-      position: fixed; top: 14px; left: 16px; z-index: 600;
     }
     .amp-btn:hover { filter: brightness(1.4); transform: scale(1.04); }
     .amp-btn.playing { filter: drop-shadow(0 0 6px rgba(79,195,247,0.8)); }
@@ -1862,7 +1861,7 @@
     }
     .genre-pill {
       flex-shrink: 0;
-      padding: 13px 28px;
+      padding: 7px 16px;
       border-radius: 30px;
       border: 1.5px solid rgba(var(--gc, 79,195,247), 0.45);
       background: rgba(var(--gc, 79,195,247), 0.09);
@@ -2009,11 +2008,6 @@
         padding: 8px 14px;
         font-size: 14px;
         gap: 6px;
-      }
-      /* Give the amp button room (it's fixed top-left) */
-      .amp-btn {
-        top: 10px;
-        left: 10px;
       }
       .amp-svg { width: 112px; height: 50px; }
 
@@ -2330,17 +2324,87 @@
 <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap">StreamFader — Blend Critic and Audience Scores to Find the Best Movies and TV Shows</h1>
 
 <!-- ═══════════════════ HEADER ═══════════════════ -->
-<header class="header" style="flex-direction:row;padding:18px 32px;align-items:center;">
-  <!-- left spacer — matches saved button width so wordmark stays truly centered -->
-  <div style="flex:1;"></div>
+<header class="header" style="flex-direction:row;padding:12px 24px;align-items:center;">
+  <!-- AMP player button — left -->
+  <div style="flex:1;display:flex;align-items:center;">
+<button class="amp-btn" id="ampBtn" onclick="toggleVST()" title="Open FX Console">
+  <svg class="amp-svg" viewBox="0 0 200 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="bb-stripe" x1="0" y1="0" x2="200" y2="0" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="#4fc3f7"/>
+        <stop offset="42%" stop-color="#c678dd"/>
+        <stop offset="100%" stop-color="#ffb74d"/>
+      </linearGradient>
+      <linearGradient id="bb-sf" x1="72" y1="0" x2="128" y2="0" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="#4fc3f7"/>
+        <stop offset="100%" stop-color="#c678dd"/>
+      </linearGradient>
+    </defs>
+    <!-- Body -->
+    <rect x="0.75" y="10" width="198.5" height="76" rx="9" fill="#07080f" stroke="#22253a" stroke-width="1.5"/>
+    <!-- Top color stripe -->
+    <rect x="0.75" y="10" width="198.5" height="4" rx="2" fill="url(#bb-stripe)"/>
+    <!-- Antenna -->
+    <line x1="168" y1="10" x2="184" y2="1" stroke="#c678dd" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="184" cy="1" r="2.5" fill="#c678dd" opacity="0.85"/>
+
+    <!-- LEFT SPEAKER — blue, matches movie logo -->
+    <rect x="4" y="15" width="58" height="65" rx="6" fill="#030710" stroke="#4fc3f7" stroke-width="1.4"/>
+    <circle cx="33" cy="47" r="23" fill="#040b18" stroke="#4fc3f7" stroke-width="1" opacity="0.9"/>
+    <circle cx="33" cy="47" r="15" fill="#060e20" stroke="#4fc3f7" stroke-width="0.7" opacity="0.7"/>
+    <circle cx="33" cy="47" r="8"  fill="#091428" stroke="#4fc3f7" stroke-width="0.5" opacity="0.9"/>
+    <circle class="amp-led" cx="33" cy="47" r="3.5" fill="#4fc3f7" opacity="0.2"/>
+    <circle cx="11" cy="21" r="2" fill="#4fc3f7" opacity="0.2"/>
+    <circle cx="55" cy="21" r="2" fill="#4fc3f7" opacity="0.2"/>
+    <circle cx="11" cy="73" r="2" fill="#4fc3f7" opacity="0.2"/>
+    <circle cx="55" cy="73" r="2" fill="#4fc3f7" opacity="0.2"/>
+
+    <!-- RIGHT SPEAKER — purple, matches TV logo -->
+    <rect x="138" y="15" width="58" height="65" rx="6" fill="#060410" stroke="#c678dd" stroke-width="1.4"/>
+    <circle cx="167" cy="47" r="23" fill="#0a0618" stroke="#c678dd" stroke-width="1" opacity="0.9"/>
+    <circle cx="167" cy="47" r="15" fill="#0d0820" stroke="#c678dd" stroke-width="0.7" opacity="0.7"/>
+    <circle cx="167" cy="47" r="8"  fill="#110b28" stroke="#c678dd" stroke-width="0.5" opacity="0.9"/>
+    <circle cx="167" cy="47" r="3.5" fill="#c678dd" opacity="0.2"/>
+    <circle cx="145" cy="21" r="2" fill="#c678dd" opacity="0.2"/>
+    <circle cx="189" cy="21" r="2" fill="#c678dd" opacity="0.2"/>
+    <circle cx="145" cy="73" r="2" fill="#c678dd" opacity="0.2"/>
+    <circle cx="189" cy="73" r="2" fill="#c678dd" opacity="0.2"/>
+
+    <!-- CENTER DISPLAY PANEL -->
+    <rect x="65" y="15" width="70" height="65" rx="4" fill="#020308" stroke="#2a2d42" stroke-width="1"/>
+    <rect x="67" y="17" width="66" height="61" rx="3" fill="#030410" stroke="rgba(198,120,221,0.18)" stroke-width="0.5"/>
+    <!-- SF branding -->
+    <text x="100" y="33" font-family="'Inter',system-ui,sans-serif" font-size="14" font-weight="900" text-anchor="middle" fill="url(#bb-sf)" letter-spacing="3">SF</text>
+    <!-- EQ bars — baseline at y=71 -->
+    <rect class="eq-bar" id="eq1" x="71"  y="56" width="6" height="15" rx="1.5" fill="#4fc3f7" opacity="0.9"/>
+    <rect class="eq-bar" id="eq2" x="80"  y="50" width="6" height="21" rx="1.5" fill="#72ccf5" opacity="0.9"/>
+    <rect class="eq-bar" id="eq3" x="89"  y="44" width="6" height="27" rx="1.5" fill="#c678dd" opacity="0.9"/>
+    <rect class="eq-bar" id="eq4" x="98"  y="48" width="6" height="23" rx="1.5" fill="#d48de6" opacity="0.9"/>
+    <rect class="eq-bar" id="eq5" x="107" y="53" width="6" height="18" rx="1.5" fill="#ffb74d" opacity="0.9"/>
+    <rect class="eq-bar" id="eq6" x="116" y="59" width="6" height="12" rx="1.5" fill="#ffd080" opacity="0.9"/>
+    <line x1="69" y1="72" x2="124" y2="72" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
+    <!-- Power button -->
+    <circle cx="127" cy="23" r="8" fill="#0d0a06" stroke="#ff6b35" stroke-width="1.5" opacity="0.9" onclick="event.stopPropagation();stopAmp()" style="cursor:pointer"/>
+    <circle class="amp-led amp-power-led" cx="127" cy="23" r="5" fill="#ff6b35" opacity="0.35" onclick="event.stopPropagation();stopAmp()" style="cursor:pointer"/>
+    <path d="M127 18.5 L127 21.5" stroke="#ff6b35" stroke-width="1.8" stroke-linecap="round" opacity="0.9" onclick="event.stopPropagation();stopAmp()" style="cursor:pointer"/>
+    <path d="M124.2 19.8 A4.2 4.2 0 1 0 129.8 19.8" stroke="#ff6b35" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.9" onclick="event.stopPropagation();stopAmp()" style="cursor:pointer"/>
+    <!-- Cassette slot -->
+    <rect x="70" y="74" width="50" height="5" rx="1.5" fill="#08090f" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
+    <rect x="84" y="75.5" width="22" height="2" rx="1" fill="rgba(255,255,255,0.05)"/>
+    <!-- Micro text -->
+    <text x="100" y="86" font-family="monospace" font-size="5" text-anchor="middle" fill="rgba(198,120,221,0.4)" letter-spacing="1.5">STREAM FADER</text>
+  </svg>
+</button>
+  </div>
   <!-- cinematic wordmark — center -->
   <div style="text-align:center;">
     <div class="sf-wordmark">
       <span style="color:#ffffff;">Stream</span><span style="background:linear-gradient(90deg,#4fc3f7 0%,#c678dd 50%,#ffb74d 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Fader</span>
     </div>
   </div>
-  <!-- Saved button — far right, clear of the fixed ? button -->
-  <div style="flex:1;display:flex;justify-content:flex-end;padding-right:56px;">
+  <!-- Share + Saved buttons — far right -->
+  <div style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:10px;">
+    <button onclick="openShareModal()" id="share-stream-btn" title="Share My Stream" style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,183,77,0.1);border:1px solid rgba(255,183,77,0.35);border-radius:32px;padding:10px 20px;color:#ffb74d;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.04em;cursor:pointer;transition:background 0.15s,border-color 0.15s;" onmouseover="this.style.background='rgba(255,183,77,0.2)';this.style.borderColor='rgba(255,183,77,0.6)'" onmouseout="this.style.background='rgba(255,183,77,0.1)';this.style.borderColor='rgba(255,183,77,0.35)'">★ Share</button>
     <button id="queue-toggle" onclick="toggleQueueDropdown()">
       🔖 Saved <span id="queue-count-badge">0</span>
     </button>
@@ -2447,23 +2511,6 @@
 
 <!-- Fixed genre sidebars — live in viewport margins, outside layout -->
 
-<!-- Fixed share star -->
-<div class="star-col">
-  <button onclick="openShareModal()" id="share-stream-btn" title="Share My Stream" style="display:flex;flex-direction:column;align-items:center;gap:8px;background:none;border:none;cursor:pointer;padding:12px 8px;animation:share-star-pulse 2.5s ease-in-out infinite;">
-    <span style="font-size:65px;line-height:1;filter:drop-shadow(0 0 14px rgba(255,183,77,0.9)) drop-shadow(0 0 30px rgba(255,183,77,0.45));">★</span>
-    <span style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,183,77,0.65);white-space:nowrap;text-align:center;line-height:1.4;">Share<br>My Stream</span>
-  </button>
-</div>
-<style>
-  @keyframes share-star-pulse {
-    0%,100% { filter: none; }
-    50%      { filter: drop-shadow(0 0 20px rgba(255,183,77,0.6)); }
-  }
-  #share-stream-btn:hover { animation: none; }
-  #share-stream-btn:hover span:first-child {
-    filter: drop-shadow(0 0 22px rgba(255,183,77,1)) drop-shadow(0 0 44px rgba(255,183,77,0.6)) !important;
-  }
-</style>
 
 <!-- ═══════════════════ CONTENT ═══════════════════ -->
 <div class="content-area">
@@ -4739,75 +4786,6 @@ renderWatchlist();
 
 
 <!-- ── AMP BUTTON + VST POPUP ── -->
-<button class="amp-btn" id="ampBtn" onclick="toggleVST()" title="Open FX Console">
-  <svg class="amp-svg" viewBox="0 0 200 88" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="bb-stripe" x1="0" y1="0" x2="200" y2="0" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stop-color="#4fc3f7"/>
-        <stop offset="42%" stop-color="#c678dd"/>
-        <stop offset="100%" stop-color="#ffb74d"/>
-      </linearGradient>
-      <linearGradient id="bb-sf" x1="72" y1="0" x2="128" y2="0" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stop-color="#4fc3f7"/>
-        <stop offset="100%" stop-color="#c678dd"/>
-      </linearGradient>
-    </defs>
-    <!-- Body -->
-    <rect x="0.75" y="10" width="198.5" height="76" rx="9" fill="#07080f" stroke="#22253a" stroke-width="1.5"/>
-    <!-- Top color stripe -->
-    <rect x="0.75" y="10" width="198.5" height="4" rx="2" fill="url(#bb-stripe)"/>
-    <!-- Antenna -->
-    <line x1="168" y1="10" x2="184" y2="1" stroke="#c678dd" stroke-width="2" stroke-linecap="round"/>
-    <circle cx="184" cy="1" r="2.5" fill="#c678dd" opacity="0.85"/>
-
-    <!-- LEFT SPEAKER — blue, matches movie logo -->
-    <rect x="4" y="15" width="58" height="65" rx="6" fill="#030710" stroke="#4fc3f7" stroke-width="1.4"/>
-    <circle cx="33" cy="47" r="23" fill="#040b18" stroke="#4fc3f7" stroke-width="1" opacity="0.9"/>
-    <circle cx="33" cy="47" r="15" fill="#060e20" stroke="#4fc3f7" stroke-width="0.7" opacity="0.7"/>
-    <circle cx="33" cy="47" r="8"  fill="#091428" stroke="#4fc3f7" stroke-width="0.5" opacity="0.9"/>
-    <circle class="amp-led" cx="33" cy="47" r="3.5" fill="#4fc3f7" opacity="0.2"/>
-    <circle cx="11" cy="21" r="2" fill="#4fc3f7" opacity="0.2"/>
-    <circle cx="55" cy="21" r="2" fill="#4fc3f7" opacity="0.2"/>
-    <circle cx="11" cy="73" r="2" fill="#4fc3f7" opacity="0.2"/>
-    <circle cx="55" cy="73" r="2" fill="#4fc3f7" opacity="0.2"/>
-
-    <!-- RIGHT SPEAKER — purple, matches TV logo -->
-    <rect x="138" y="15" width="58" height="65" rx="6" fill="#060410" stroke="#c678dd" stroke-width="1.4"/>
-    <circle cx="167" cy="47" r="23" fill="#0a0618" stroke="#c678dd" stroke-width="1" opacity="0.9"/>
-    <circle cx="167" cy="47" r="15" fill="#0d0820" stroke="#c678dd" stroke-width="0.7" opacity="0.7"/>
-    <circle cx="167" cy="47" r="8"  fill="#110b28" stroke="#c678dd" stroke-width="0.5" opacity="0.9"/>
-    <circle cx="167" cy="47" r="3.5" fill="#c678dd" opacity="0.2"/>
-    <circle cx="145" cy="21" r="2" fill="#c678dd" opacity="0.2"/>
-    <circle cx="189" cy="21" r="2" fill="#c678dd" opacity="0.2"/>
-    <circle cx="145" cy="73" r="2" fill="#c678dd" opacity="0.2"/>
-    <circle cx="189" cy="73" r="2" fill="#c678dd" opacity="0.2"/>
-
-    <!-- CENTER DISPLAY PANEL -->
-    <rect x="65" y="15" width="70" height="65" rx="4" fill="#020308" stroke="#2a2d42" stroke-width="1"/>
-    <rect x="67" y="17" width="66" height="61" rx="3" fill="#030410" stroke="rgba(198,120,221,0.18)" stroke-width="0.5"/>
-    <!-- SF branding -->
-    <text x="100" y="33" font-family="'Inter',system-ui,sans-serif" font-size="14" font-weight="900" text-anchor="middle" fill="url(#bb-sf)" letter-spacing="3">SF</text>
-    <!-- EQ bars — baseline at y=71 -->
-    <rect class="eq-bar" id="eq1" x="71"  y="56" width="6" height="15" rx="1.5" fill="#4fc3f7" opacity="0.9"/>
-    <rect class="eq-bar" id="eq2" x="80"  y="50" width="6" height="21" rx="1.5" fill="#72ccf5" opacity="0.9"/>
-    <rect class="eq-bar" id="eq3" x="89"  y="44" width="6" height="27" rx="1.5" fill="#c678dd" opacity="0.9"/>
-    <rect class="eq-bar" id="eq4" x="98"  y="48" width="6" height="23" rx="1.5" fill="#d48de6" opacity="0.9"/>
-    <rect class="eq-bar" id="eq5" x="107" y="53" width="6" height="18" rx="1.5" fill="#ffb74d" opacity="0.9"/>
-    <rect class="eq-bar" id="eq6" x="116" y="59" width="6" height="12" rx="1.5" fill="#ffd080" opacity="0.9"/>
-    <line x1="69" y1="72" x2="124" y2="72" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
-    <!-- Power button — click stops music and closes panel -->
-    <circle cx="127" cy="23" r="8" fill="#0d0a06" stroke="#ff6b35" stroke-width="1.5" opacity="0.9" onclick="event.stopPropagation();stopAmp()" style="cursor:pointer"/>
-    <circle class="amp-led amp-power-led" cx="127" cy="23" r="5" fill="#ff6b35" opacity="0.35" onclick="event.stopPropagation();stopAmp()" style="cursor:pointer"/>
-    <!-- Power symbol -->
-    <path d="M127 18.5 L127 21.5" stroke="#ff6b35" stroke-width="1.8" stroke-linecap="round" opacity="0.9" onclick="event.stopPropagation();stopAmp()" style="cursor:pointer"/>
-    <path d="M124.2 19.8 A4.2 4.2 0 1 0 129.8 19.8" stroke="#ff6b35" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.9" onclick="event.stopPropagation();stopAmp()" style="cursor:pointer"/>
-    <!-- Cassette slot -->
-    <rect x="70" y="74" width="50" height="5" rx="1.5" fill="#08090f" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
-    <rect x="84" y="75.5" width="22" height="2" rx="1" fill="rgba(255,255,255,0.05)"/>
-    <!-- Micro text -->
-    <text x="100" y="86" font-family="monospace" font-size="5" text-anchor="middle" fill="rgba(198,120,221,0.4)" letter-spacing="1.5">STREAM FADER</text>
-  </svg>
-</button>
 <audio id="ampAudio" loop preload="auto" src="/static/mango-tree-man-anthem.mp3"></audio>
 <div class="vst-popup" id="vstPopup">
   <div class="vst-header">
