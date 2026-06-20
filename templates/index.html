@@ -3200,14 +3200,8 @@ function topN(items, f, n) {
                       : i.audience_score != null ? i.audience_score
                       : 50;
 
-      // CENTER pole: min(left, right) — only films critics AND audiences both love rank high here
-      const centerScore = Math.min(leftPole, rightPole);
-
-      // Three-pole tent: fader sweeps left → center → right (0 → 50 → 100)
-      const leftW   = Math.max(0, 1 - ratio * 2);
-      const rightW  = Math.max(0, ratio * 2 - 1);
-      const centerW = 1 - leftW - rightW;
-      const blended = leftPole * leftW + centerScore * centerW + rightPole * rightW;
+      // Linear blend: pure critics at 0, pure audience at 100, proportional everywhere between
+      const blended = leftPole * (1 - ratio) + rightPole * ratio;
 
       // Tiny stable jitter breaks exact ties
       const jitter = ((i.title || '').length % 7) * 0.1;
