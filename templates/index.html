@@ -2269,10 +2269,10 @@
       border-bottom: 1px solid var(--border);
     }
     .mm-card-poster {
-      position: relative; width: 100%; aspect-ratio: 2/3; max-height: 400px;
+      position: relative; width: 100%; height: 260px;
       overflow: hidden; background: var(--muted); flex-shrink: 0;
     }
-    .mm-card-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .mm-card-poster img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
     .mm-poster-ph {
       width: 100%; height: 100%; display: flex; align-items: center;
       justify-content: center; font-size: 56px; opacity: 0.25;
@@ -5467,26 +5467,38 @@ renderWatchlist();
     const posterHtml = item.poster
       ? `<img src="${item.poster}" alt="${(item.title||'').replace(/"/g,'&quot;')}" onerror="this.style.display='none'">`
       : `<div class="mm-poster-ph">${type === 'movie' ? '🎬' : '📺'}</div>`;
-    const scoreHtml  = item.blend != null
-      ? `<span class="mm-score" style="color:${scoreColor(item.blend)}">${item.blend}</span><span style="font-size:11px;color:var(--dim);margin-left:4px;font-weight:700;">SF Score</span>`
+
+    // Scores — mirror regular cards: RT + IMDb, fall back to SF blend
+    const rtHtml   = item.rt_score   != null ? `<span style="font-size:13px;font-weight:700;color:#fa4c0c;">🍅 ${item.rt_score}%</span>` : '';
+    const imdbHtml = item.imdb_score != null ? `<span style="font-size:13px;font-weight:700;color:#f5c518;">⭐ ${Number(item.imdb_score).toFixed(1)}</span>` : '';
+    const blendFallback = (!rtHtml && !imdbHtml && item.blend != null)
+      ? `<span style="font-size:13px;font-weight:700;color:${scoreColor(item.blend)};">SF ${item.blend}</span>` : '';
+    const scoresRow = (rtHtml || imdbHtml || blendFallback)
+      ? `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:2px 0;">${rtHtml}${imdbHtml}${blendFallback}</div>` : '';
+
+    // Streaming providers with affiliate links
+    const rawProviders = (item.providers || []).slice(0, 4);
+    const providersHtml = rawProviders.length
+      ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">${rawProviders.map(p => platformTag(p, 'font-size:11px;padding:4px 10px;', item.title)).join('')}</div>`
       : '';
-    const reasonHtml = item.reason
-      ? `<div class="mm-card-reason">"${item.reason}"</div>` : '';
-    const synopsisHtml = item.overview
-      ? `<p class="mm-synopsis">${item.overview}</p>` : '';
-    const trailerHtml = item.imdb_id
+
+    const reasonHtml   = item.reason   ? `<div class="mm-card-reason">"${item.reason}"</div>` : '';
+    const synopsisHtml = item.overview ? `<p class="mm-synopsis">${item.overview}</p>` : '';
+    const trailerHtml  = item.imdb_id
       ? `<button class="mm-trailer-btn" onclick="mmOpenTrailer('${item.imdb_id}','${(item.title||'').replace(/'/g,"\\'").replace(/"/g,'\\"')}')">▶ Trailer</button>`
       : '';
     const safeId    = (item.imdb_id || item.id || '').replace(/'/g,"\\'");
     const safeTitle = (item.title || '').replace(/'/g,"\\'").replace(/"/g,'\\"');
+    const year      = item.year || (item.release || '').slice(0, 4) || '';
 
     el.innerHTML = `
       <div class="mm-card-type">${typeLabel}</div>
       <div class="mm-card-poster">${posterHtml}</div>
       <div class="mm-card-info">
         <div class="mm-card-title">${item.title || '—'}</div>
-        <div class="mm-card-year">${item.year || ''}</div>
-        ${scoreHtml ? `<div style="display:flex;align-items:baseline;gap:4px;margin:2px 0;">${scoreHtml}</div>` : ''}
+        <div class="mm-card-year">${year}</div>
+        ${scoresRow}
+        ${providersHtml}
         ${reasonHtml}
         ${synopsisHtml}
         ${trailerHtml}
