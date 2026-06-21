@@ -547,6 +547,24 @@ def fetch_movies():
             for m in data.get('results', []):
                 candidates.append(('tmdb_movie', m))
 
+        # ── POOL 6: Big-budget family — major studio releases only ──────────
+        # High vote/popularity floor naturally selects Pixar/Disney/DreamWorks
+        # while keeping out niche kids content and direct-to-streaming titles
+        for page in range(1, 4):
+            data = tmdb_get('/discover/movie', {
+                'sort_by': 'popularity.desc',
+                'watch_region': 'US',
+                'with_watch_providers': STREAMING_PROVIDER_IDS,
+                'with_genres': '10751',       # Family
+                'without_genres': '10402',    # Music only — Family exclusion intentionally omitted
+                'vote_count.gte': 2000,       # Filters out niche/kids-only titles
+                'popularity.gte': 20,
+                'vote_average.gte': 6.0,
+                'page': page,
+            })
+            for m in data.get('results', []):
+                candidates.append(('tmdb_movie', m))
+
         # ── POOL 7: Foreign language — best rated non-English, last 6mo ──────
         for lang in ['ko', 'fr', 'es', 'ja', 'it', 'de', 'hi', 'pt', 'zh']:
             for page in range(1, 5):
