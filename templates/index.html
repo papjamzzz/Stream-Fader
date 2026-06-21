@@ -2949,8 +2949,7 @@
 ══════════════════════════════════════════════ -->
 <div class="type-selector">
   <span class="type-selector-label">I want to watch:</span>
-  <button class="type-btn movies" id="type-movies" onclick="setContentType('movies')">🎬 Movies</button>
-  <button class="type-btn all active" id="type-all" onclick="setContentType('all')">✦ All</button>
+  <button class="type-btn movies active" id="type-movies" onclick="setContentType('movies')">🎬 Movies</button>
   <button class="type-btn tv" id="type-tv" onclick="setContentType('tv')">📺 TV Shows</button>
 </div>
 
@@ -3911,6 +3910,7 @@ function loadMoreTV() {
 
 // ── Content type selector ────────────────────────────────────────────────────
 function setContentType(type) {
+  if (type !== 'movies' && type !== 'tv') type = 'movies';  // 'all' removed → default Movies
   window._contentType = type;
   try { localStorage.setItem('sf_content_type', type); } catch(e) {}
 
@@ -5546,9 +5546,9 @@ function _formatVal(param, val) {
 document.addEventListener('DOMContentLoaded', () => {
   // Restore content type preference
   try {
-    const saved = localStorage.getItem('sf_content_type') || 'all';
+    const saved = localStorage.getItem('sf_content_type') || 'movies';
     setContentType(saved);
-  } catch(e) { setContentType('all'); }
+  } catch(e) { setContentType('movies'); }
 
   // Pin fader sticky offset to exact header height
   const hdr = document.querySelector('.header');

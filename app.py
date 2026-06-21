@@ -7,6 +7,27 @@ TMDB_KEY = os.getenv('TMDB_API_KEY', '')
 
 app = Flask(__name__)
 
+
+def openai_chat(messages, model='gpt-4o', max_tokens=700):
+    """Call OpenAI chat completions via `requests`.
+
+    The official `openai` SDK uses httpx, which fails with a bare
+    'Connection error.' on Railway's network egress, while `requests`
+    (used everywhere else in this app for TMDb/OMDb) connects fine.
+    Hitting the REST endpoint directly sidesteps that entirely.
+    """
+    key = os.getenv('OPENAI_API_KEY', '')
+    if not key:
+        raise RuntimeError('no OPENAI_API_KEY')
+    r = requests.post(
+        'https://api.openai.com/v1/chat/completions',
+        headers={'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'},
+        json={'model': model, 'max_tokens': max_tokens, 'messages': messages},
+        timeout=45,
+    )
+    r.raise_for_status()
+    return r.json()['choices'][0]['message']['content']
+
 # ── Background refresh ───────────────────────────────────────────────────────
 _refreshing = False
 _refresh_lock = threading.Lock()
@@ -188,13 +209,10 @@ Rules: real titles only, match mood AND taste, mix well-known and hidden gems, n
         return _parse(msg.content[0].text)
 
     def call_openai():
-        import openai as _openai
-        client = _openai.OpenAI(api_key=OPENAI_KEY)
-        msg = client.chat.completions.create(
-            model='gpt-4o-mini', max_tokens=350,
-            messages=[{'role': 'user', 'content': prompt}]
-        )
-        return _parse(msg.choices[0].message.content)
+        return _parse(openai_chat(
+            [{'role': 'user', 'content': prompt}],
+            model='gpt-4o-mini', max_tokens=350
+        ))
 
     def call_gemini():
         import google.generativeai as genai
@@ -875,13 +893,10 @@ Rules:
     try:
         raw = None
         if OPENAI_KEY:
-            import openai as _openai
-            oc = _openai.OpenAI(api_key=OPENAI_KEY)
-            msg = oc.chat.completions.create(
-                model='gpt-4o', max_tokens=700,
-                messages=[{'role': 'user', 'content': prompt}]
+            raw = openai_chat(
+                [{'role': 'user', 'content': prompt}],
+                model='gpt-4o', max_tokens=700
             )
-            raw = msg.choices[0].message.content
         elif ANTHROPIC_KEY:
             import anthropic as _anthropic
             ac = _anthropic.Anthropic(api_key=ANTHROPIC_KEY)
@@ -893,7 +908,7 @@ Rules:
         parsed = _parse_mm(raw or '')
     except Exception as e:
         app.logger.warning(f"mood_magic AI failed: {e}")
-        return jsonify({'error': 'ai_failed'}), 500
+        return jsonify({'error': 'ai_failed', 'detail': str(e)[:200]}), 500
 
     ai_movies = parsed.get('movies', [])[:5]
     ai_tv     = parsed.get('tv',     [])[:5]
