@@ -47,6 +47,15 @@ NOT the `openai` SDK. Use this pattern for any future OpenAI calls in Railway ap
 - **Next**: Railway deploy with `OPENAI_API_KEY` env var set so Mood Magic works in prod.
 
 ---
+## Last Session (2026-06-21) — Mobile tighten v2
+- **Header**: StreamFader now centered in the open space, clear of the ✦ button (added `.hdr-left/.hdr-center/.hdr-right` classes, mobile-only re-center; smaller wordmark clamp).
+- **Card buttons**: icon-only **✓ / ✗** circular buttons stacked in a slim column on mobile (`.dismiss-label` hidden ≤480px; desktop keeps full text). Title/year/🍅/⭐ no longer cut off.
+- **Legend strip kept** but rebuilt as "Tap ✓ Seen it · ✗ No thanks" with matching colored `.hb-key` chips, slimmed to one line.
+- **Removed** the "Tell us your vibe" hero subline → hero is a compact single row.
+- **Shrunk** the giant MOVIES/TV section headers (`.col-section-head/-logo/-title`), tightened fader padding + thumb (65→52px).
+- Result: first movie card is fully above the fold (was 461–571px in 844px viewport). Verified mobile + desktop, ✓ button still dismisses. Commit `5ccf78e`.
+
+---
 ## Last Session (2026-06-21) — Hero + Railway fix
 - **Genre pills removed** → replaced with a **Mood Magic hero** card in the same spot (animated spark, gradient wordmark, Find My Match CTA). Genre JS left dormant/harmless.
 - **Content type selector** reduced to **Movies / TV Shows** (dropped "All"); Movies default, legacy 'all' coerces to Movies.
