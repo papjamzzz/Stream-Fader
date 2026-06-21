@@ -622,15 +622,15 @@
     /* Rank badge — top-left of poster */
     .row-rank {
       position: absolute;
-      top: 6px;
-      left: 6px;
-      font-size: 14px;
+      top: 8px;
+      left: 8px;
+      font-size: 22px;
       font-weight: 900;
       background: rgba(0,0,0,0.72);
       color: rgba(240,242,255,0.8);
-      width: 24px;
-      height: 24px;
-      border-radius: 6px;
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -655,7 +655,7 @@
     }
 
     .row-title {
-      font-size: 12px;
+      font-size: 19px;
       font-weight: 700;
       color: var(--text);
       line-height: 1.3;
@@ -1160,18 +1160,18 @@
     /* ── DISMISS BUTTONS ── */
     .dismiss-bar {
       display: flex;
-      gap: 4px;
-      padding: 5px 6px 0;
+      gap: 6px;
+      padding: 7px 7px 0;
       flex-shrink: 0;
     }
     .dismiss-btn {
       flex: 1;
-      padding: 6px 5px;
+      padding: 11px 6px;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       cursor: pointer;
       font-family: 'Inter', sans-serif;
-      font-size: 14px;
+      font-size: 22px;
       font-weight: 700;
       letter-spacing: 0.03em;
       line-height: 1;
@@ -2556,6 +2556,15 @@
       }
       .card-body {
         padding: 8px 8px 9px;
+      }
+      /* Keep the rank badge compact on phones (desktop bumped it +60%) */
+      .row-rank {
+        font-size: 14px;
+        width: 24px;
+        height: 24px;
+        top: 6px;
+        left: 6px;
+        border-radius: 6px;
       }
 
       /* ── Card grid — single column on phones for readability ── */
