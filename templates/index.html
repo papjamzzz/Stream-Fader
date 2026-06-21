@@ -2045,6 +2045,71 @@
     }
     .hdr-btn-magic:hover { background: linear-gradient(135deg, rgba(0,212,190,0.18) 0%, rgba(140,90,240,0.16) 100%); border-color: rgba(0,212,190,0.65); }
 
+    /* ── MOOD MAGIC HERO (replaces genre bar) ───────────────────────────────── */
+    .mm-hero {
+      position: relative;
+      margin: 6px 16px 20px;
+      border-radius: 18px;
+      border: 1px solid rgba(0,212,190,0.3);
+      background:
+        linear-gradient(135deg, rgba(0,212,190,0.09) 0%, rgba(198,120,221,0.06) 50%, rgba(255,183,77,0.05) 100%),
+        var(--card);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .mm-hero:hover {
+      border-color: rgba(0,212,190,0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0,212,190,0.14);
+    }
+    .mm-hero-glow {
+      position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(circle at 12% 50%, rgba(0,212,190,0.18), transparent 55%);
+    }
+    .mm-hero-inner {
+      position: relative; display: flex; align-items: center; gap: 18px;
+      padding: 20px 24px;
+    }
+    .mm-hero-spark {
+      font-size: 34px; line-height: 1; flex-shrink: 0;
+      background: linear-gradient(135deg, #00d4be, #c678dd, #ffb74d);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      animation: mmHeroPulse 2.6s ease-in-out infinite;
+    }
+    @keyframes mmHeroPulse {
+      0%,100% { transform: scale(1);    opacity: 0.9; }
+      50%     { transform: scale(1.12); opacity: 1;   }
+    }
+    .mm-hero-text { flex: 1; min-width: 0; }
+    .mm-hero-title {
+      font-size: 22px; font-weight: 900; letter-spacing: -0.01em;
+      background: linear-gradient(135deg, #00d4be 0%, #c678dd 55%, #ffb74d 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .mm-hero-sub { color: var(--dim); font-size: 14px; margin-top: 3px; }
+    .mm-hero-btn {
+      flex-shrink: 0;
+      padding: 13px 26px; border-radius: 28px;
+      background: linear-gradient(135deg, rgba(0,212,190,0.18) 0%, rgba(198,120,221,0.16) 100%);
+      border: 1px solid rgba(0,212,190,0.45); color: #00d4be;
+      font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 800;
+      letter-spacing: 0.04em; cursor: pointer; white-space: nowrap;
+      transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    }
+    .mm-hero-btn:hover {
+      background: linear-gradient(135deg, rgba(0,212,190,0.3) 0%, rgba(198,120,221,0.28) 100%);
+      border-color: rgba(0,212,190,0.75); transform: translateY(-1px);
+    }
+    @media (max-width: 480px) {
+      .mm-hero { margin: 6px 12px 14px; }
+      .mm-hero-inner { padding: 16px; gap: 12px; flex-wrap: wrap; }
+      .mm-hero-spark { font-size: 28px; }
+      .mm-hero-title { font-size: 18px; }
+      .mm-hero-sub { font-size: 12.5px; }
+      .mm-hero-btn { padding: 12px 18px; font-size: 13px; width: 100%; }
+    }
+
     /* ── MOOD MAGIC ─────────────────────────────────────────────────────────── */
     #mm-overlay {
       display: none; position: fixed; inset: 0; z-index: 2000;
@@ -2890,9 +2955,19 @@
 </div>
 
 <!-- ══════════════════════════════════════════════
-     GENRE FILTER BAR
+     MOOD MAGIC HERO
 ══════════════════════════════════════════════ -->
-<div class="genre-bar" id="genre-bar"></div>
+<div class="mm-hero" onclick="openMoodMagic()">
+  <div class="mm-hero-glow"></div>
+  <div class="mm-hero-inner">
+    <div class="mm-hero-spark">✦</div>
+    <div class="mm-hero-text">
+      <div class="mm-hero-title">Mood Magic</div>
+      <div class="mm-hero-sub">Tell us your vibe — AI picks your perfect movie &amp; show.</div>
+    </div>
+    <button class="mm-hero-btn" onclick="event.stopPropagation();openMoodMagic()">Find My Match →</button>
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════════════
      CLAUDE TOP PICK
