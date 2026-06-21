@@ -5360,11 +5360,12 @@ renderWatchlist();
 
 // ── Mood Magic ────────────────────────────────────────────────────────────────
 (function() {
-  let _mmMovies = [];
-  let _mmTV     = [];
-  let _mmIndex  = 0;
-  let _mmGenre  = '';
-  let _mmVibe   = '';
+  let _mmMovies   = [];
+  let _mmTV       = [];
+  let _mmMovieIdx = 0;
+  let _mmTvIdx    = 0;
+  let _mmGenre    = '';
+  let _mmVibe     = '';
 
   window.openMoodMagic = function() {
     document.getElementById('mm-overlay').style.display = 'block';
@@ -5376,7 +5377,7 @@ renderWatchlist();
   };
 
   window.resetMoodMagic = function() {
-    _mmMovies = []; _mmTV = []; _mmIndex = 0;
+    _mmMovies = []; _mmTV = []; _mmMovieIdx = 0; _mmTvIdx = 0;
     document.getElementById('mm-genre').value = '';
     document.getElementById('mm-vibe').value  = '';
     showPicker();
@@ -5409,9 +5410,10 @@ renderWatchlist();
         alert('Could not find matches right now. Try again!');
         return;
       }
-      _mmMovies = data.movies || [];
-      _mmTV     = data.tv     || [];
-      _mmIndex  = 0;
+      _mmMovies   = data.movies || [];
+      _mmTV       = data.tv     || [];
+      _mmMovieIdx = 0;
+      _mmTvIdx    = 0;
       showReveal();
     } catch(e) {
       alert('Connection error — try again.');
@@ -5432,15 +5434,20 @@ renderWatchlist();
     document.getElementById('mm-picker').style.display = 'none';
     document.getElementById('mm-reveal').style.display = 'flex';
     document.getElementById('mm-done').style.display   = 'none';
-    renderPair(_mmIndex);
+    renderPair();
   }
 
-  function renderPair(idx) {
-    const total = Math.max(_mmMovies.length, _mmTV.length);
-    document.getElementById('mm-progress').textContent  = `Match ${idx + 1} of ${total}`;
+  function renderPair() {
     document.getElementById('mm-combo-label').textContent = `${_mmGenre} × ${_mmVibe}`;
-    renderCard('mm-movie-card', _mmMovies[idx], 'movie', idx);
-    renderCard('mm-tv-card',    _mmTV[idx],     'tv',    idx);
+    _updateProgress();
+    renderCard('mm-movie-card', _mmMovies[_mmMovieIdx], 'movie');
+    renderCard('mm-tv-card',    _mmTV[_mmTvIdx],        'tv');
+  }
+
+  function _updateProgress() {
+    const mLeft = _mmMovies.length - _mmMovieIdx;
+    const tLeft = _mmTV.length    - _mmTvIdx;
+    document.getElementById('mm-progress').textContent = `${mLeft} movie${mLeft !== 1 ? 's' : ''} · ${tLeft} show${tLeft !== 1 ? 's' : ''}`;
   }
 
   function scoreColor(v) {
@@ -5450,7 +5457,7 @@ renderWatchlist();
     return '#ef5350';
   }
 
-  function renderCard(cardId, item, type, idx) {
+  function renderCard(cardId, item, type) {
     const el = document.getElementById(cardId);
     if (!item) {
       el.innerHTML = `<div style="padding:32px;color:var(--dim);text-align:center;flex:1;display:flex;align-items:center;justify-content:center;">No match found for this slot</div>`;
@@ -5484,19 +5491,42 @@ renderWatchlist();
         ${synopsisHtml}
         ${trailerHtml}
         <div class="mm-card-actions">
-          <button class="mm-action-btn mm-seen" onclick="mmAction('seen',${idx},'${cardId}','${safeId}','${safeTitle}')">✓ Seen it</button>
-          <button class="mm-action-btn mm-skip" onclick="mmAction('skip',${idx},'${cardId}','${safeId}','${safeTitle}')">✕ Skip</button>
-          <button class="mm-action-btn mm-save" onclick="mmAction('save',${idx},'${cardId}','${safeId}','${safeTitle}')">★ Save</button>
+          <button class="mm-action-btn mm-seen" onclick="mmAction('seen','${cardId}','${safeId}','${safeTitle}')">✓ Seen it</button>
+          <button class="mm-action-btn mm-skip" onclick="mmAction('skip','${cardId}','${safeId}','${safeTitle}')">✕ Skip</button>
+          <button class="mm-action-btn mm-save" onclick="mmAction('save','${cardId}','${safeId}','${safeTitle}')">★ Save</button>
         </div>
       </div>`;
   }
 
-  window.mmAction = function(action, idx, cardId, id, title) {
+  window.mmAction = function(action, cardId, id, title) {
+    const isMovie = cardId === 'mm-movie-card';
     if (action === 'save') {
-      const item = cardId === 'mm-movie-card' ? _mmMovies[idx] : _mmTV[idx];
+      const item = isMovie ? _mmMovies[_mmMovieIdx] : _mmTV[_mmTvIdx];
       if (item) toggleWannaSee(item, null);
     }
-    advancePair(idx);
+    const exhaustedHtml = (emoji, label) =>
+      `<div style="padding:32px;color:var(--dim);text-align:center;flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;"><span style="font-size:40px;">${emoji}</span><span>${label}</span></div>`;
+    if (isMovie) {
+      _mmMovieIdx++;
+      const cardEl = document.getElementById('mm-movie-card');
+      if (_mmMovieIdx < _mmMovies.length) {
+        renderCard('mm-movie-card', _mmMovies[_mmMovieIdx], 'movie');
+      } else {
+        cardEl.innerHTML = exhaustedHtml('🎬', 'All movie matches seen');
+      }
+    } else {
+      _mmTvIdx++;
+      const cardEl = document.getElementById('mm-tv-card');
+      if (_mmTvIdx < _mmTV.length) {
+        renderCard('mm-tv-card', _mmTV[_mmTvIdx], 'tv');
+      } else {
+        cardEl.innerHTML = exhaustedHtml('📺', 'All show matches seen');
+      }
+    }
+    _updateProgress();
+    if (_mmMovieIdx >= _mmMovies.length && _mmTvIdx >= _mmTV.length) {
+      setTimeout(showDone, 400);
+    }
   };
 
   window.mmOpenTrailer = async function(imdbId, title) {
@@ -5507,25 +5537,6 @@ renderWatchlist();
       else alert('Trailer not found.');
     } catch(e) {}
   };
-
-  function advancePair(idx) {
-    if (idx !== _mmIndex) return; // stale click guard
-    const total = Math.max(_mmMovies.length, _mmTV.length);
-    const next  = idx + 1;
-    if (next >= total) {
-      showDone();
-      return;
-    }
-    _mmIndex = next;
-    const cards = document.getElementById('mm-reveal-cards');
-    cards.style.opacity   = '0';
-    cards.style.transform = 'translateY(14px)';
-    setTimeout(() => {
-      renderPair(_mmIndex);
-      cards.style.opacity   = '1';
-      cards.style.transform = 'translateY(0)';
-    }, 220);
-  }
 
   function showDone() {
     document.getElementById('mm-reveal').style.display = 'none';
@@ -5646,11 +5657,8 @@ function _formatVal(param, val) {
   return val > 0 ? Math.round(val * 100) + '%' : '—';
 }
 document.addEventListener('DOMContentLoaded', () => {
-  // Restore content type preference
-  try {
-    const saved = localStorage.getItem('sf_content_type') || 'movies';
-    setContentType(saved);
-  } catch(e) { setContentType('movies'); }
+  // Always default to movies on load
+  setContentType('movies');
 
   // Pin fader sticky offset to exact header height
   const hdr = document.querySelector('.header');

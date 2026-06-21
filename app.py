@@ -881,6 +881,7 @@ Return ONLY valid JSON (no markdown, no code fences):
 
 Rules:
 - Real titles only, available on major streaming platforms (Netflix, Prime, Hulu, Max, Disney+, Apple TV+)
+- Prioritize titles from 2019–2025. Only use older titles if there is genuinely no modern equivalent.
 - Rank by best match first — the #1 pick must nail both the genre AND vibe precisely
 - The reason must reference BOTH the genre and vibe specifically
 - Mix well-known with hidden gems; no duplicates between movies and tv lists"""
@@ -926,6 +927,11 @@ Rules:
             results = [x for x in r.json().get('results', []) if x.get('media_type') in ('movie', 'tv')]
             if not results:
                 return None
+            # Prefer results whose release year matches what AI specified
+            if year:
+                year_matches = [x for x in results if (x.get('release_date') or x.get('first_air_date') or '').startswith(year)]
+                if year_matches:
+                    results = year_matches
             item_r  = results[0]
             tmdb_id = item_r.get('id')
             mtype   = item_r.get('media_type', media_hint)
