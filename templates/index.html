@@ -2084,63 +2084,88 @@
       position: relative;
       margin: 6px 16px 20px;
       border-radius: 18px;
-      border: 1px solid rgba(0,212,190,0.3);
+      border: 1px solid rgba(199,125,255,0.34);
       background:
-        linear-gradient(135deg, rgba(0,212,190,0.09) 0%, rgba(198,120,221,0.06) 50%, rgba(255,183,77,0.05) 100%),
+        linear-gradient(135deg, rgba(199,125,255,0.11) 0%, rgba(255,110,199,0.07) 50%, rgba(94,231,223,0.06) 100%),
         var(--card);
       overflow: hidden;
       cursor: pointer;
       transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
     }
     .mm-hero:hover {
-      border-color: rgba(0,212,190,0.6);
+      border-color: rgba(255,110,199,0.62);
       transform: translateY(-2px);
-      box-shadow: 0 12px 40px rgba(0,212,190,0.14);
+      box-shadow: 0 12px 44px rgba(199,125,255,0.24);
     }
+    /* magical multicolor wash */
     .mm-hero-glow {
-      position: absolute; inset: 0; pointer-events: none;
-      background: radial-gradient(circle at 12% 50%, rgba(0,212,190,0.18), transparent 55%);
+      position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(circle at 10% 50%, rgba(199,125,255,0.24), transparent 52%),
+        radial-gradient(circle at 92% 50%, rgba(94,231,223,0.15), transparent 50%);
+    }
+    /* glitter shine sweep across the bar */
+    .mm-hero::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background: linear-gradient(105deg, transparent 32%, rgba(255,255,255,0.10) 46%, rgba(255,255,255,0.24) 50%, rgba(255,255,255,0.10) 54%, transparent 68%);
+      transform: translateX(-120%);
+      animation: mmShine 5.5s ease-in-out infinite;
+    }
+    @keyframes mmShine {
+      0%, 55% { transform: translateX(-120%); }
+      100%    { transform: translateX(120%); }
     }
     .mm-hero-inner {
-      position: relative; display: flex; align-items: center; gap: 18px;
+      position: relative; z-index: 1; display: flex; align-items: center; gap: 18px;
       padding: 20px 24px;
     }
     .mm-hero-spark {
       font-size: 34px; line-height: 1; flex-shrink: 0;
-      background: linear-gradient(135deg, #00d4be, #c678dd, #ffb74d);
+      background: linear-gradient(110deg, #c77dff, #ff6ec7, #ffd166, #5ee7df, #7b9bff, #c77dff);
+      background-size: 220% auto;
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      animation: mmHeroPulse 2.6s ease-in-out infinite;
+      filter: drop-shadow(0 0 9px rgba(255,110,199,0.6));
+      animation: mmHeroPulse 2.6s ease-in-out infinite, mmGlitter 4.5s linear infinite;
     }
     @keyframes mmHeroPulse {
-      0%,100% { transform: scale(1);    opacity: 0.9; }
-      50%     { transform: scale(1.12); opacity: 1;   }
+      0%,100% { transform: scale(1);    opacity: 0.92; }
+      50%     { transform: scale(1.12); opacity: 1;    }
+    }
+    @keyframes mmGlitter {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 220% 50%; }
     }
     .mm-hero-text { flex: 1; min-width: 0; }
     .mm-hero-title {
-      font-size: 22px; font-weight: 900; letter-spacing: -0.01em;
-      background: linear-gradient(135deg, #00d4be 0%, #c678dd 55%, #ffb74d 100%);
+      font-size: 25px; font-weight: 900; letter-spacing: -0.01em;
+      background: linear-gradient(110deg, #c77dff 0%, #ff6ec7 18%, #ffd166 36%, #5ee7df 54%, #7b9bff 74%, #c77dff 100%);
+      background-size: 220% auto;
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      filter: drop-shadow(0 1px 7px rgba(199,125,255,0.5));
+      animation: mmGlitter 4.5s linear infinite;
     }
     .mm-hero-sub { color: var(--dim); font-size: 14px; margin-top: 3px; }
     .mm-hero-btn {
       flex-shrink: 0;
-      padding: 13px 26px; border-radius: 28px;
-      background: linear-gradient(135deg, rgba(0,212,190,0.18) 0%, rgba(198,120,221,0.16) 100%);
-      border: 1px solid rgba(0,212,190,0.45); color: #00d4be;
-      font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 800;
+      padding: 12px 26px; border-radius: 28px;
+      background: linear-gradient(135deg, rgba(199,125,255,0.22) 0%, rgba(255,110,199,0.18) 100%);
+      border: 1px solid rgba(199,125,255,0.55); color: #efc6ff;
+      font-family: 'Inter', sans-serif; font-size: 17px; font-weight: 800;
       letter-spacing: 0.04em; cursor: pointer; white-space: nowrap;
-      transition: background 0.2s, border-color 0.2s, transform 0.1s;
+      box-shadow: 0 0 18px rgba(199,125,255,0.16);
+      transition: background 0.2s, border-color 0.2s, transform 0.1s, box-shadow 0.2s;
     }
     .mm-hero-btn:hover {
-      background: linear-gradient(135deg, rgba(0,212,190,0.3) 0%, rgba(198,120,221,0.28) 100%);
-      border-color: rgba(0,212,190,0.75); transform: translateY(-1px);
+      background: linear-gradient(135deg, rgba(199,125,255,0.36) 0%, rgba(255,110,199,0.32) 100%);
+      border-color: rgba(255,110,199,0.85); transform: translateY(-1px);
+      box-shadow: 0 0 28px rgba(255,110,199,0.32);
     }
     @media (max-width: 480px) {
       .mm-hero { margin: 4px 12px 10px; }
       .mm-hero-inner { padding: 11px 14px; gap: 10px; flex-wrap: nowrap; }
       .mm-hero-spark { font-size: 24px; }
-      .mm-hero-title { font-size: 18px; }
-      .mm-hero-btn { padding: 10px 14px; font-size: 12.5px; white-space: nowrap; }
+      .mm-hero-title { font-size: 21px; }
+      .mm-hero-btn { padding: 9px 14px; font-size: 14.5px; white-space: nowrap; }
     }
 
     /* ── MOOD MAGIC ─────────────────────────────────────────────────────────── */
@@ -3072,8 +3097,8 @@
     <!-- MOVIES COLUMN -->
     <div>
       <div class="col-section-head" style="display:flex;align-items:center;gap:10px;padding:8px 0 12px;border-bottom:2px solid rgba(79,195,247,0.2);margin-bottom:12px;">
-        <img src="/static/logo4.png" alt="Movies" class="col-section-logo" style="height:72px;width:72px;object-fit:contain;filter:drop-shadow(0 0 16px rgba(79,195,247,0.9)) drop-shadow(0 0 32px rgba(79,195,247,0.4));">
-        <span class="col-section-title" style="font-size:32px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#4fc3f7;text-shadow:0 0 28px rgba(79,195,247,0.8),0 0 60px rgba(79,195,247,0.35);">Movies</span>
+        <img src="/static/logo4.png" alt="Movies" class="col-section-logo" style="height:72px;width:72px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(255,255,255,0.5)) drop-shadow(0 0 22px rgba(79,195,247,1)) drop-shadow(0 0 44px rgba(79,195,247,0.6)) brightness(1.12);">
+        <span class="col-section-title" style="font-size:32px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#6cd2ff;text-shadow:0 0 10px rgba(255,255,255,0.55),0 0 26px rgba(79,195,247,1),0 0 52px rgba(79,195,247,0.7),0 0 90px rgba(79,195,247,0.4);">Movies</span>
         <div style="flex:1;height:1px;background:rgba(79,195,247,0.15);"></div>
       </div>
       <div class="card-list" id="movie-list">
@@ -3099,8 +3124,8 @@
     <!-- TV COLUMN -->
     <div>
       <div class="col-section-head" style="display:flex;align-items:center;gap:10px;padding:8px 0 12px;border-bottom:2px solid rgba(198,120,221,0.2);margin-bottom:12px;">
-        <img src="/static/logo5.png" alt="TV Shows" class="col-section-logo" style="height:72px;width:72px;object-fit:contain;filter:drop-shadow(0 0 16px rgba(198,120,221,0.9)) drop-shadow(0 0 32px rgba(198,120,221,0.4));">
-        <span class="col-section-title" style="font-size:32px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#c678dd;text-shadow:0 0 28px rgba(198,120,221,0.8),0 0 60px rgba(198,120,221,0.35);">TV Shows</span>
+        <img src="/static/logo5.png" alt="TV Shows" class="col-section-logo" style="height:72px;width:72px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(255,255,255,0.5)) drop-shadow(0 0 22px rgba(198,120,221,1)) drop-shadow(0 0 44px rgba(198,120,221,0.6)) brightness(1.12);">
+        <span class="col-section-title" style="font-size:32px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#dca0f0;text-shadow:0 0 10px rgba(255,255,255,0.55),0 0 26px rgba(198,120,221,1),0 0 52px rgba(198,120,221,0.7),0 0 90px rgba(198,120,221,0.4);">TV Shows</span>
         <div style="flex:1;height:1px;background:rgba(198,120,221,0.15);"></div>
       </div>
       <div class="card-list" id="tv-list">
