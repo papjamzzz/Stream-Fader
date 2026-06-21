@@ -823,6 +823,7 @@ def fetch_tv():
                 'sort_by': 'vote_average.desc',
                 'with_genres': '18,9648',
                 'without_genres': TV_EXCLUDED_GENRES,
+                'air_date.gte': TV_RECENCY_CUTOFF,
                 'vote_count.gte': 100,
                 'page': page,
             })
@@ -838,6 +839,7 @@ def fetch_tv():
                 'sort_by': 'popularity.desc',
                 'with_genres': '10759,35,16,27',
                 'without_genres': TV_EXCLUDED_GENRES,
+                'air_date.gte': TV_RECENCY_CUTOFF,
                 'vote_count.gte': 30,
                 'page': page,
             })
@@ -976,6 +978,12 @@ def _enrich_tv(source, item):
             if show_type and show_type not in TV_ALLOWED_TYPES:
                 return None
 
+            # Exclude anime (Japanese animation) and Japanese game shows
+            genre_ids = [g.get('id') for g in (details.get('genres') or [])]
+            orig_lang = details.get('original_language', '')
+            if orig_lang == 'ja' and 16 in genre_ids:
+                return None
+
             # Hard recency gate: last_air_date must be within 8 months
             # Also reject shows with no air date (likely cancelled/unaired)
             last_air = details.get('last_air_date') or item.get('last_air_date', '')
@@ -1070,6 +1078,10 @@ def _enrich_tv(source, item):
             ids     = item.get('ids') or {}
             imdb_id = ids.get('imdb')
             tmdb_id = ids.get('tmdb')
+            # Exclude anime and game shows from Trakt
+            trakt_genres = {g.lower() for g in (item.get('genres') or [])}
+            if 'anime' in trakt_genres or 'game-show' in trakt_genres or 'game show' in trakt_genres:
+                return None
             scores  = best_scores(imdb_id) if imdb_id else {}
             if not scores.get('critic') and not scores.get('audience'):
                 if item.get('rating'):
