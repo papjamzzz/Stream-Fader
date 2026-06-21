@@ -2244,11 +2244,24 @@
       .header {
         padding: 10px 12px !important;
       }
-      /* Shrink the saved button */
-      #queue-toggle {
-        padding: 8px 14px;
-        font-size: 14px;
-        gap: 6px;
+      /* Hide secondary header buttons — not worth the space on mobile */
+      #helpBtn, #share-stream-btn { display: none !important; }
+      /* Hide button text labels — icon only on mobile */
+      .hdr-btn-label { display: none !important; }
+      /* Compact icon-pill size for Mood Magic + Saved */
+      #mm-btn, #queue-toggle {
+        padding: 8px 11px !important;
+        gap: 2px;
+        font-size: 15px;
+        border-radius: 10px;
+        min-width: 0;
+      }
+      /* Badge repositioning for compact button */
+      #queue-count-badge {
+        font-size: 10px !important;
+        min-width: 14px !important;
+        height: 14px !important;
+        padding: 0 3px !important;
       }
       .amp-btn { display: none; }
 
@@ -2317,8 +2330,10 @@
         padding: 7px 14px;
       }
 
-      /* ── Card grid — slightly tighter gap ── */
-      .card-list {
+      /* ── Card grid — single column on mobile so horizontal card has room ── */
+      .card-list,
+      .two-col.single-col .card-list {
+        grid-template-columns: 1fr !important;
         gap: 7px;
       }
 
@@ -2372,13 +2387,19 @@
         right: -100vw;
       }
 
-      /* ── Genre bar — already scrollable, just tighten padding on mobile ── */
+      /* ── Genre bar — single scrollable row on mobile ── */
       .genre-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        justify-content: flex-start;
         padding: 8px 12px;
-        gap: 5px;
+        gap: 6px;
+        scrollbar-width: none;
       }
+      .genre-bar::-webkit-scrollbar { display: none; }
       .genre-pill {
-        padding: 5px 11px;
+        padding: 6px 12px;
         font-size: 11px;
         flex-shrink: 0;
       }
@@ -2631,10 +2652,10 @@
   </div>
   <!-- ?, Share, Saved — far right -->
   <div style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:10px;">
-    <button id="mm-btn" class="hdr-btn hdr-btn-magic" onclick="openMoodMagic()" title="AI mood-based recommendations">✦ Mood Magic</button>
-    <button id="helpBtn" class="hdr-btn hdr-btn-purple" onclick="document.getElementById('helpModal').style.display='flex'" title="How it works">? Help</button>
-    <button id="share-stream-btn" class="hdr-btn hdr-btn-orange" onclick="openShareModal()" title="Share My Stream">★ Share</button>
-    <button id="queue-toggle" class="hdr-btn hdr-btn-gold" onclick="toggleQueueDropdown()">🔖 Saved <span id="queue-count-badge">0</span></button>
+    <button id="mm-btn" class="hdr-btn hdr-btn-magic" onclick="openMoodMagic()" title="AI mood-based recommendations">✦<span class="hdr-btn-label"> Mood Magic</span></button>
+    <button id="helpBtn" class="hdr-btn hdr-btn-purple" onclick="document.getElementById('helpModal').style.display='flex'" title="How it works">?<span class="hdr-btn-label"> Help</span></button>
+    <button id="share-stream-btn" class="hdr-btn hdr-btn-orange" onclick="openShareModal()" title="Share My Stream">★<span class="hdr-btn-label"> Share</span></button>
+    <button id="queue-toggle" class="hdr-btn hdr-btn-gold" onclick="toggleQueueDropdown()">🔖<span class="hdr-btn-label"> Saved</span> <span id="queue-count-badge">0</span></button>
   </div>
 </header>
 
