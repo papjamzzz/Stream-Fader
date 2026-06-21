@@ -631,12 +631,16 @@ def fetch_movies():
                 rel = str(result.get('release') or '')
                 if not result.get('theatrical') and len(rel) >= 7 and rel[:7] < hard_cutoff[:7]:
                     continue
-                # Absolute year cap — drop anything originally released 3+ years ago
+                # Absolute year cap — drop anything originally released 3+ years ago.
+                # Applies to theatrical too: TMDb "now playing" includes anniversary
+                # re-releases (Shrek 2001, Evil Dead II 1987, etc.) that are NOT current
+                # content and make the feed look broken. The year is the source of truth.
                 try:
-                    if not result.get('theatrical') and int(rel[:4]) < (datetime.now().year - 2):
+                    if int(rel[:4]) < (datetime.now().year - 2):
                         continue
                 except (ValueError, TypeError):
-                    pass
+                    # No parseable year → can't verify it's current, so drop it
+                    continue
                 key = result.get('imdb_id') or result.get('id')
                 if key and key not in seen_imdb:
                     seen_imdb.add(key)
