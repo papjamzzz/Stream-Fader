@@ -1601,6 +1601,14 @@
     .hb-green { color: #4ade80; font-weight: 700; }
     .hb-red   { color: #f87171; font-weight: 700; }
     .hb-dot   { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+    /* legend chips — mirror the ✓ / ✗ card buttons */
+    .hb-key {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      font-size: 13px; font-weight: 900; line-height: 1; flex-shrink: 0;
+    }
+    .hb-key-seen { background: rgba(102,187,106,0.15); color: #66bb6a; border: 1px solid rgba(102,187,106,0.5); }
+    .hb-key-skip { background: rgba(239,83,80,0.15);  color: #ef5350; border: 1px solid rgba(239,83,80,0.5); }
 
     /* ── AMP / VST PLAYER ── */
     .amp-btn {
@@ -2102,12 +2110,11 @@
       border-color: rgba(0,212,190,0.75); transform: translateY(-1px);
     }
     @media (max-width: 480px) {
-      .mm-hero { margin: 6px 12px 14px; }
-      .mm-hero-inner { padding: 16px; gap: 12px; flex-wrap: wrap; }
-      .mm-hero-spark { font-size: 28px; }
+      .mm-hero { margin: 4px 12px 10px; }
+      .mm-hero-inner { padding: 11px 14px; gap: 10px; flex-wrap: nowrap; }
+      .mm-hero-spark { font-size: 24px; }
       .mm-hero-title { font-size: 18px; }
-      .mm-hero-sub { font-size: 12.5px; }
-      .mm-hero-btn { padding: 12px 18px; font-size: 13px; width: 100%; }
+      .mm-hero-btn { padding: 10px 14px; font-size: 12.5px; white-space: nowrap; }
     }
 
     /* ── MOOD MAGIC ─────────────────────────────────────────────────────────── */
@@ -2332,7 +2339,7 @@
 
       /* ── Fader section ── */
       .fader-section {
-        padding: 10px 0 8px !important;
+        padding: 6px 0 4px !important;
         top: var(--header-h, 56px);
       }
       .fader-with-pills {
@@ -2350,7 +2357,7 @@
         padding: 0 12px;
       }
       .fader-labels {
-        margin-bottom: 10px;
+        margin-bottom: 6px;
       }
       .fader-label {
         font-size: 12px;
@@ -2369,7 +2376,7 @@
         height: 48px;
       }
       .fader-readout {
-        margin-top: 12px;
+        margin-top: 8px;
         gap: 4px;
       }
       .readout-side {
@@ -2386,13 +2393,13 @@
       }
       .genre-sidebar, .star-col { display: none; }
 
-      /* ── Taste helper bar — wrap gracefully ── */
+      /* ── Taste helper / legend bar — compact single line ── */
       .hb-bar {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         justify-content: center;
-        gap: 6px;
-        font-size: 13px;
-        padding: 7px 14px;
+        gap: 7px;
+        font-size: 12.5px;
+        padding: 6px 14px;
       }
 
       /* ── Card grid — single column on mobile so horizontal card has room ── */
@@ -2499,9 +2506,13 @@
         justify-content: center;
       }
 
-      /* ── Wordmark — clamp min was 72px, crushing mobile layouts ── */
+      /* ── Header — center the wordmark in the open space, clear of the buttons ── */
+      .hdr-left { display: none !important; }            /* amp button already hidden — drop its spacer */
+      .hdr-center { flex: 1 1 auto !important; }          /* wordmark fills space left of buttons, centered */
+      .hdr-right { flex: 0 0 auto !important; }           /* buttons take only what they need */
       .sf-wordmark {
-        font-size: clamp(36px, 10vw, 72px) !important;
+        font-size: clamp(30px, 8.2vw, 52px) !important;   /* smaller so it never bleeds into ✦ */
+        white-space: nowrap;
       }
 
       /* ── Header — tighter padding on mobile ── */
@@ -2555,21 +2566,50 @@
         padding: 5px 6px;
       }
 
-      /* ── Dismiss buttons — mobile tap targets ── */
+      /* ── Dismiss buttons — icon-only ✓ / ✗, stacked in a slim column ── */
+      .dismiss-label { display: none !important; }       /* hide text — legend strip explains the icons */
+      .dismiss-bar {
+        flex-direction: column;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px 8px;
+        flex-shrink: 0;
+      }
       .dismiss-btn {
-        padding: 8px 5px;
-        min-height: 36px;
+        flex: 0 0 auto;
+        width: 38px;
+        height: 38px;
+        min-height: 0;
+        padding: 0;
+        border-radius: 50%;
+        font-size: 17px;
+        font-weight: 900;
       }
 
-      /* ── Fader thumb — big enough for thumbs ── */
+      /* ── Section headers (MOVIES / TV) — slim row, override inline sizing ── */
+      .col-section-head {
+        padding: 4px 0 8px !important;
+        margin-bottom: 8px !important;
+        gap: 8px !important;
+      }
+      .col-section-logo {
+        height: 38px !important;
+        width: 38px !important;
+      }
+      .col-section-title {
+        font-size: 19px !important;
+        letter-spacing: 0.08em !important;
+      }
+
+      /* ── Fader thumb — big enough for thumbs, trimmed height to save space ── */
       #blend-fader::-webkit-slider-thumb {
         width: 40px;
-        height: 65px;
+        height: 52px;
         border-radius: 8px;
       }
       #blend-fader::-moz-range-thumb {
         width: 40px;
-        height: 65px;
+        height: 52px;
         border-radius: 8px;
       }
 
@@ -2639,7 +2679,7 @@
 <!-- ═══════════════════ HEADER ═══════════════════ -->
 <header class="header" style="flex-direction:row;padding:12px 24px;align-items:center;">
   <!-- AMP player button — left -->
-  <div style="flex:1;display:flex;align-items:center;">
+  <div class="hdr-left" style="flex:1;display:flex;align-items:center;">
 <button class="amp-btn" id="ampBtn" onclick="toggleVST()" title="Open FX Console">
   <svg class="amp-svg" viewBox="0 0 200 88" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -2710,13 +2750,13 @@
 </button>
   </div>
   <!-- cinematic wordmark — center -->
-  <div style="text-align:center;">
+  <div class="hdr-center" style="text-align:center;">
     <div class="sf-wordmark">
       <span style="color:#ffffff;">Stream</span><span style="background:linear-gradient(90deg,#4fc3f7 0%,#c678dd 50%,#ffb74d 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Fader</span>
     </div>
   </div>
   <!-- ?, Share, Saved — far right -->
-  <div style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:10px;">
+  <div class="hdr-right" style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:10px;">
     <button id="mm-btn" class="hdr-btn hdr-btn-magic" onclick="openMoodMagic()" title="AI mood-based recommendations">✦<span class="hdr-btn-label"> Mood Magic</span></button>
     <button id="helpBtn" class="hdr-btn hdr-btn-purple" onclick="document.getElementById('helpModal').style.display='flex'" title="How it works">?<span class="hdr-btn-label"> Help</span></button>
     <button id="share-stream-btn" class="hdr-btn hdr-btn-orange" onclick="openShareModal()" title="Share My Stream">★<span class="hdr-btn-label"> Share</span></button>
@@ -2962,7 +3002,6 @@
     <div class="mm-hero-spark">✦</div>
     <div class="mm-hero-text">
       <div class="mm-hero-title">Mood Magic</div>
-      <div class="mm-hero-sub">Tell us your vibe — AI picks your perfect movie &amp; show.</div>
     </div>
     <button class="mm-hero-btn" onclick="event.stopPropagation();openMoodMagic()">Find My Match →</button>
   </div>
@@ -2981,22 +3020,23 @@
   <div class="two-col">
 
 
-    <!-- TASTE HELPER — heartbeat -->
-    <div style="grid-column:1/-1;text-align:center;padding:10px 0 18px;">
+    <!-- TASTE HELPER — heartbeat (legend for the ✓ / ✗ card buttons) -->
+    <div style="grid-column:1/-1;text-align:center;padding:6px 0 10px;">
       <div class="hb-bar">
-        <span class="hb-pulse">💚</span>
-        <span class="hb-text">Tap <span class="hb-green">Seen it</span></span>
+        <span class="hb-text">Tap</span>
+        <span class="hb-key hb-key-seen">✓</span>
+        <span class="hb-green">Seen it</span>
         <span class="hb-dot"></span>
-        <span class="hb-text">Tap <span class="hb-red">No thanks</span></span>
-        <span class="hb-pulse hb-red-pulse">👎</span>
+        <span class="hb-key hb-key-skip">✗</span>
+        <span class="hb-red">No thanks</span>
       </div>
     </div>
 
     <!-- MOVIES COLUMN -->
     <div>
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 0 12px;border-bottom:2px solid rgba(79,195,247,0.2);margin-bottom:12px;">
-        <img src="/static/logo4.png" alt="Movies" style="height:72px;width:72px;object-fit:contain;filter:drop-shadow(0 0 16px rgba(79,195,247,0.9)) drop-shadow(0 0 32px rgba(79,195,247,0.4));">
-        <span style="font-size:32px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#4fc3f7;text-shadow:0 0 28px rgba(79,195,247,0.8),0 0 60px rgba(79,195,247,0.35);">Movies</span>
+      <div class="col-section-head" style="display:flex;align-items:center;gap:10px;padding:8px 0 12px;border-bottom:2px solid rgba(79,195,247,0.2);margin-bottom:12px;">
+        <img src="/static/logo4.png" alt="Movies" class="col-section-logo" style="height:72px;width:72px;object-fit:contain;filter:drop-shadow(0 0 16px rgba(79,195,247,0.9)) drop-shadow(0 0 32px rgba(79,195,247,0.4));">
+        <span class="col-section-title" style="font-size:32px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#4fc3f7;text-shadow:0 0 28px rgba(79,195,247,0.8),0 0 60px rgba(79,195,247,0.35);">Movies</span>
         <div style="flex:1;height:1px;background:rgba(79,195,247,0.15);"></div>
       </div>
       <div class="card-list" id="movie-list">
@@ -3021,9 +3061,9 @@
 
     <!-- TV COLUMN -->
     <div>
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 0 12px;border-bottom:2px solid rgba(198,120,221,0.2);margin-bottom:12px;">
-        <img src="/static/logo5.png" alt="TV Shows" style="height:72px;width:72px;object-fit:contain;filter:drop-shadow(0 0 16px rgba(198,120,221,0.9)) drop-shadow(0 0 32px rgba(198,120,221,0.4));">
-        <span style="font-size:32px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#c678dd;text-shadow:0 0 28px rgba(198,120,221,0.8),0 0 60px rgba(198,120,221,0.35);">TV Shows</span>
+      <div class="col-section-head" style="display:flex;align-items:center;gap:10px;padding:8px 0 12px;border-bottom:2px solid rgba(198,120,221,0.2);margin-bottom:12px;">
+        <img src="/static/logo5.png" alt="TV Shows" class="col-section-logo" style="height:72px;width:72px;object-fit:contain;filter:drop-shadow(0 0 16px rgba(198,120,221,0.9)) drop-shadow(0 0 32px rgba(198,120,221,0.4));">
+        <span class="col-section-title" style="font-size:32px;font-weight:900;letter-spacing:0.12em;text-transform:uppercase;color:#c678dd;text-shadow:0 0 28px rgba(198,120,221,0.8),0 0 60px rgba(198,120,221,0.35);">TV Shows</span>
         <div style="flex:1;height:1px;background:rgba(198,120,221,0.15);"></div>
       </div>
       <div class="card-list" id="tv-list">
@@ -3779,8 +3819,8 @@ function renderCard(item, rank) {
         </div>
       </div>
       <div class="dismiss-bar" onclick="event.stopPropagation()">
-        <button class="dismiss-btn dismiss-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'seen','${item.media_type||'movie'}')">✓ Seen it</button>
-        <button class="dismiss-btn dismiss-nope" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'nope');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'skip','${item.media_type||'movie'}')">✗ No thanks</button>
+        <button class="dismiss-btn dismiss-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'seen','${item.media_type||'movie'}')">✓<span class="dismiss-label"> Seen it</span></button>
+        <button class="dismiss-btn dismiss-nope" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'nope');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'skip','${item.media_type||'movie'}')">✗<span class="dismiss-label"> No thanks</span></button>
       </div>
       <div class="card-body">
         <div class="row-title">${item.title}</div>
