@@ -343,11 +343,11 @@ MIN_POPULARITY  = 10     # lowered — lets quality indie/doc/foreign through
 MIN_SCORE       = 38     # lowered floor so genre tabs have enough content to filter from
 DOC_GENRE_ID    = 99     # TMDb genre ID for Documentary
 
-# TMDb movie genre IDs to exclude — Music videos, concerts
-MOVIE_EXCLUDED_GENRES = '10402'  # Music
+# TMDb movie genre IDs to exclude — Music videos, concerts, kids/family
+MOVIE_EXCLUDED_GENRES = '10402,10751'  # Music, Family
 
-# TMDb TV genre IDs to exclude — News, Reality, Soap, Talk, Music
-TV_EXCLUDED_GENRES = '10763,10764,10766,10767,10402'
+# TMDb TV genre IDs to exclude — News, Reality, Soap, Talk, Music, Kids
+TV_EXCLUDED_GENRES = '10763,10764,10766,10767,10402,10762'
 
 # TMDb show types to keep — scripted fiction and limited series only
 TV_ALLOWED_TYPES = {'Scripted', 'Miniseries'}
@@ -542,20 +542,6 @@ def fetch_movies():
                 'primary_release_date.gte': cutoff_6mo,
                 'vote_count.gte': 100,
                 'vote_average.gte': 7.0,
-                'page': page,
-            })
-            for m in data.get('results', []):
-                candidates.append(('tmdb_movie', m))
-
-        # ── POOL 6: Family — last 6mo ─────────────────────────────────────────
-        for page in range(1, 6):
-            data = tmdb_get('/discover/movie', {
-                'sort_by': 'popularity.desc',
-                'watch_region': 'US',
-                'with_watch_providers': STREAMING_PROVIDER_IDS,
-                'primary_release_date.gte': cutoff_6mo,
-                'with_genres': '10751',  # Family
-                'vote_count.gte': 50,
                 'page': page,
             })
             for m in data.get('results', []):
