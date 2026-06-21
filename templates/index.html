@@ -456,40 +456,65 @@
     }
 
     /* ── CONTENT TYPE SELECTOR ── */
+    /* ── PRIMARY CONTROL: Movies / TV toggle — the centerpiece ── */
     .type-selector {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 12px 24px;
+      gap: 12px;
+      padding: 22px 24px 24px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
     }
     .type-selector-label {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
       color: var(--dim);
-      margin-right: 6px;
+    }
+    .type-toggle {
+      display: flex;
+      gap: 14px;
+      width: 100%;
+      max-width: 560px;
     }
     .type-btn {
-      padding: 9px 24px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: transparent;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 11px;
+      padding: 19px 18px;
+      border-radius: 16px;
+      border: 1.5px solid var(--border);
+      background: var(--card);
       color: var(--dim);
       font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
       cursor: pointer;
-      transition: border-color 0.15s, color 0.15s, background 0.15s;
-      letter-spacing: 0.03em;
+      transition: transform 0.15s ease, border-color 0.15s, color 0.15s, background 0.18s, box-shadow 0.22s;
     }
-    .type-btn:hover { border-color: rgba(198,120,221,0.4); color: var(--text); }
-    .type-btn.active.movies { background: rgba(79,195,247,0.1); border-color: rgba(79,195,247,0.5); color: #4fc3f7; }
-    .type-btn.active.all    { background: rgba(198,120,221,0.1); border-color: rgba(198,120,221,0.5); color: #c678dd; }
-    .type-btn.active.tv     { background: rgba(255,183,77,0.1); border-color: rgba(255,183,77,0.5); color: #ffb74d; }
+    .type-emoji { font-size: 25px; line-height: 1; }
+    .type-btn:hover { border-color: rgba(198,120,221,0.45); color: var(--text); transform: translateY(-2px); }
+    .type-btn.active { transform: translateY(-1px); }
+    .type-btn.active.movies {
+      background: linear-gradient(135deg, rgba(79,195,247,0.24) 0%, rgba(79,195,247,0.07) 100%);
+      border-color: #4fc3f7; color: #4fc3f7;
+      box-shadow: 0 10px 34px rgba(79,195,247,0.28), inset 0 0 24px rgba(79,195,247,0.08);
+    }
+    .type-btn.active.all {
+      background: linear-gradient(135deg, rgba(198,120,221,0.24) 0%, rgba(198,120,221,0.07) 100%);
+      border-color: #c678dd; color: #c678dd;
+      box-shadow: 0 10px 34px rgba(198,120,221,0.28), inset 0 0 24px rgba(198,120,221,0.08);
+    }
+    .type-btn.active.tv {
+      background: linear-gradient(135deg, rgba(255,183,77,0.24) 0%, rgba(255,183,77,0.07) 100%);
+      border-color: #ffb74d; color: #ffb74d;
+      box-shadow: 0 10px 34px rgba(255,183,77,0.28), inset 0 0 24px rgba(255,183,77,0.08);
+    }
 
     /* single-col mode: full width, wider card grid */
     .two-col.single-col { grid-template-columns: 1fr; }
@@ -497,9 +522,10 @@
     .two-col.single-col .card-list { grid-template-columns: repeat(4, 1fr); }
 
     @media (max-width: 768px) {
-      .type-selector { padding: 10px 12px; gap: 6px; }
-      .type-selector-label { display: none; }
-      .type-btn { padding: 8px 16px; font-size: 13px; }
+      .type-selector { padding: 14px 12px 16px; gap: 9px; }
+      .type-toggle { gap: 11px; max-width: 100%; }
+      .type-btn { padding: 16px 12px; font-size: 17px; border-radius: 14px; }
+      .type-emoji { font-size: 21px; }
       .two-col.single-col .card-list { grid-template-columns: repeat(2, 1fr); }
     }
 
@@ -2988,9 +3014,11 @@
      CONTENT TYPE SELECTOR
 ══════════════════════════════════════════════ -->
 <div class="type-selector">
-  <span class="type-selector-label">I want to watch:</span>
-  <button class="type-btn movies active" id="type-movies" onclick="setContentType('movies')">🎬 Movies</button>
-  <button class="type-btn tv" id="type-tv" onclick="setContentType('tv')">📺 TV Shows</button>
+  <span class="type-selector-label">I want to watch</span>
+  <div class="type-toggle">
+    <button class="type-btn movies active" id="type-movies" onclick="setContentType('movies')"><span class="type-emoji">🎬</span> Movies</button>
+    <button class="type-btn tv" id="type-tv" onclick="setContentType('tv')"><span class="type-emoji">📺</span> TV Shows</button>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════════
