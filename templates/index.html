@@ -2367,12 +2367,8 @@
       .header {
         padding: 10px 12px !important;
       }
-      /* Hide secondary header buttons — not worth the space on mobile */
-      #helpBtn, #share-stream-btn { display: none !important; }
-      /* Hide button text labels — icon only on mobile */
-      .hdr-btn-label { display: none !important; }
-      /* Compact icon-pill size for Mood Magic + Saved */
-      #mm-btn, #queue-toggle {
+      /* Compact icon-pill size for Saved + ? on mobile */
+      #queue-toggle, #helpBtn {
         padding: 8px 11px !important;
         gap: 2px;
         font-size: 15px;
@@ -2815,11 +2811,9 @@
       <span style="color:#ffffff;">Stream</span><span style="background:linear-gradient(90deg,#4fc3f7 0%,#c678dd 50%,#ffb74d 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Fader</span>
     </div>
   </div>
-  <!-- ?, Share, Saved — far right -->
+  <!-- ?, Saved — far right -->
   <div class="hdr-right" style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:10px;">
-    <button id="mm-btn" class="hdr-btn hdr-btn-magic" onclick="openMoodMagic()" title="AI mood-based recommendations">✦<span class="hdr-btn-label"> Mood Magic</span></button>
-    <button id="helpBtn" class="hdr-btn hdr-btn-purple" onclick="document.getElementById('helpModal').style.display='flex'" title="How it works">?<span class="hdr-btn-label"> Help</span></button>
-    <button id="share-stream-btn" class="hdr-btn hdr-btn-orange" onclick="openShareModal()" title="Share My Stream">★<span class="hdr-btn-label"> Share</span></button>
+    <button id="helpBtn" class="hdr-btn hdr-btn-purple" onclick="document.getElementById('helpModal').style.display='flex'" title="How it works">?</button>
     <button id="queue-toggle" class="hdr-btn hdr-btn-gold" onclick="toggleQueueDropdown()">🔖<span class="hdr-btn-label"> Saved</span> <span id="queue-count-badge">0</span></button>
   </div>
 </header>
@@ -3082,17 +3076,6 @@
   <div class="two-col">
 
 
-    <!-- TASTE HELPER — heartbeat (legend for the ✓ / ✗ card buttons) -->
-    <div style="grid-column:1/-1;text-align:center;padding:6px 0 10px;">
-      <div class="hb-bar">
-        <span class="hb-text">Tap</span>
-        <span class="hb-key hb-key-seen">✓</span>
-        <span class="hb-green">Seen it</span>
-        <span class="hb-dot"></span>
-        <span class="hb-key hb-key-skip">✗</span>
-        <span class="hb-red">No thanks</span>
-      </div>
-    </div>
 
     <!-- MOVIES COLUMN -->
     <div>
@@ -3218,6 +3201,9 @@
   <div class="social-footer-label">Creative Konsoles</div>
   <div style="margin-bottom:14px;font-size:13px;color:rgba(240,242,255,0.45);">
     Questions? Email <a href="mailto:support@creativekonsoles.com" style="color:#c678dd;text-decoration:none;font-weight:700;">support@creativekonsoles.com</a> — a real person will reply. We love to hear from users!
+  </div>
+  <div style="margin-bottom:18px;">
+    <button onclick="openShareModal()" style="background:rgba(255,183,77,0.1);border:1px solid rgba(255,183,77,0.35);color:#ffb74d;font-family:inherit;font-size:13px;font-weight:700;padding:10px 24px;border-radius:10px;cursor:pointer;transition:background 0.15s,border-color 0.15s;" onmouseover="this.style.background='rgba(255,183,77,0.2)'" onmouseout="this.style.background='rgba(255,183,77,0.1)'">★ Share My Stream</button>
   </div>
   <div class="social-links">
     <a class="social-link" href="https://www.linkedin.com/in/jeremiahsmith3335/" target="_blank" rel="noopener">
@@ -3370,7 +3356,11 @@
       <strong style="color:#ef4444;">✗ No thanks</strong><br>
       Removes the title and reduces similar content in your feed. Dismissed titles return after 30 days.
     </div>
-    <div style="color:#555;font-size: 15px;">The more you use it, the smarter it gets.</div>
+    <div style="margin-bottom:18px;">
+      <strong style="color:#00d4be;">✦ Mood Magic</strong><br>
+      Hit <strong>Find My Match</strong> on the home screen. Pick a genre and a vibe — AI picks the best movie <em>and</em> TV show for tonight from the current StreamFader catalog. Use ✓ / ✕ / ★ to cycle through all 5 pairs.
+    </div>
+    <div style="color:#555;font-size:15px;">The more you use it, the smarter it gets.</div>
     <div style="margin-top:24px;padding-top:20px;border-top:1px solid #222;">
       <strong style="color:#c678dd;">Questions or feedback?</strong><br>
       Email <a href="mailto:support@creativekonsoles.com" style="color:#c678dd;text-decoration:none;font-weight:700;">support@creativekonsoles.com</a> — a real person will get back to you. For real, please reach out. We love to hear from users!
@@ -4898,12 +4888,12 @@ const TOUR_STEPS = [
     arrow:  'down',
   },
   {
-    target: '.hb-bar',
-    color:  '#66bb6a',
-    emoji:  '🎯',
+    target: '.mm-hero',
+    color:  '#00d4be',
+    emoji:  '✦',
     label:  'STEP 5 OF 5',
-    title:  'Make it yours.',
-    body:   'Tap <strong style="color:#66bb6a">Seen it ✓</strong> or <strong style="color:#ef5350">No thanks 👎</strong> on any card. StreamFader learns your taste and moves things up or down for you.',
+    title:  'Mood Magic.',
+    body:   'Pick a genre and a vibe — <strong style="color:#00d4be">AI finds your perfect movie and show</strong> from tonight\'s catalog. Hit <strong style="color:#00d4be">Find My Match</strong> to try it.',
     arrow:  'up',
   },
 ];
