@@ -2038,6 +2038,184 @@
       color: #c678dd;
     }
     .hdr-btn-purple:hover { background: rgba(198,120,221,0.18); border-color: rgba(198,120,221,0.65); }
+    .hdr-btn-magic {
+      background: linear-gradient(135deg, rgba(0,212,190,0.1) 0%, rgba(140,90,240,0.08) 100%);
+      border-color: rgba(0,212,190,0.35);
+      color: #00d4be;
+    }
+    .hdr-btn-magic:hover { background: linear-gradient(135deg, rgba(0,212,190,0.18) 0%, rgba(140,90,240,0.16) 100%); border-color: rgba(0,212,190,0.65); }
+
+    /* ── MOOD MAGIC ─────────────────────────────────────────────────────────── */
+    #mm-overlay {
+      display: none; position: fixed; inset: 0; z-index: 2000;
+      background: var(--bg); overflow-y: auto;
+    }
+    #mm-picker {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 100vh; padding: 60px 24px; gap: 28px;
+      position: relative;
+    }
+    .mm-close {
+      position: absolute; top: 20px; right: 24px;
+      background: none; border: 1px solid var(--border); color: var(--dim);
+      font-size: 18px; width: 36px; height: 36px; border-radius: 8px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .mm-close:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
+    .mm-logo {
+      font-size: 40px; font-weight: 900; letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #00d4be 0%, #c678dd 50%, #ffb74d 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .mm-sub { color: var(--dim); font-size: 16px; text-align: center; max-width: 420px; line-height: 1.6; }
+    .mm-dropdowns { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; justify-content: center; }
+    .mm-drop-wrap { display: flex; flex-direction: column; gap: 8px; }
+    .mm-drop-wrap label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--dim);
+    }
+    .mm-select {
+      appearance: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px; font-weight: 600;
+      padding: 13px 40px 13px 16px;
+      border-radius: 10px; cursor: pointer; min-width: 230px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%238890b0' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+      transition: border-color 0.15s;
+    }
+    .mm-select:focus { outline: none; border-color: rgba(0,212,190,0.5); }
+    .mm-select option { background: #11131e; }
+    .mm-x { font-size: 20px; font-weight: 900; color: var(--muted); padding-bottom: 2px; }
+    .mm-find-btn {
+      padding: 15px 52px; border-radius: 32px;
+      background: linear-gradient(135deg, rgba(0,212,190,0.12) 0%, rgba(198,120,221,0.12) 100%);
+      border: 1px solid rgba(0,212,190,0.4); color: #00d4be;
+      font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 800;
+      letter-spacing: 0.06em; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    }
+    .mm-find-btn:hover {
+      background: linear-gradient(135deg, rgba(0,212,190,0.22) 0%, rgba(198,120,221,0.22) 100%);
+      border-color: rgba(0,212,190,0.7); transform: translateY(-1px);
+    }
+    .mm-find-btn:active { transform: translateY(0); }
+    .mm-find-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .mm-loading { display: flex; align-items: center; gap: 12px; color: var(--dim); font-size: 14px; }
+    .mm-spinner {
+      width: 20px; height: 20px; border: 2px solid var(--border);
+      border-top-color: #00d4be; border-radius: 50%;
+      animation: mmSpin 0.8s linear infinite;
+    }
+    @keyframes mmSpin { to { transform: rotate(360deg); } }
+
+    #mm-reveal {
+      display: none; flex-direction: column; min-height: 100vh; padding: 20px 24px 48px;
+    }
+    .mm-reveal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
+    }
+    .mm-progress {
+      font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+      color: #00d4be; background: rgba(0,212,190,0.08);
+      border: 1px solid rgba(0,212,190,0.2); padding: 6px 14px; border-radius: 20px;
+    }
+    .mm-combo-label { font-size: 13px; font-weight: 700; color: var(--dim); flex: 1; text-align: center; }
+    .mm-close-small {
+      background: none; border: 1px solid var(--border); color: var(--dim);
+      font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 8px;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: border-color 0.15s, color 0.15s;
+    }
+    .mm-close-small:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
+    #mm-reveal-cards {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px; flex: 1;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .mm-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; display: flex; flex-direction: column;
+    }
+    .mm-card-type {
+      padding: 10px 16px 8px; font-size: 10px; font-weight: 900;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim);
+      border-bottom: 1px solid var(--border);
+    }
+    .mm-card-poster {
+      position: relative; width: 100%; aspect-ratio: 2/3; max-height: 400px;
+      overflow: hidden; background: var(--muted); flex-shrink: 0;
+    }
+    .mm-card-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .mm-poster-ph {
+      width: 100%; height: 100%; display: flex; align-items: center;
+      justify-content: center; font-size: 56px; opacity: 0.25;
+    }
+    .mm-card-info { padding: 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .mm-card-title { font-size: 20px; font-weight: 800; line-height: 1.2; }
+    .mm-card-year { font-size: 12px; color: var(--dim); font-weight: 600; }
+    .mm-score {
+      display: inline-block; font-size: 30px; font-weight: 900;
+      font-variant-numeric: tabular-nums; line-height: 1;
+    }
+    .mm-card-reason {
+      font-size: 13px; color: #00d4be; font-style: italic; font-weight: 500;
+      line-height: 1.55; padding: 10px 12px;
+      background: rgba(0,212,190,0.06); border-radius: 8px;
+      border-left: 2px solid rgba(0,212,190,0.3);
+    }
+    .mm-synopsis {
+      font-size: 13px; color: var(--dim); line-height: 1.6;
+      overflow: hidden; display: -webkit-box;
+      -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    }
+    .mm-trailer-btn {
+      background: none; border: 1px solid var(--border); color: var(--dim);
+      font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+      padding: 6px 14px; border-radius: 8px; cursor: pointer; align-self: flex-start;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .mm-trailer-btn:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
+    .mm-card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 4px; }
+    .mm-action-btn {
+      flex: 1; padding: 10px 6px; border-radius: 8px;
+      font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 800;
+      cursor: pointer; transition: background 0.15s, border-color 0.15s; border: 1px solid;
+    }
+    .mm-seen  { background: rgba(102,187,106,0.1); border-color: rgba(102,187,106,0.3); color: #66bb6a; }
+    .mm-seen:hover  { background: rgba(102,187,106,0.2); border-color: rgba(102,187,106,0.6); }
+    .mm-skip  { background: rgba(239,83,80,0.08); border-color: rgba(239,83,80,0.25); color: #ef5350; }
+    .mm-skip:hover  { background: rgba(239,83,80,0.18); border-color: rgba(239,83,80,0.55); }
+    .mm-save  { background: rgba(245,196,0,0.1); border-color: rgba(245,196,0,0.3); color: #f5c400; }
+    .mm-save:hover  { background: rgba(245,196,0,0.2); border-color: rgba(245,196,0,0.6); }
+    #mm-done {
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; gap: 20px; padding: 48px 24px;
+    }
+    .mm-done-icon {
+      font-size: 64px;
+      background: linear-gradient(135deg, #00d4be 0%, #c678dd 50%, #ffb74d 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .mm-done-title { font-size: 34px; font-weight: 900; text-align: center; }
+    .mm-done-sub { color: var(--dim); font-size: 16px; text-align: center; max-width: 360px; line-height: 1.6; }
+    .mm-close-link {
+      background: none; border: none; color: var(--dim);
+      font-family: 'Inter', sans-serif; font-size: 13px; cursor: pointer;
+      text-decoration: underline; margin-top: 8px;
+    }
+    .mm-close-link:hover { color: var(--text); }
+    @media (max-width: 700px) {
+      #mm-reveal-cards { grid-template-columns: 1fr; }
+      .mm-card-poster { max-height: 280px; }
+      .mm-logo { font-size: 30px; }
+      .mm-dropdowns { flex-direction: column; }
+      .mm-x { display: none; }
+      .mm-select { min-width: 280px; }
+    }
 
     #queue-toggle {
       display: inline-flex;
@@ -2453,11 +2631,144 @@
   </div>
   <!-- ?, Share, Saved — far right -->
   <div style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:10px;">
+    <button id="mm-btn" class="hdr-btn hdr-btn-magic" onclick="openMoodMagic()" title="AI mood-based recommendations">✦ Mood Magic</button>
     <button id="helpBtn" class="hdr-btn hdr-btn-purple" onclick="document.getElementById('helpModal').style.display='flex'" title="How it works">? Help</button>
     <button id="share-stream-btn" class="hdr-btn hdr-btn-orange" onclick="openShareModal()" title="Share My Stream">★ Share</button>
     <button id="queue-toggle" class="hdr-btn hdr-btn-gold" onclick="toggleQueueDropdown()">🔖 Saved <span id="queue-count-badge">0</span></button>
   </div>
 </header>
+
+<!-- ══════════════════════════════════════════════
+     MOOD MAGIC OVERLAY
+══════════════════════════════════════════════ -->
+<div id="mm-overlay">
+
+  <!-- PICKER -->
+  <div id="mm-picker">
+    <button class="mm-close" onclick="closeMoodMagic()" title="Close">✕</button>
+    <div class="mm-logo">✦ Mood Magic</div>
+    <p class="mm-sub">Pick a genre and a vibe. AI finds your perfect movie <em>and</em> show for tonight.</p>
+    <div class="mm-dropdowns">
+      <div class="mm-drop-wrap">
+        <label>Genre</label>
+        <select id="mm-genre" class="mm-select">
+          <option value="">Choose a genre...</option>
+          <option>Action</option>
+          <option>Adventure</option>
+          <option>Animation</option>
+          <option>Anime</option>
+          <option>Biography</option>
+          <option>Black Comedy</option>
+          <option>Comedy</option>
+          <option>Coming-of-Age</option>
+          <option>Crime</option>
+          <option>Dark Comedy</option>
+          <option>Documentary</option>
+          <option>Drama</option>
+          <option>Epic</option>
+          <option>Fantasy</option>
+          <option>Heist</option>
+          <option>Historical</option>
+          <option>Horror</option>
+          <option>Legal Thriller</option>
+          <option>Martial Arts</option>
+          <option>Musical</option>
+          <option>Mystery</option>
+          <option>Nature</option>
+          <option>Noir</option>
+          <option>Paranormal</option>
+          <option>Political</option>
+          <option>Psychological</option>
+          <option>Road Trip</option>
+          <option>Romance</option>
+          <option>Satire</option>
+          <option>Sci-Fi</option>
+          <option>Slasher</option>
+          <option>Sports</option>
+          <option>Spy</option>
+          <option>Superhero</option>
+          <option>Survival</option>
+          <option>Thriller</option>
+          <option>True Crime</option>
+          <option>War</option>
+          <option>Western</option>
+          <option>Zombie</option>
+        </select>
+      </div>
+      <div class="mm-x">×</div>
+      <div class="mm-drop-wrap">
+        <label>Vibe</label>
+        <select id="mm-vibe" class="mm-select">
+          <option value="">Choose your vibe...</option>
+          <option>Adrenaline Rush</option>
+          <option>Beautifully Shot</option>
+          <option>Binge-Worthy</option>
+          <option>Brain-Bending</option>
+          <option>Cathartic</option>
+          <option>Chaotic</option>
+          <option>Cozy</option>
+          <option>Creepy</option>
+          <option>Dark &amp; Bleak</option>
+          <option>Disturbing</option>
+          <option>Dreamlike</option>
+          <option>Emotional</option>
+          <option>Epic &amp; Grand</option>
+          <option>Feel-Good</option>
+          <option>Funny</option>
+          <option>Gritty</option>
+          <option>Gut-Punch</option>
+          <option>Heartwarming</option>
+          <option>Intense</option>
+          <option>Mind-Bending</option>
+          <option>Mysterious</option>
+          <option>Nostalgic</option>
+          <option>Over-the-Top</option>
+          <option>Raw &amp; Real</option>
+          <option>Romantic</option>
+          <option>Slow Burn</option>
+          <option>Suspenseful</option>
+          <option>Tearjerker</option>
+          <option>Tense</option>
+          <option>Thought-Provoking</option>
+          <option>Twisted</option>
+          <option>Unexpected</option>
+          <option>Uplifting</option>
+          <option>Weird</option>
+          <option>Wholesome</option>
+          <option>Wild Ride</option>
+        </select>
+      </div>
+    </div>
+    <button id="mm-find-btn" class="mm-find-btn" onclick="findMoodMatch()">✦ Find My Match</button>
+    <div id="mm-loading" class="mm-loading" style="display:none">
+      <div class="mm-spinner"></div>
+      <span>AI is finding your perfect match...</span>
+    </div>
+  </div>
+
+  <!-- REVEAL -->
+  <div id="mm-reveal">
+    <div class="mm-reveal-header">
+      <span class="mm-progress" id="mm-progress">Match 1 of 5</span>
+      <span class="mm-combo-label" id="mm-combo-label"></span>
+      <button class="mm-close-small" onclick="closeMoodMagic()">✕ Close</button>
+    </div>
+    <div id="mm-reveal-cards">
+      <div id="mm-movie-card" class="mm-card"></div>
+      <div id="mm-tv-card"    class="mm-card"></div>
+    </div>
+  </div>
+
+  <!-- DONE -->
+  <div id="mm-done">
+    <div class="mm-done-icon">✦</div>
+    <h2 class="mm-done-title">You've seen them all</h2>
+    <p class="mm-done-sub">You've gone through all 5 pairs. Try a different genre + vibe combo for more magic.</p>
+    <button class="mm-find-btn" onclick="resetMoodMagic()" style="margin-top:8px;">✦ Try a New Combo</button>
+    <button class="mm-close-link" onclick="closeMoodMagic()">Back to StreamFader</button>
+  </div>
+
+</div>
 
 <!-- ── QUEUE DROPDOWN ── -->
 <div id="queue-backdrop" onclick="toggleQueueDropdown()"></div>
@@ -4848,6 +5159,188 @@ function renderWatchlist() {
 }
 
 renderWatchlist();
+
+// ── Mood Magic ────────────────────────────────────────────────────────────────
+(function() {
+  let _mmMovies = [];
+  let _mmTV     = [];
+  let _mmIndex  = 0;
+  let _mmGenre  = '';
+  let _mmVibe   = '';
+
+  window.openMoodMagic = function() {
+    document.getElementById('mm-overlay').style.display = 'block';
+    showPicker();
+  };
+
+  window.closeMoodMagic = function() {
+    document.getElementById('mm-overlay').style.display = 'none';
+  };
+
+  window.resetMoodMagic = function() {
+    _mmMovies = []; _mmTV = []; _mmIndex = 0;
+    document.getElementById('mm-genre').value = '';
+    document.getElementById('mm-vibe').value  = '';
+    showPicker();
+  };
+
+  window.findMoodMatch = async function() {
+    const genre = (document.getElementById('mm-genre').value || '').trim();
+    const vibe  = (document.getElementById('mm-vibe').value  || '').trim();
+    if (!genre || !vibe) {
+      const miss = !genre ? 'mm-genre' : 'mm-vibe';
+      document.getElementById(miss).focus();
+      return;
+    }
+    _mmGenre = genre; _mmVibe = vibe;
+
+    const btn  = document.getElementById('mm-find-btn');
+    const load = document.getElementById('mm-loading');
+    btn.disabled = true;
+    btn.textContent = 'Finding your match...';
+    load.style.display = 'flex';
+
+    try {
+      const res  = await fetch('/api/mood-magic', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ genre, vibe })
+      });
+      const data = await res.json();
+      if (data.error || (!data.movies?.length && !data.tv?.length)) {
+        alert('Could not find matches right now. Try again!');
+        return;
+      }
+      _mmMovies = data.movies || [];
+      _mmTV     = data.tv     || [];
+      _mmIndex  = 0;
+      showReveal();
+    } catch(e) {
+      alert('Connection error — try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '✦ Find My Match';
+      load.style.display = 'none';
+    }
+  };
+
+  function showPicker() {
+    document.getElementById('mm-picker').style.display = 'flex';
+    document.getElementById('mm-reveal').style.display = 'none';
+    document.getElementById('mm-done').style.display   = 'none';
+  }
+
+  function showReveal() {
+    document.getElementById('mm-picker').style.display = 'none';
+    document.getElementById('mm-reveal').style.display = 'flex';
+    document.getElementById('mm-done').style.display   = 'none';
+    renderPair(_mmIndex);
+  }
+
+  function renderPair(idx) {
+    const total = Math.max(_mmMovies.length, _mmTV.length);
+    document.getElementById('mm-progress').textContent  = `Match ${idx + 1} of ${total}`;
+    document.getElementById('mm-combo-label').textContent = `${_mmGenre} × ${_mmVibe}`;
+    renderCard('mm-movie-card', _mmMovies[idx], 'movie', idx);
+    renderCard('mm-tv-card',    _mmTV[idx],     'tv',    idx);
+  }
+
+  function scoreColor(v) {
+    if (!v) return 'var(--dim)';
+    if (v >= 80) return '#66bb6a';
+    if (v >= 60) return '#ffb74d';
+    return '#ef5350';
+  }
+
+  function renderCard(cardId, item, type, idx) {
+    const el = document.getElementById(cardId);
+    if (!item) {
+      el.innerHTML = `<div style="padding:32px;color:var(--dim);text-align:center;flex:1;display:flex;align-items:center;justify-content:center;">No match found for this slot</div>`;
+      return;
+    }
+    const typeLabel  = type === 'movie' ? '🎬 MOVIE' : '📺 TV SHOW';
+    const posterHtml = item.poster
+      ? `<img src="${item.poster}" alt="${(item.title||'').replace(/"/g,'&quot;')}" onerror="this.style.display='none'">`
+      : `<div class="mm-poster-ph">${type === 'movie' ? '🎬' : '📺'}</div>`;
+    const scoreHtml  = item.blend != null
+      ? `<span class="mm-score" style="color:${scoreColor(item.blend)}">${item.blend}</span><span style="font-size:11px;color:var(--dim);margin-left:4px;font-weight:700;">SF Score</span>`
+      : '';
+    const reasonHtml = item.reason
+      ? `<div class="mm-card-reason">"${item.reason}"</div>` : '';
+    const synopsisHtml = item.overview
+      ? `<p class="mm-synopsis">${item.overview}</p>` : '';
+    const trailerHtml = item.imdb_id
+      ? `<button class="mm-trailer-btn" onclick="mmOpenTrailer('${item.imdb_id}','${(item.title||'').replace(/'/g,"\\'").replace(/"/g,'\\"')}')">▶ Trailer</button>`
+      : '';
+    const safeId    = (item.imdb_id || item.id || '').replace(/'/g,"\\'");
+    const safeTitle = (item.title || '').replace(/'/g,"\\'").replace(/"/g,'\\"');
+
+    el.innerHTML = `
+      <div class="mm-card-type">${typeLabel}</div>
+      <div class="mm-card-poster">${posterHtml}</div>
+      <div class="mm-card-info">
+        <div class="mm-card-title">${item.title || '—'}</div>
+        <div class="mm-card-year">${item.year || ''}</div>
+        ${scoreHtml ? `<div style="display:flex;align-items:baseline;gap:4px;margin:2px 0;">${scoreHtml}</div>` : ''}
+        ${reasonHtml}
+        ${synopsisHtml}
+        ${trailerHtml}
+        <div class="mm-card-actions">
+          <button class="mm-action-btn mm-seen" onclick="mmAction('seen',${idx},'${cardId}','${safeId}','${safeTitle}')">✓ Seen it</button>
+          <button class="mm-action-btn mm-skip" onclick="mmAction('skip',${idx},'${cardId}','${safeId}','${safeTitle}')">✕ Skip</button>
+          <button class="mm-action-btn mm-save" onclick="mmAction('save',${idx},'${cardId}','${safeId}','${safeTitle}')">★ Save</button>
+        </div>
+      </div>`;
+  }
+
+  window.mmAction = function(action, idx, cardId, id, title) {
+    if (action === 'save') {
+      const item = cardId === 'mm-movie-card' ? _mmMovies[idx] : _mmTV[idx];
+      if (item) toggleWannaSee(item, null);
+    }
+    advancePair(idx);
+  };
+
+  window.mmOpenTrailer = async function(imdbId, title) {
+    try {
+      const res  = await fetch(`/api/trailer?imdb_id=${encodeURIComponent(imdbId)}&title=${encodeURIComponent(title)}`);
+      const data = await res.json();
+      if (data.url) window.open(data.url, '_blank', 'noopener');
+      else alert('Trailer not found.');
+    } catch(e) {}
+  };
+
+  function advancePair(idx) {
+    if (idx !== _mmIndex) return; // stale click guard
+    const total = Math.max(_mmMovies.length, _mmTV.length);
+    const next  = idx + 1;
+    if (next >= total) {
+      showDone();
+      return;
+    }
+    _mmIndex = next;
+    const cards = document.getElementById('mm-reveal-cards');
+    cards.style.opacity   = '0';
+    cards.style.transform = 'translateY(14px)';
+    setTimeout(() => {
+      renderPair(_mmIndex);
+      cards.style.opacity   = '1';
+      cards.style.transform = 'translateY(0)';
+    }, 220);
+  }
+
+  function showDone() {
+    document.getElementById('mm-reveal').style.display = 'none';
+    document.getElementById('mm-done').style.display   = 'flex';
+  }
+
+  // Close on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('mm-overlay').style.display !== 'none') {
+      closeMoodMagic();
+    }
+  });
+})();
 </script>
 
 <!-- ── Detail Modal ── -->

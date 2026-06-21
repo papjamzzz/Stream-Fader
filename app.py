@@ -820,6 +820,143 @@ StreamFader combines critic scores (Rotten Tomatoes, Metacritic) with audience r
     resp.headers['Cache-Control'] = 'public, max-age=86400'
     return resp
 
+@app.route('/api/mood-magic', methods=['POST'])
+def mood_magic():
+    import re as _re
+    from concurrent.futures import ThreadPoolExecutor
+    from engine import best_scores
+
+    body  = request.get_json(force=True, silent=True) or {}
+    genre = (body.get('genre') or '').strip()[:80]
+    vibe  = (body.get('vibe')  or '').strip()[:80]
+
+    if not genre or not vibe:
+        return jsonify({'error': 'missing_input'}), 400
+
+    ANTHROPIC_KEY = os.getenv('ANTHROPIC_API_KEY', '')
+    OPENAI_KEY    = os.getenv('OPENAI_API_KEY', '')
+    if not any([ANTHROPIC_KEY, OPENAI_KEY]) or not TMDB_KEY:
+        return jsonify({'error': 'no_ai_key'}), 503
+
+    prompt = f"""You are a film and TV expert matching viewers to the perfect watch based on mood.
+
+Genre: {genre}
+Vibe: {vibe}
+
+Return ONLY valid JSON (no markdown, no code fences):
+{{
+  "movies": [
+    {{"title": "Title", "year": "2024", "reason": "One sentence why this perfectly matches."}},
+    {{"title": "Title", "year": "2022", "reason": "One sentence why this perfectly matches."}},
+    {{"title": "Title", "year": "2023", "reason": "One sentence why this perfectly matches."}},
+    {{"title": "Title", "year": "2021", "reason": "One sentence why this perfectly matches."}},
+    {{"title": "Title", "year": "2019", "reason": "One sentence why this perfectly matches."}}
+  ],
+  "tv": [
+    {{"title": "Title", "year": "2024", "reason": "One sentence why this perfectly matches."}},
+    {{"title": "Title", "year": "2022", "reason": "One sentence why this perfectly matches."}},
+    {{"title": "Title", "year": "2023", "reason": "One sentence why this perfectly matches."}},
+    {{"title": "Title", "year": "2021", "reason": "One sentence why this perfectly matches."}},
+    {{"title": "Title", "year": "2019", "reason": "One sentence why this perfectly matches."}}
+  ]
+}}
+
+Rules:
+- Real titles only, available on major streaming platforms (Netflix, Prime, Hulu, Max, Disney+, Apple TV+)
+- Rank by best match first — the #1 pick must nail both the genre AND vibe precisely
+- The reason must reference BOTH the genre and vibe specifically
+- Mix well-known with hidden gems; no duplicates between movies and tv lists"""
+
+    def _parse_mm(raw):
+        raw = _re.sub(r'^```(?:json)?\n?', '', raw.strip())
+        raw = _re.sub(r'\n?```$', '', raw)
+        return json.loads(raw)
+
+    try:
+        raw = None
+        if OPENAI_KEY:
+            import openai as _openai
+            oc = _openai.OpenAI(api_key=OPENAI_KEY)
+            msg = oc.chat.completions.create(
+                model='gpt-4o', max_tokens=700,
+                messages=[{'role': 'user', 'content': prompt}]
+            )
+            raw = msg.choices[0].message.content
+        elif ANTHROPIC_KEY:
+            import anthropic as _anthropic
+            ac = _anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+            msg = ac.messages.create(
+                model='claude-haiku-4-5-20251001', max_tokens=800,
+                messages=[{'role': 'user', 'content': prompt}]
+            )
+            raw = msg.content[0].text
+        parsed = _parse_mm(raw or '')
+    except Exception as e:
+        app.logger.warning(f"mood_magic AI failed: {e}")
+        return jsonify({'error': 'ai_failed'}), 500
+
+    ai_movies = parsed.get('movies', [])[:5]
+    ai_tv     = parsed.get('tv',     [])[:5]
+
+    def resolve(ai_item, media_hint):
+        title  = ai_item.get('title', '')
+        reason = ai_item.get('reason', '')
+        year   = ai_item.get('year', '')
+        try:
+            r = requests.get(
+                'https://api.themoviedb.org/3/search/multi',
+                params={'api_key': TMDB_KEY, 'query': title, 'include_adult': 'false'},
+                timeout=6
+            )
+            results = [x for x in r.json().get('results', []) if x.get('media_type') in ('movie', 'tv')]
+            if not results:
+                return None
+            item_r  = results[0]
+            tmdb_id = item_r.get('id')
+            mtype   = item_r.get('media_type', media_hint)
+            det = requests.get(
+                f'https://api.themoviedb.org/3/{mtype}/{tmdb_id}',
+                params={'api_key': TMDB_KEY, 'append_to_response': 'external_ids,watch/providers'},
+                timeout=6
+            ).json()
+            imdb_id   = (det.get('external_ids') or {}).get('imdb_id') or ''
+            name      = det.get('title') or det.get('name') or title
+            poster    = f"https://image.tmdb.org/t/p/w342{det['poster_path']}" if det.get('poster_path') else None
+            release   = det.get('release_date') or det.get('first_air_date') or ''
+            yr        = release[:4] if release else year
+            genres    = [g['name'] for g in (det.get('genres') or []) if g.get('name')][:3]
+            wp        = (det.get('watch/providers') or {}).get('results', {}).get('US', {})
+            providers = [p['provider_name'] for p in (wp.get('flatrate') or [])[:3]]
+            overview  = (det.get('overview') or '')[:220]
+            scores    = best_scores(imdb_id) if imdb_id else {}
+            c, a      = scores.get('critic'), scores.get('audience')
+            blend     = round((c + a) / 2) if c is not None and a is not None else None
+            return {
+                'id': imdb_id or str(tmdb_id), 'imdb_id': imdb_id, 'tmdb_id': tmdb_id,
+                'title': name, 'year': yr, 'overview': overview,
+                'poster': poster, 'release': release, 'media_type': mtype,
+                'genres': genres, 'providers': providers,
+                'critic_score': c, 'audience_score': a, 'blend': blend,
+                'reason': reason,
+            }
+        except Exception as ex:
+            app.logger.warning(f"mood_magic resolve '{title}' failed: {ex}")
+            return None
+
+    with ThreadPoolExecutor(max_workers=10) as ex:
+        mfuts = [ex.submit(resolve, item, 'movie') for item in ai_movies]
+        tfuts = [ex.submit(resolve, item, 'tv')    for item in ai_tv]
+        movies = [f.result() for f in mfuts]
+        tv     = [f.result() for f in tfuts]
+
+    return jsonify({
+        'movies': [m for m in movies if m],
+        'tv':     [t for t in tv     if t],
+        'genre':  genre,
+        'vibe':   vibe,
+    })
+
+
 @app.route('/sitemap.xml')
 def sitemap():
     xml = ('<?xml version="1.0" encoding="UTF-8"?>'
