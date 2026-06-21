@@ -99,6 +99,11 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* Scale to match how the UI looks best at browser 67% zoom */
+    @media (min-width: 900px) {
+      html { zoom: 0.67; }
+    }
+
     body {
       background: var(--bg);
       color: var(--text);
