@@ -217,20 +217,20 @@
       letter-spacing: 2px;
       text-transform: uppercase;
     }
-    .fader-label.left  { color: var(--critic); text-shadow: 0 0 24px rgba(79,195,247,0.9), 0 0 48px rgba(79,195,247,0.4); }
-    .fader-label.right { color: var(--audience); text-shadow: 0 0 24px rgba(255,183,77,0.9), 0 0 48px rgba(255,183,77,0.4); }
+    .fader-label.left  { color: var(--critic); text-shadow: 0 0 12px rgba(79,195,247,0.5); }
+    .fader-label.right { color: var(--audience); text-shadow: 0 0 12px rgba(255,183,77,0.5); }
     .fader-sweet-label {
       font-size: 21px;
       font-weight: 900;
       letter-spacing: 1px;
       color: var(--sweet);
-      opacity: 0.85;
+      opacity: 0.75;
       transition: opacity 0.3s, text-shadow 0.3s;
-      text-shadow: 0 0 20px rgba(198,120,221,0.6);
+      text-shadow: 0 0 10px rgba(198,120,221,0.35);
     }
     .fader-sweet-label.active {
       opacity: 1;
-      text-shadow: 0 0 30px rgba(198,120,221,1), 0 0 60px rgba(198,120,221,0.5);
+      text-shadow: 0 0 16px rgba(198,120,221,0.7);
     }
 
     .fader-wrap {
@@ -449,10 +449,58 @@
       color: rgba(198,120,221,0.7);
       text-transform: uppercase;
     }
-    @media (max-width: 900px) {
+    @media (max-width: 1024px) {
       .two-col { grid-template-columns: 1fr; }
       .col-divider { display: none; }
       .genre-sidebar, .star-col { display: none; }
+    }
+
+    /* ── CONTENT TYPE SELECTOR ── */
+    .type-selector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .type-selector-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-right: 6px;
+    }
+    .type-btn {
+      padding: 9px 24px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--dim);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      letter-spacing: 0.03em;
+    }
+    .type-btn:hover { border-color: rgba(198,120,221,0.4); color: var(--text); }
+    .type-btn.active.movies { background: rgba(79,195,247,0.1); border-color: rgba(79,195,247,0.5); color: #4fc3f7; }
+    .type-btn.active.all    { background: rgba(198,120,221,0.1); border-color: rgba(198,120,221,0.5); color: #c678dd; }
+    .type-btn.active.tv     { background: rgba(255,183,77,0.1); border-color: rgba(255,183,77,0.5); color: #ffb74d; }
+
+    /* single-col mode: full width, wider card grid */
+    .two-col.single-col { grid-template-columns: 1fr; }
+    .two-col.single-col .col-divider { display: none !important; }
+    .two-col.single-col .card-list { grid-template-columns: repeat(4, 1fr); }
+
+    @media (max-width: 768px) {
+      .type-selector { padding: 10px 12px; gap: 6px; }
+      .type-selector-label { display: none; }
+      .type-btn { padding: 8px 16px; font-size: 13px; }
+      .two-col.single-col .card-list { grid-template-columns: repeat(2, 1fr); }
     }
 
     .col-header {
@@ -1060,26 +1108,20 @@
       border-radius: 50%;
       background: #66bb6a;
       box-shadow: 0 0 6px #66bb6a;
-      animation: livePulse 2s ease-in-out infinite;
+      animation: livePulse 3.5s ease-in-out infinite;
       flex-shrink: 0;
     }
     @keyframes livePulse {
-      0%, 100% { opacity: 1; box-shadow: 0 0 6px #66bb6a; }
-      50%       { opacity: 0.4; box-shadow: 0 0 2px #66bb6a; }
+      0%, 100% { opacity: 1; box-shadow: 0 0 4px #66bb6a; }
+      50%       { opacity: 0.5; box-shadow: 0 0 2px #66bb6a; }
     }
 
-    /* card entry animations */
-    @keyframes cardFlipTop {
-      0%   { opacity: 0; transform: perspective(700px) rotateX(-90deg) scale(0.95); }
-      55%  { opacity: 1; transform: perspective(700px) rotateX(8deg) scale(1.02); }
-      100% { opacity: 1; transform: perspective(700px) rotateX(0deg) scale(1); }
+    /* card entry — simple fade, no flip theatrics */
+    @keyframes cardFadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-    @keyframes cardFlip {
-      0%   { opacity: 0; transform: perspective(700px) rotateX(-90deg); }
-      55%  { opacity: 1; transform: perspective(700px) rotateX(4deg); }
-      100% { opacity: 1; transform: perspective(700px) rotateX(0deg); }
-    }
-    .card-list .title-row { animation: cardFlip 0.35s cubic-bezier(0.22,1,0.36,1) both; }
+    .card-list .title-row { animation: cardFadeIn 0.18s ease both; }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
@@ -2506,6 +2548,16 @@
 <div id="results-anchor"></div>
 
 <!-- ══════════════════════════════════════════════
+     CONTENT TYPE SELECTOR
+══════════════════════════════════════════════ -->
+<div class="type-selector">
+  <span class="type-selector-label">I want to watch:</span>
+  <button class="type-btn movies" id="type-movies" onclick="setContentType('movies')">🎬 Movies</button>
+  <button class="type-btn all active" id="type-all" onclick="setContentType('all')">✦ All</button>
+  <button class="type-btn tv" id="type-tv" onclick="setContentType('tv')">📺 TV Shows</button>
+</div>
+
+<!-- ══════════════════════════════════════════════
      GENRE FILTER BAR
 ══════════════════════════════════════════════ -->
 <div class="genre-bar" id="genre-bar"></div>
@@ -3448,6 +3500,38 @@ function loadMoreMovies() {
 function loadMoreTV() {
   tvPage++;
   renderList('tv-list', applyGenreFilter(allTV), 'tv-count', tvPage);
+}
+
+// ── Content type selector ────────────────────────────────────────────────────
+function setContentType(type) {
+  window._contentType = type;
+  try { localStorage.setItem('sf_content_type', type); } catch(e) {}
+
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('type-' + type);
+  if (btn) btn.classList.add('active');
+
+  const twocol   = document.querySelector('.two-col');
+  const movieCol = document.getElementById('movie-list') && document.getElementById('movie-list').closest('div[style], div:not([class])') || document.getElementById('movie-list').parentElement;
+  const tvCol    = document.getElementById('tv-list') && document.getElementById('tv-list').closest('div[style], div:not([class])') || document.getElementById('tv-list').parentElement;
+  const divider  = document.querySelector('.col-divider');
+
+  if (type === 'movies') {
+    twocol.classList.add('single-col');
+    movieCol.style.display = '';
+    if (tvCol)   tvCol.style.display = 'none';
+    if (divider) divider.style.display = 'none';
+  } else if (type === 'tv') {
+    twocol.classList.add('single-col');
+    if (movieCol) movieCol.style.display = 'none';
+    tvCol.style.display = '';
+    if (divider) divider.style.display = 'none';
+  } else {
+    twocol.classList.remove('single-col');
+    if (movieCol) movieCol.style.display = '';
+    if (tvCol)   tvCol.style.display = '';
+    if (divider) divider.style.display = '';
+  }
 }
 
 function updateCards(fromFader) {
@@ -4871,6 +4955,12 @@ function _formatVal(param, val) {
   return val > 0 ? Math.round(val * 100) + '%' : '—';
 }
 document.addEventListener('DOMContentLoaded', () => {
+  // Restore content type preference
+  try {
+    const saved = localStorage.getItem('sf_content_type') || 'all';
+    setContentType(saved);
+  } catch(e) { setContentType('all'); }
+
   // Pin fader sticky offset to exact header height
   const hdr = document.querySelector('.header');
   if (hdr) {
