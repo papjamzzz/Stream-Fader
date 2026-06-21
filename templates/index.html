@@ -262,8 +262,8 @@
       -webkit-appearance: none;
       appearance: none;
       width: 100%;
-      height: 13px;
-      border-radius: 7px;
+      height: 10px;
+      border-radius: 5px;
       background: linear-gradient(90deg,
         var(--critic) 0%,
         var(--sweet) 50%,
@@ -283,8 +283,8 @@
       left: 0; right: 0;
       top: 50%;
       transform: translateY(-50%);
-      height: 13px;
-      border-radius: 7px;
+      height: 10px;
+      border-radius: 5px;
       pointer-events: none;
       z-index: 1;
       transition: opacity 0.2s;
@@ -293,9 +293,9 @@
     /* Webkit thumb — big hardware-style fader knob */
     #blend-fader::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 35px;
-      height: 90px;
-      border-radius: 8px;
+      width: 26px;
+      height: 68px;
+      border-radius: 6px;
       background: linear-gradient(180deg, #ffffff 0%, #c8cce0 20%, #8890b0 50%, #5a6080 80%, #3a4060 100%);
       cursor: grab;
       border: 1px solid rgba(255,255,255,0.4);
@@ -319,9 +319,9 @@
         inset 0 2px 0 rgba(255,255,255,0.5);
     }
     #blend-fader::-moz-range-thumb {
-      width: 35px;
-      height: 90px;
-      border-radius: 8px;
+      width: 26px;
+      height: 68px;
+      border-radius: 6px;
       background: linear-gradient(180deg, #ffffff 0%, #c8cce0 20%, #8890b0 50%, #3a4060 100%);
       cursor: grab;
       border: 1px solid rgba(255,255,255,0.3);
@@ -372,7 +372,7 @@
     /* ── FADER INNER (50% width centered) ── */
     .fader-inner {
       flex: 1;
-      max-width: 640px;
+      max-width: 480px;
       padding: 0;
     }
 
@@ -1771,7 +1771,7 @@
 
     /* ── WORDMARK ── */
     .sf-wordmark {
-      font-size: clamp(72px, 9vw, 120px);
+      font-size: clamp(86px, 10.8vw, 144px);
       font-weight: 900;
       letter-spacing: -0.03em;
       line-height: 0.95;
@@ -2084,93 +2084,120 @@
     }
     .hdr-btn-magic:hover { background: linear-gradient(135deg, rgba(0,212,190,0.18) 0%, rgba(140,90,240,0.16) 100%); border-color: rgba(0,212,190,0.65); }
 
-    /* ── MOOD MAGIC HERO (replaces genre bar) ───────────────────────────────── */
-    .mm-hero {
+    /* ── GRAB BAG — cheesy sale-banner CTA (replaces genre bar) ──────────────── */
+    .grab-bag {
       position: relative;
-      margin: 6px 16px 20px;
-      border-radius: 18px;
-      border: 1px solid rgba(199,125,255,0.34);
-      background:
-        linear-gradient(135deg, rgba(199,125,255,0.11) 0%, rgba(255,110,199,0.07) 50%, rgba(94,231,223,0.06) 100%),
-        var(--card);
-      overflow: hidden;
+      display: block; width: calc(100% - 32px);
+      margin: 6px auto 22px;
+      max-width: 880px;
+      border: none;
+      border-radius: 16px;
+      padding: 0;
       cursor: pointer;
-      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(100deg, #7b2ff7 0%, #c11ad6 28%, #ff2e93 52%, #ff7a18 78%, #ffc11e 100%);
+      background-size: 200% auto;
+      box-shadow:
+        0 10px 30px rgba(255,46,147,0.32),
+        0 4px 12px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.35);
+      animation: gbFlow 6s linear infinite;
+      transition: transform 0.12s, box-shadow 0.2s;
     }
-    .mm-hero:hover {
-      border-color: rgba(255,110,199,0.62);
-      transform: translateY(-2px);
-      box-shadow: 0 12px 44px rgba(199,125,255,0.24);
-    }
-    /* magical multicolor wash */
-    .mm-hero-glow {
-      position: absolute; inset: 0; pointer-events: none; z-index: 0;
-      background:
-        radial-gradient(circle at 10% 50%, rgba(199,125,255,0.24), transparent 52%),
-        radial-gradient(circle at 92% 50%, rgba(94,231,223,0.15), transparent 50%);
-    }
-    /* glitter shine sweep across the bar */
-    .mm-hero::after {
-      content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
-      background: linear-gradient(105deg, transparent 32%, rgba(255,255,255,0.10) 46%, rgba(255,255,255,0.24) 50%, rgba(255,255,255,0.10) 54%, transparent 68%);
-      transform: translateX(-120%);
-      animation: mmShine 5.5s ease-in-out infinite;
-    }
-    @keyframes mmShine {
-      0%, 55% { transform: translateX(-120%); }
-      100%    { transform: translateX(120%); }
-    }
-    .mm-hero-inner {
-      position: relative; z-index: 1; display: flex; align-items: center; gap: 18px;
-      padding: 20px 24px;
-    }
-    .mm-hero-spark {
-      font-size: 34px; line-height: 1; flex-shrink: 0;
-      background: linear-gradient(110deg, #c77dff, #ff6ec7, #ffd166, #5ee7df, #7b9bff, #c77dff);
-      background-size: 220% auto;
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      filter: drop-shadow(0 0 9px rgba(255,110,199,0.6));
-      animation: mmHeroPulse 2.6s ease-in-out infinite, mmGlitter 4.5s linear infinite;
-    }
-    @keyframes mmHeroPulse {
-      0%,100% { transform: scale(1);    opacity: 0.92; }
-      50%     { transform: scale(1.12); opacity: 1;    }
-    }
-    @keyframes mmGlitter {
+    @keyframes gbFlow {
       0%   { background-position: 0% 50%; }
-      100% { background-position: 220% 50%; }
+      100% { background-position: 200% 50%; }
     }
-    .mm-hero-text { flex: 1; min-width: 0; }
-    .mm-hero-title {
-      font-size: 25px; font-weight: 900; letter-spacing: -0.01em;
-      background: linear-gradient(110deg, #c77dff 0%, #ff6ec7 18%, #ffd166 36%, #5ee7df 54%, #7b9bff 74%, #c77dff 100%);
-      background-size: 220% auto;
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      filter: drop-shadow(0 1px 7px rgba(199,125,255,0.5));
-      animation: mmGlitter 4.5s linear infinite;
+    .grab-bag:hover {
+      transform: translateY(-2px) scale(1.008);
+      box-shadow:
+        0 16px 44px rgba(255,46,147,0.45),
+        0 6px 16px rgba(0,0,0,0.55),
+        inset 0 1px 0 rgba(255,255,255,0.45);
     }
-    .mm-hero-sub { color: var(--dim); font-size: 14px; margin-top: 3px; }
-    .mm-hero-btn {
+    .grab-bag:active { transform: translateY(0) scale(0.995); }
+    /* glossy top sheen */
+    .grab-bag::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+      background: linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.05) 42%, transparent 60%);
+    }
+    /* shine sweep */
+    .grab-bag::after {
+      content: ''; position: absolute; top: 0; bottom: 0; width: 60%; z-index: 2;
+      pointer-events: none;
+      background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%);
+      transform: translateX(-180%);
+      animation: gbShine 4s ease-in-out infinite;
+    }
+    @keyframes gbShine {
+      0%, 50% { transform: translateX(-180%); }
+      100%    { transform: translateX(320%); }
+    }
+    .grab-bag-inner {
+      position: relative; z-index: 3;
+      display: flex; align-items: center; gap: 18px;
+      padding: 16px 22px;
+    }
+    .grab-bag-badge {
       flex-shrink: 0;
-      padding: 12px 26px; border-radius: 28px;
-      background: linear-gradient(135deg, rgba(199,125,255,0.22) 0%, rgba(255,110,199,0.18) 100%);
-      border: 1px solid rgba(199,125,255,0.55); color: #efc6ff;
-      font-family: 'Inter', sans-serif; font-size: 17px; font-weight: 800;
-      letter-spacing: 0.04em; cursor: pointer; white-space: nowrap;
-      box-shadow: 0 0 18px rgba(199,125,255,0.16);
-      transition: background 0.2s, border-color 0.2s, transform 0.1s, box-shadow 0.2s;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 1px;
+      background: #0a0c18;
+      color: #ffc11e;
+      border-radius: 12px;
+      padding: 10px 16px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.5), inset 0 0 0 1.5px rgba(255,193,30,0.5);
+      transform: rotate(-4deg);
+      animation: gbWobble 3s ease-in-out infinite;
     }
-    .mm-hero-btn:hover {
-      background: linear-gradient(135deg, rgba(199,125,255,0.36) 0%, rgba(255,110,199,0.32) 100%);
-      border-color: rgba(255,110,199,0.85); transform: translateY(-1px);
-      box-shadow: 0 0 28px rgba(255,110,199,0.32);
+    @keyframes gbWobble {
+      0%,100% { transform: rotate(-4deg) scale(1); }
+      50%     { transform: rotate(-4deg) scale(1.06); }
     }
-    @media (max-width: 480px) {
-      .mm-hero { margin: 4px 12px 10px; }
-      .mm-hero-inner { padding: 11px 14px; gap: 10px; flex-wrap: nowrap; }
-      .mm-hero-spark { font-size: 24px; }
-      .mm-hero-title { font-size: 21px; }
-      .mm-hero-btn { padding: 9px 14px; font-size: 14.5px; white-space: nowrap; }
+    .grab-bag-badge-emoji { font-size: 26px; line-height: 1; }
+    .grab-bag-badge-label {
+      font-size: 10px; font-weight: 900; letter-spacing: 0.14em;
+      text-transform: uppercase; color: #fff;
+    }
+    .grab-bag-text { flex: 1; min-width: 0; text-align: left; }
+    .grab-bag-title {
+      font-size: 27px; font-weight: 900; letter-spacing: -0.01em; line-height: 1.05;
+      color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    }
+    .grab-bag-sub {
+      font-size: 14px; font-weight: 700; letter-spacing: 0.02em;
+      color: rgba(255,255,255,0.9); margin-top: 3px;
+    }
+    .grab-bag-cta {
+      flex-shrink: 0;
+      display: flex; align-items: center; gap: 8px;
+      background: #fff; color: #c11ad6;
+      font-weight: 900; font-size: 16px; letter-spacing: 0.02em;
+      padding: 13px 24px; border-radius: 30px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+      white-space: nowrap;
+      transition: transform 0.12s;
+    }
+    .grab-bag:hover .grab-bag-cta { transform: scale(1.05); }
+    .grab-bag-cta-arrow {
+      display: inline-block;
+      animation: gbArrow 1.3s ease-in-out infinite;
+    }
+    @keyframes gbArrow {
+      0%,100% { transform: translateX(0); }
+      50%     { transform: translateX(5px); }
+    }
+    @media (max-width: 600px) {
+      .grab-bag { width: calc(100% - 24px); margin: 4px auto 12px; }
+      .grab-bag-inner { padding: 12px 14px; gap: 12px; }
+      .grab-bag-badge { padding: 7px 11px; }
+      .grab-bag-badge-emoji { font-size: 20px; }
+      .grab-bag-badge-label { font-size: 8px; }
+      .grab-bag-title { font-size: 19px; }
+      .grab-bag-sub { font-size: 12px; }
+      .grab-bag-cta { padding: 10px 16px; font-size: 13px; }
+      .grab-bag-cta .grab-bag-cta-full { display: none; }
     }
 
     /* ── MOOD MAGIC ─────────────────────────────────────────────────────────── */
@@ -3055,18 +3082,21 @@
 </div>
 
 <!-- ══════════════════════════════════════════════
-     MOOD MAGIC HERO
+     GRAB BAG — sale-banner CTA
 ══════════════════════════════════════════════ -->
-<div class="mm-hero" onclick="openMoodMagic()">
-  <div class="mm-hero-glow"></div>
-  <div class="mm-hero-inner">
-    <div class="mm-hero-spark">✦</div>
-    <div class="mm-hero-text">
-      <div class="mm-hero-title">Mood Magic</div>
+<button class="grab-bag" onclick="openMoodMagic()">
+  <div class="grab-bag-inner">
+    <div class="grab-bag-badge">
+      <span class="grab-bag-badge-emoji">🎁</span>
+      <span class="grab-bag-badge-label">Grab Bag</span>
     </div>
-    <button class="mm-hero-btn" onclick="event.stopPropagation();openMoodMagic()">Find My Match →</button>
+    <div class="grab-bag-text">
+      <div class="grab-bag-title">We Choose for Your Mood</div>
+      <div class="grab-bag-sub">Pick a genre + a vibe — we hand-pick tonight's watch</div>
+    </div>
+    <div class="grab-bag-cta"><span class="grab-bag-cta-full">Surprise Me</span> <span class="grab-bag-cta-arrow">→</span></div>
   </div>
-</div>
+</button>
 
 <!-- ══════════════════════════════════════════════
      CLAUDE TOP PICK
@@ -4893,12 +4923,12 @@ const TOUR_STEPS = [
     arrow:  'down',
   },
   {
-    target: '.mm-hero',
-    color:  '#00d4be',
-    emoji:  '✦',
+    target: '.grab-bag',
+    color:  '#ff2e93',
+    emoji:  '🎁',
     label:  'STEP 5 OF 5',
-    title:  'Mood Magic.',
-    body:   'Pick a genre and a vibe — <strong style="color:#00d4be">AI finds your perfect movie and show</strong> from tonight\'s catalog. Hit <strong style="color:#00d4be">Find My Match</strong> to try it.',
+    title:  'Grab Bag.',
+    body:   'Pick a genre and a vibe — <strong style="color:#ff2e93">we hand-pick your movie and show</strong> from tonight\'s catalog. Hit <strong style="color:#ff2e93">Surprise Me</strong> to try it.',
     arrow:  'up',
   },
 ];
