@@ -102,6 +102,9 @@
     /* Scale to match how the UI looks best at browser 67% zoom */
     @media (min-width: 900px) {
       html { zoom: 0.67; }
+      /* The Mood Magic picker form is a small centered UI — counter the
+         global 0.67 zoom so it reads at full size like it does on mobile. */
+      #mm-picker { zoom: 1.5; min-height: 67vh; }
     }
 
     body {
