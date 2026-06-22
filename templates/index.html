@@ -4841,7 +4841,7 @@ function faderStroll(onDone) {
 }
 
 // ── First-time walkthrough ────────────────────────────────────────────────────
-const TOUR_KEY = 'sf_tour_v6';
+const TOUR_KEY = 'sf_tour_v7';
 
 const TOUR_STEPS = [
   {
@@ -4851,7 +4851,6 @@ const TOUR_STEPS = [
     label:  'STEP 1 OF 5',
     title:  'You\'re the VJ now.',
     body:   'Drag left for what <strong style="color:#4fc3f7">critics</strong> love.<br>Drag right for what <strong style="color:#ffb74d">audiences</strong> love.<br>Every position is a different list.',
-    arrow:  'down',
     onShow: () => faderStroll(),
   },
   {
@@ -4861,7 +4860,6 @@ const TOUR_STEPS = [
     label:  'STEP 2 OF 5',
     title:  'Watch the magic happen.',
     body:   'See those cards? Move the fader and they <strong style="color:#c678dd">reshuffle in real time</strong>. Same movies — totally different order. No algorithm. Just you.',
-    arrow:  'up',
   },
   {
     target: '#movie-list',
@@ -4870,7 +4868,6 @@ const TOUR_STEPS = [
     label:  'STEP 3 OF 5',
     title:  'Tap any card.',
     body:   'RT score. IMDb. Metacritic. Where to watch. <strong style="color:#ffb74d">Everything you need</strong> to decide — plus a <strong style="color:#ffb74d">▶ trailer link</strong> right there in the card.',
-    arrow:  'up',
   },
   {
     target: '#queue-toggle',
@@ -4879,7 +4876,6 @@ const TOUR_STEPS = [
     label:  'STEP 4 OF 5',
     title:  'Save it. It\'ll wait for you.',
     body:   'Bookmark any movie or show. Come back tomorrow, next week — <strong style="color:#f5c400">your list is still here</strong>. No account needed.',
-    arrow:  'down',
   },
   {
     target: '.grab-bag',
@@ -4888,7 +4884,6 @@ const TOUR_STEPS = [
     label:  'STEP 5 OF 5',
     title:  'Your Mood, We Choose.',
     body:   'Pick a genre and a vibe — <strong style="color:#ff2e93">we hand-pick your movie and show</strong> from tonight\'s catalog. Tap the strip to try it.',
-    arrow:  'up',
   },
 ];
 
@@ -4896,7 +4891,7 @@ function showTour() {
   if (_ls.getItem(TOUR_KEY)) return;
 
   let current = 0;
-  let tourEl, spotEl, arrowEl, skipEl, arrowTimer;
+  let tourEl, spotEl, skipEl, arrowTimer;
 
   // Confetti burst
   function burst(x, y, color) {
@@ -4930,37 +4925,8 @@ function showTour() {
     return el;
   }
 
-  function buildArrow() {
-    const a = document.createElement('div');
-    a.style.cssText = `
-      position:fixed;z-index:9003;font-size:72px;line-height:1;
-      animation:arrowBounce 0.5s ease-in-out infinite alternate;
-      filter:drop-shadow(0 0 20px rgba(255,220,0,0.8));
-      pointer-events:none;text-align:center;
-      transform:translateX(-50%);
-    `;
-    a.textContent = '⬆️';
-    document.body.appendChild(a);
-    return a;
-  }
-
-  function positionArrow(arrow, targetSel) {
-    if (!arrow) return;
-    const el = document.querySelector(targetSel);
-    if (!el) return;
-    const r   = el.getBoundingClientRect();
-    const cx  = r.left + r.width / 2;
-    // Place arrow just below the target, pointing up at it
-    const ay  = Math.min(r.bottom + 10, window.innerHeight - 220);
-    arrow.style.left = cx + 'px';   // translateX(-50%) handles centering
-    arrow.style.top  = ay + 'px';
-  }
-
   function showStep(n) {
     const s = TOUR_STEPS[n];
-
-    // Remove previous arrow
-    if (arrowEl) { arrowEl.remove(); arrowEl = null; }
 
     // Scroll target into view
     const targetDom = spotlightEl(s.target);
@@ -5003,12 +4969,9 @@ function showTour() {
       tourEl.style.transform = 'scale(1) translateY(0)';
     }, 50);
 
-    // Arrow — wait for smooth scroll to settle, then measure real position
+    // Wait for smooth scroll to settle, then celebrate at the target
     if (arrowTimer) { clearTimeout(arrowTimer); arrowTimer = null; }
     arrowTimer = setTimeout(() => {
-      arrowEl = buildArrow();
-      positionArrow(arrowEl, s.target);
-      // Burst at the target element's settled position
       const fresh = document.querySelector(s.target);
       if (fresh) {
         const r = fresh.getBoundingClientRect();
@@ -5153,7 +5116,6 @@ function showTour() {
 
   function endTour() {
     if (arrowTimer) { clearTimeout(arrowTimer); arrowTimer = null; }
-    if (arrowEl) arrowEl.remove();
     if (skipEl)  skipEl.remove();
     tourEl.style.transition = 'opacity 0.3s, transform 0.3s';
     tourEl.style.opacity = '0';
@@ -5170,10 +5132,6 @@ function showTour() {
     const s = document.createElement('style');
     s.id = 'tour-styles';
     s.textContent = `
-      @keyframes arrowBounce {
-        from { transform: translateX(-50%) translateY(0px); }
-        to   { transform: translateX(-50%) translateY(12px); }
-      }
       @keyframes tourGlow {
         0%   { box-shadow: 0 12px 80px rgba(0,0,0,0.9), 0 0 60px rgba(79,195,247,0.12); }
         50%  { box-shadow: 0 12px 80px rgba(0,0,0,0.9), 0 0 100px rgba(79,195,247,0.22); }
