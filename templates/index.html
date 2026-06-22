@@ -2254,29 +2254,30 @@
     }
     .mm-close-small:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
     #mm-reveal-cards {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 24px; flex: 1;
+      display: grid; grid-template-columns: repeat(2, minmax(0, 320px));
+      justify-content: center; align-content: start; gap: 28px;
       transition: opacity 0.22s ease, transform 0.22s ease;
     }
     .mm-card {
       background: var(--card); border: 1px solid var(--border);
-      border-radius: 16px; overflow: hidden; display: flex; flex-direction: row;
-      min-height: 340px;
+      border-radius: 16px; overflow: hidden; display: flex; flex-direction: column;
+      align-self: start;
     }
     .mm-card-poster {
-      position: relative; width: 230px; flex-shrink: 0; align-self: stretch;
+      position: relative; width: 100%; aspect-ratio: 2 / 3; flex-shrink: 0;
       overflow: hidden; background: var(--muted);
     }
-    .mm-card-poster img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+    .mm-card-poster img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
     .mm-poster-ph {
       width: 100%; height: 100%; display: flex; align-items: center;
       justify-content: center; font-size: 56px; opacity: 0.25;
     }
-    .mm-card-body { flex: 1; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; }
+    .mm-card-body { flex: 1; min-width: 0; padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 9px; }
     .mm-card-type {
       font-size: 10px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase;
     }
-    .mm-card-title { font-size: 23px; font-weight: 800; line-height: 1.2; }
-    .mm-card-year { font-size: 13px; color: var(--dim); font-weight: 600; margin-top: -4px; }
+    .mm-card-title { font-size: 19px; font-weight: 800; line-height: 1.2; }
+    .mm-card-year { font-size: 12px; color: var(--dim); font-weight: 600; margin-top: -3px; }
     .mm-score {
       display: inline-block; font-size: 30px; font-weight: 900;
       font-variant-numeric: tabular-nums; line-height: 1;
@@ -2329,12 +2330,8 @@
     }
     .mm-close-link:hover { color: var(--text); }
     @media (max-width: 760px) {
-      #mm-reveal-cards { grid-template-columns: 1fr; }
-      .mm-card { flex-direction: column; min-height: 0; }
-      .mm-card-poster { width: 100%; height: 300px; align-self: auto; }
-      .mm-card-poster img { object-position: top center; }
-      .mm-card-body { padding: 16px 16px 18px; }
-      .mm-card-title { font-size: 20px; }
+      #mm-reveal-cards { grid-template-columns: minmax(0, 300px); }
+      .mm-card-poster { aspect-ratio: auto; height: 300px; }
       .mm-logo { font-size: 30px; }
       .mm-dropdowns { flex-direction: column; }
       .mm-x { display: none; }
