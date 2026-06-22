@@ -2259,25 +2259,24 @@
     }
     .mm-card {
       background: var(--card); border: 1px solid var(--border);
-      border-radius: 14px; overflow: hidden; display: flex; flex-direction: column;
-    }
-    .mm-card-type {
-      padding: 10px 16px 8px; font-size: 10px; font-weight: 900;
-      letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim);
-      border-bottom: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden; display: flex; flex-direction: row;
+      min-height: 340px;
     }
     .mm-card-poster {
-      position: relative; width: 100%; height: 260px;
-      overflow: hidden; background: var(--muted); flex-shrink: 0;
+      position: relative; width: 230px; flex-shrink: 0; align-self: stretch;
+      overflow: hidden; background: var(--muted);
     }
-    .mm-card-poster img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+    .mm-card-poster img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
     .mm-poster-ph {
       width: 100%; height: 100%; display: flex; align-items: center;
       justify-content: center; font-size: 56px; opacity: 0.25;
     }
-    .mm-card-info { padding: 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
-    .mm-card-title { font-size: 20px; font-weight: 800; line-height: 1.2; }
-    .mm-card-year { font-size: 12px; color: var(--dim); font-weight: 600; }
+    .mm-card-body { flex: 1; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; }
+    .mm-card-type {
+      font-size: 10px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase;
+    }
+    .mm-card-title { font-size: 23px; font-weight: 800; line-height: 1.2; }
+    .mm-card-year { font-size: 13px; color: var(--dim); font-weight: 600; margin-top: -4px; }
     .mm-score {
       display: inline-block; font-size: 30px; font-weight: 900;
       font-variant-numeric: tabular-nums; line-height: 1;
@@ -2329,9 +2328,13 @@
       text-decoration: underline; margin-top: 8px;
     }
     .mm-close-link:hover { color: var(--text); }
-    @media (max-width: 700px) {
+    @media (max-width: 760px) {
       #mm-reveal-cards { grid-template-columns: 1fr; }
-      .mm-card-poster { max-height: 280px; }
+      .mm-card { flex-direction: column; min-height: 0; }
+      .mm-card-poster { width: 100%; height: 300px; align-self: auto; }
+      .mm-card-poster img { object-position: top center; }
+      .mm-card-body { padding: 16px 16px 18px; }
+      .mm-card-title { font-size: 20px; }
       .mm-logo { font-size: 30px; }
       .mm-dropdowns { flex-direction: column; }
       .mm-x { display: none; }
@@ -5405,18 +5408,20 @@ renderWatchlist();
       el.innerHTML = `<div style="padding:32px;color:var(--dim);text-align:center;flex:1;display:flex;align-items:center;justify-content:center;">No match found for this slot</div>`;
       return;
     }
+    const typeColor  = type === 'movie' ? '#4fc3f7' : '#c678dd';
     const typeLabel  = type === 'movie' ? '🎬 MOVIE' : '📺 TV SHOW';
     const posterHtml = item.poster
       ? `<img src="${item.poster}" alt="${(item.title||'').replace(/"/g,'&quot;')}" onerror="this.style.display='none'">`
       : `<div class="mm-poster-ph">${type === 'movie' ? '🎬' : '📺'}</div>`;
 
     // Scores — mirror regular cards: RT + IMDb, fall back to SF blend
-    const rtHtml   = item.rt_score   != null ? `<span style="font-size:13px;font-weight:700;color:#fa4c0c;">🍅 ${item.rt_score}%</span>` : '';
-    const imdbHtml = item.imdb_score != null ? `<span style="font-size:13px;font-weight:700;color:#f5c518;">⭐ ${Number(item.imdb_score).toFixed(1)}</span>` : '';
-    const blendFallback = (!rtHtml && !imdbHtml && item.blend != null)
-      ? `<span style="font-size:13px;font-weight:700;color:${scoreColor(item.blend)};">SF ${item.blend}</span>` : '';
-    const scoresRow = (rtHtml || imdbHtml || blendFallback)
-      ? `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:2px 0;">${rtHtml}${imdbHtml}${blendFallback}</div>` : '';
+    const rtHtml   = item.rt_score   != null ? `<span style="font-size:15px;font-weight:800;color:#fa4c0c;white-space:nowrap;">🍅 ${item.rt_score}%</span>` : '';
+    const imdbHtml = item.imdb_score != null ? `<span style="font-size:15px;font-weight:800;color:#f5c518;white-space:nowrap;">⭐ ${Number(item.imdb_score).toFixed(1)}</span>` : '';
+    const blendHtml = item.blend != null
+      ? `<span style="font-size:15px;font-weight:800;color:${scoreColor(item.blend)};white-space:nowrap;">SF ${item.blend}</span>` : '';
+    const scoreParts = [rtHtml, imdbHtml, blendHtml].filter(Boolean);
+    const scoresRow = scoreParts.length
+      ? `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">${scoreParts.join('')}</div>` : '';
 
     // Streaming providers with affiliate links
     const rawProviders = (item.providers || []).slice(0, 4);
@@ -5434,11 +5439,11 @@ renderWatchlist();
     const year      = item.year || (item.release || '').slice(0, 4) || '';
 
     el.innerHTML = `
-      <div class="mm-card-type">${typeLabel}</div>
       <div class="mm-card-poster">${posterHtml}</div>
-      <div class="mm-card-info">
+      <div class="mm-card-body">
+        <div class="mm-card-type" style="color:${typeColor};">${typeLabel}</div>
         <div class="mm-card-title">${item.title || '—'}</div>
-        <div class="mm-card-year">${year}</div>
+        ${year ? `<div class="mm-card-year">${year}</div>` : ''}
         ${scoresRow}
         ${providersHtml}
         ${reasonHtml}
