@@ -2254,8 +2254,9 @@
     }
     .mm-close-small:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
     #mm-reveal-cards {
+      flex: 1;
       display: grid; grid-template-columns: repeat(2, minmax(0, 320px));
-      justify-content: center; align-content: start; gap: 28px;
+      justify-content: center; align-content: center; gap: 28px;
       transition: opacity 0.22s ease, transform 0.22s ease;
     }
     .mm-card {
@@ -2330,7 +2331,7 @@
     }
     .mm-close-link:hover { color: var(--text); }
     @media (max-width: 760px) {
-      #mm-reveal-cards { grid-template-columns: minmax(0, 300px); }
+      #mm-reveal-cards { grid-template-columns: minmax(0, 340px); align-content: start; }
       .mm-card-poster { aspect-ratio: auto; height: 300px; }
       .mm-logo { font-size: 30px; }
       .mm-dropdowns { flex-direction: column; }
