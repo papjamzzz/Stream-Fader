@@ -383,7 +383,7 @@
     .content-area {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 24px 16px 56px;
+      padding: 12px 16px 56px;
     }
     /* Genre sidebar — fixed in left viewport margin, never touches the card grid */
     /* Star — fixed between left sidebar and content */
@@ -469,8 +469,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
-      padding: 22px 24px 24px;
+      gap: 10px;
+      padding: 14px 24px 16px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
     }
@@ -1779,7 +1779,7 @@
 
     /* ── WORDMARK ── */
     .sf-wordmark {
-      font-size: clamp(103px, 13vw, 173px);
+      font-size: clamp(88px, 11vw, 147px);
       font-weight: 900;
       letter-spacing: -0.03em;
       line-height: 0.95;
@@ -2971,6 +2971,11 @@
 <section class="fader-section" style="padding:14px 0 12px;">
   <div class="fader-with-pills">
 
+    <div class="fader-pole critic">
+      <span class="fader-pole-icon">🍅</span>
+      <span class="fader-pole-label">Critics</span>
+    </div>
+
     <div class="fader-inner">
       <div class="fader-labels">
         <div class="fader-label left">Critics</div>
@@ -3035,8 +3040,35 @@
       </div>
     </div>
 
+    <div class="fader-pole audience">
+      <span class="fader-pole-icon">⭐</span>
+      <span class="fader-pole-label">Audience</span>
+    </div>
+
   </div>
 </section>
+
+<style>
+  .fader-pole {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    padding: 0 8px;
+    opacity: 0.65;
+  }
+  .fader-pole-icon { font-size: 22px; line-height: 1; }
+  .fader-pole-label {
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .fader-pole.critic   .fader-pole-label { color: var(--critic); }
+  .fader-pole.audience .fader-pole-label { color: var(--audience); }
+  @media (max-width: 700px) { .fader-pole { display: none; } }
+</style>
 
 <div id="results-anchor"></div>
 
@@ -3868,18 +3900,18 @@ function renderCard(item, rank) {
           ${isSaved ? '🔖 Saved' : '🔖 Save'}
         </div>
       </div>
-      <div class="dismiss-bar" onclick="event.stopPropagation()">
-        <button class="dismiss-btn dismiss-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'seen','${item.media_type||'movie'}')">✓<span class="dismiss-label"> Seen it</span></button>
-        <button class="dismiss-btn dismiss-nope" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'nope');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'skip','${item.media_type||'movie'}')">✗<span class="dismiss-label"> No thanks</span></button>
-      </div>
       <div class="card-body">
         <div class="row-title">${item.title}</div>
         <div class="card-meta-line">
           ${year ? `<span class="row-year">${year}</span>` : ''}
-          ${item.rt_score != null ? `<span class="meta-dot">·</span><span style="font-size:11px;font-weight:700;color:#fa4c0c;white-space:nowrap;">🍅 ${item.rt_score}%</span>` : ''}
-          ${item.imdb_score != null ? `<span class="meta-dot">·</span><span style="font-size:11px;font-weight:700;color:#f5c518;white-space:nowrap;">⭐ ${Number(item.imdb_score).toFixed(1)}</span>` : ''}
+          ${item.rt_score != null ? `<span class="meta-dot">·</span><span style="font-size:13px;font-weight:700;color:#fa4c0c;white-space:nowrap;">🍅 ${item.rt_score}%</span>` : ''}
+          ${item.imdb_score != null ? `<span class="meta-dot">·</span><span style="font-size:13px;font-weight:700;color:#f5c518;white-space:nowrap;">⭐ ${Number(item.imdb_score).toFixed(1)}</span>` : ''}
           ${item.rt_score == null && item.imdb_score == null ? `<span class="meta-dot">·</span><span class="sf-inline">SF: <strong>${item.blend != null ? Math.round(item.blend) : '—'}</strong></span>` : ''}
         </div>
+      </div>
+      <div class="dismiss-bar" onclick="event.stopPropagation()">
+        <button class="dismiss-btn dismiss-seen" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'seen');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'seen','${item.media_type||'movie'}')">✓<span class="dismiss-label"> Seen it</span></button>
+        <button class="dismiss-btn dismiss-nope" onclick="dismissTitle(window._cardRegistry[${cardIndex}],'nope');sendPreference('${safeImdbId}','${safeTitle}',${safeGenres},'skip','${item.media_type||'movie'}')">✗<span class="dismiss-label"> No thanks</span></button>
       </div>
     </div>`;
 }
