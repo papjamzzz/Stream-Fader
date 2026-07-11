@@ -36,6 +36,18 @@ NOT the `openai` SDK. Use this pattern for any future OpenAI calls in Railway ap
 - [ ] Add streaming platform filter
 - [ ] Dark/light mode toggle
 - [x] Mobile polish pass — DONE 2026-06-21
+- [x] Pre-share audit + fixes — DONE 2026-07-11
+
+---
+## Last Session (2026-07-11) — Pre-share audit + fixes
+- **Full audit** (backend, frontend, live prod) before sharing the site with someone. Found and fixed:
+  - **Cross-user data leak**: `/api/preference`/`/api/preferences` had no per-user scoping — everyone's seen/skip signals shared one global file and fed into everyone's genre ranking. Now scoped by `session_id` (the existing `sf_session_id` localStorage value); unscoped reads return `[]`, unscoped writes 400.
+  - **Unescaped HTML injection**: titles with quotes (e.g. `"Wuthering Heights"`) broke poster `alt` attributes; Mood Magic's AI-generated `reason` text was injected into `innerHTML` completely raw (self-XSS risk via direct API calls). Added `escapeHtml()`, applied everywhere title/overview/reason hits `innerHTML`.
+  - **Content filter leaks**: anime exclusion only applied on the TMDb ingestion path, not TVmaze/Trakt — Dorohedoro was slipping through. AEW Dynamite/WWE shows slipped through everywhere since TMDb mislabels wrestling as scripted Action/Drama (no genre signal) — added a title-keyword check.
+  - **Stale cache risk**: cache only refreshed when a real visitor hit `/api/content`; during a quiet stretch it sat 32h+ stale. Added an in-process periodic refresh (30 min check, file-locked across gunicorn's 4 workers) so it self-heals with zero traffic.
+  - **Minor**: `/api/streamfinder` could 500 on a non-numeric `fader` value — now falls back to 50.
+- All fixes committed (`4f09654`), pushed, Railway auto-deployed and verified live (new deployment `f423cca0`): preferences properly scoped, wrestling/anime gone from catalog, cache fresh.
+- **Next**: none of this is urgent — app is solid to share as-is.
 
 ---
 ## Last Session (2026-06-21)
