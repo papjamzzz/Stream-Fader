@@ -352,11 +352,19 @@ TV_EXCLUDED_GENRES = '10763,10764,10766,10767,10402,10762'
 # TMDb show types to keep — scripted fiction and limited series only
 TV_ALLOWED_TYPES = {'Scripted', 'Miniseries'}
 
-# TVmaze genres that indicate non-fiction / non-scripted programming
+# Non-fiction / non-scripted genre names — applied across all TV sources
+# (TMDb uses genre IDs for its own exclusion; this name-based set covers
+# TVmaze and Trakt, which only expose genre names, not TMDb's IDs)
 TVMAZE_EXCLUDED_GENRES = {
-    'news', 'talk show', 'sports', 'game show', 'reality',
+    'news', 'talk show', 'sports', 'sport', 'wrestling', 'game show', 'reality',
     'soap', 'variety', 'awards show', 'sports talk',
 }
+
+
+def _is_anime(genres, language):
+    """True if a show is Japanese-language animation — excluded everywhere."""
+    genre_names = {(g or '').lower() for g in (genres or [])}
+    return (language or '').lower() in ('ja', 'japanese') and 'animation' in genre_names
 
 # Titles manually blocked from appearing in results (normalized lowercase)
 TITLE_BLOCKLIST = {
@@ -364,6 +372,10 @@ TITLE_BLOCKLIST = {
     'top gun',
     'top gun: maverick',
 }
+
+# Wrestling promotions — TMDb frequently mislabels these as scripted
+# Action/Drama (no genre signal to filter on), so match on title instead
+TV_TITLE_EXCLUDE_KEYWORDS = ('wrestling', 'wwe ', 'aew ', 'njpw')
 
 
 _GENRE_NORMALIZE = {
@@ -897,6 +909,8 @@ def fetch_tv():
                 show_type = (show.get('type') or '').lower()
                 if show_type in ('news', 'sports', 'variety', 'talk show', 'reality', 'game show'):
                     continue
+                if _is_anime(show.get('genres'), show.get('language')):
+                    continue
                 has_rating = (show.get('rating') or {}).get('average')
                 has_imdb   = (show.get('externals') or {}).get('imdb')
                 if not has_rating and not has_imdb:
@@ -939,6 +953,9 @@ def fetch_tv():
     deduped = []
     for item in enriched:
         if not _passes_score_floor(item):
+            continue
+        title_lower = (item.get('title') or '').lower()
+        if any(kw in title_lower for kw in TV_TITLE_EXCLUDE_KEYWORDS):
             continue
         key = item.get('imdb_id') or item.get('id')
         if key and key not in seen_final:
@@ -1078,9 +1095,11 @@ def _enrich_tv(source, item):
             ids     = item.get('ids') or {}
             imdb_id = ids.get('imdb')
             tmdb_id = ids.get('tmdb')
-            # Exclude anime and game shows from Trakt
+            # Exclude anime, non-fiction/non-scripted genres (reality, sports, wrestling, etc.)
             trakt_genres = {g.lower() for g in (item.get('genres') or [])}
-            if 'anime' in trakt_genres or 'game-show' in trakt_genres or 'game show' in trakt_genres:
+            if 'anime' in trakt_genres or trakt_genres & TVMAZE_EXCLUDED_GENRES:
+                return None
+            if _is_anime(item.get('genres'), item.get('language')):
                 return None
             scores  = best_scores(imdb_id) if imdb_id else {}
             if not scores.get('critic') and not scores.get('audience'):

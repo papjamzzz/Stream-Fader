@@ -1,4 +1,4 @@
-import threading, os, requests, json, hashlib
+import threading, os, requests, json, hashlib, time
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request, make_response
 from engine import get_top_content, get_cached_content, generate_top10, _score_cache, CACHE_FILE
@@ -73,6 +73,42 @@ def _startup():
 
 # Pre-warm cache on startup so the first real user never hits a cold fetch
 threading.Thread(target=_startup, daemon=True).start()
+
+def _try_acquire_refresh_lock(ttl=600):
+    """File-based lock so only one gunicorn worker performs a periodic
+    refresh at a time — in-process locks (_refresh_lock) don't cross
+    worker processes, but this file (on the shared Railway volume) does."""
+    lock_path = 'data/.refresh_lock'
+    now = time.time()
+    try:
+        os.makedirs('data', exist_ok=True)
+        if os.path.exists(lock_path) and now - os.path.getmtime(lock_path) > ttl:
+            os.remove(lock_path)  # previous holder crashed mid-refresh — clear it
+        fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        os.write(fd, str(now).encode())
+        os.close(fd)
+        return True
+    except FileExistsError:
+        return False
+    except Exception:
+        return False
+
+def _periodic_refresh():
+    """Keep content fresh even with zero visitor traffic. Without this,
+    the cache only refreshes when a real browser calls /api/content — during
+    a quiet stretch (e.g. before sharing the site) it can sit stale for a
+    day+ with nothing to trigger a rebuild."""
+    while True:
+        time.sleep(1800)  # check every 30 min
+        try:
+            cached = get_cached_content()
+            if (not cached or cached.get('_stale')) and _try_acquire_refresh_lock():
+                get_top_content(force=True)
+                _background_top10()
+        except Exception:
+            pass
+
+threading.Thread(target=_periodic_refresh, daemon=True).start()
 
 # ── Routes ───────────────────────────────────────────────────────────────────
 
@@ -166,9 +202,12 @@ def streamfinder():
     from engine import best_scores
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
-    body      = request.get_json(force=True, silent=True) or {}
-    words     = (body.get('words') or '').strip()[:120]
-    fader_pos = max(0, min(100, int(body.get('fader', 50))))
+    body  = request.get_json(force=True, silent=True) or {}
+    words = (body.get('words') or '').strip()[:120]
+    try:
+        fader_pos = max(0, min(100, int(body.get('fader', 50))))
+    except (TypeError, ValueError):
+        fader_pos = 50
 
     if not words or not TMDB_KEY:
         return jsonify({'error': 'missing_input'}), 400
@@ -628,18 +667,20 @@ def _save_prefs(p): _save_json(PREFS_FILE, p)
 @app.route('/api/preference', methods=['POST'])
 def preference():
     body = request.get_json(force=True)
-    imdb_id = body.get('imdb_id')
-    signal  = body.get('signal')  # "seen" or "skip"
-    if not imdb_id or signal not in ('seen', 'skip'):
+    imdb_id    = body.get('imdb_id')
+    signal     = body.get('signal')  # "seen" or "skip"
+    session_id = (body.get('session_id') or '').strip()
+    if not imdb_id or signal not in ('seen', 'skip') or not session_id:
         return jsonify({'error': 'bad_request'}), 400
     prefs = _load_prefs()
-    # Remove any existing signal for this title
-    prefs = [p for p in prefs if p.get('imdb_id') != imdb_id]
+    # Remove any existing signal for this title from this session only
+    prefs = [p for p in prefs if not (p.get('imdb_id') == imdb_id and p.get('session_id') == session_id)]
     prefs.append({
         'imdb_id': imdb_id,
         'title': body.get('title', ''),
         'genres': body.get('genres', []),
         'signal': signal,
+        'session_id': session_id,
         'timestamp': datetime.utcnow().isoformat(),
     })
     _save_prefs(prefs)
@@ -647,7 +688,11 @@ def preference():
 
 @app.route('/api/preferences')
 def get_preferences():
-    return jsonify(_load_prefs())
+    session_id = (request.args.get('session_id') or '').strip()
+    if not session_id:
+        return jsonify([])
+    prefs = [p for p in _load_prefs() if p.get('session_id') == session_id]
+    return jsonify(prefs)
 
 
 @app.route('/api/watchlist', methods=['POST'])

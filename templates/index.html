@@ -3624,7 +3624,7 @@ let userPrefs = [];
 
 async function loadPreferences() {
     try {
-        const r = await fetch('/api/preferences');
+        const r = await fetch('/api/preferences?session_id=' + encodeURIComponent(window._sfSession.id));
         userPrefs = await r.json();
     } catch(e) { userPrefs = []; }
 }
@@ -3649,7 +3649,7 @@ async function sendPreference(imdbId, title, genres, signal, mediaType) {
     fetch('/api/preference', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({imdb_id: imdbId, title, genres, signal})
+        body: JSON.stringify({imdb_id: imdbId, title, genres, signal, session_id: window._sfSession.id})
     }).catch(() => {});
     _track('swipe', { imdb_id: imdbId, title, genres, signal, media_type: mediaType || '' });
     loadPreferences();
@@ -3859,6 +3859,12 @@ function formatDate(d) {
   } catch { return d; }
 }
 
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
 function renderCard(item, rank) {
   const col = blendColor(fader);
   const rankClass = rank === 1 ? 'row-rank top1' : rank === 2 ? 'row-rank top2' : rank === 3 ? 'row-rank top3' : 'row-rank';
@@ -3870,8 +3876,8 @@ function renderCard(item, rank) {
     : '';
 
   const posterEl = item.poster
-    ? `<img src="${item.poster}" alt="${item.title}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'card-poster-placeholder\\'><div class=\\'ph-icon\\'>${item.media_type === 'movie' ? '🎬' : '📺'}</div><div class=\\'ph-title\\'>${item.title.replace(/'/g,"&#39;")}</div></div>'">`
-    : `<div class="card-poster-placeholder"><div class="ph-icon">${item.media_type === 'movie' ? '🎬' : '📺'}</div><div class="ph-title">${item.title}</div></div>`;
+    ? `<img src="${item.poster}" alt="${escapeHtml(item.title)}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'card-poster-placeholder\\'><div class=\\'ph-icon\\'>${item.media_type === 'movie' ? '🎬' : '📺'}</div><div class=\\'ph-title\\'>${escapeHtml(item.title)}</div></div>'">`
+    : `<div class="card-poster-placeholder"><div class="ph-icon">${item.media_type === 'movie' ? '🎬' : '📺'}</div><div class="ph-title">${escapeHtml(item.title)}</div></div>`;
 
   const year = item.release ? item.release.slice(0, 4) : '';
   const genre = (item.genres || [])[0] || '';
@@ -3901,7 +3907,7 @@ function renderCard(item, rank) {
         </div>
       </div>
       <div class="card-body">
-        <div class="row-title">${item.title}</div>
+        <div class="row-title">${escapeHtml(item.title)}</div>
         <div class="card-meta-line">
           ${year ? `<span class="row-year">${year}</span>` : ''}
           ${item.rt_score != null ? `<span class="meta-dot">·</span><span style="font-size:13px;font-weight:700;color:#fa4c0c;white-space:nowrap;">🍅 ${item.rt_score}%</span>` : ''}
@@ -4258,7 +4264,7 @@ function renderTop10List(containerId, items, type) {
       <div class="top10-rank">${rank}</div>
       ${thumb}
       <div class="top10-info">
-        <div class="top10-title">${item.title}${season}</div>
+        <div class="top10-title">${escapeHtml(item.title)}${escapeHtml(season)}</div>
         <div class="top10-meta">
           ${year ? `<span>${year}</span>` : ''}
           ${scoreStr ? `<span class="top10-score">${scoreStr}</span>` : ''}
@@ -4285,7 +4291,7 @@ function openDetail(cardIndex) {
 
   // Poster
   const posterEl = item.poster
-    ? `<img class="detail-poster" src="${item.poster}" alt="${item.title}">`
+    ? `<img class="detail-poster" src="${item.poster}" alt="${escapeHtml(item.title)}">`
     : `<div class="detail-poster-placeholder">${item.media_type === 'movie' ? '🎬' : '📺'}</div>`;
 
   // Scores — show real sub-scores first, fall back to composites
@@ -4320,7 +4326,7 @@ function openDetail(cardIndex) {
     const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
     return sentences.slice(0, max).join(' ').trim();
   }
-  const synopsis = truncateSentences(item.overview, 3);
+  const synopsis = escapeHtml(truncateSentences(item.overview, 3));
 
   const imdbLink = item.imdb_id
     ? `<a class="imdb-btn" href="https://www.imdb.com/title/${item.imdb_id}/" target="_blank">⭐ IMDb Page</a>`
@@ -4331,7 +4337,7 @@ function openDetail(cardIndex) {
     <div class="detail-hero">
       ${posterEl}
       <div class="detail-info">
-        <div class="detail-title">${item.title}</div>
+        <div class="detail-title">${escapeHtml(item.title)}</div>
         <div class="detail-meta">
           ${year ? `<span>${year}</span>` : ''}
           <span>${type}</span>
@@ -5325,7 +5331,7 @@ function renderWatchlist() {
       </div>
       ${posterHtml}
       <div class="q-info">
-        <div class="q-title">${item.title}</div>
+        <div class="q-title">${escapeHtml(item.title)}</div>
         <div class="q-meta">${[year, platforms].filter(Boolean).join(' · ')}</div>
       </div>
       <a class="q-find" href="${jwUrl}" target="_blank" rel="noopener" title="Find on JustWatch">Find</a>
@@ -5444,7 +5450,7 @@ renderWatchlist();
     const typeColor  = type === 'movie' ? '#4fc3f7' : '#c678dd';
     const typeLabel  = type === 'movie' ? '🎬 MOVIE' : '📺 TV SHOW';
     const posterHtml = item.poster
-      ? `<img src="${item.poster}" alt="${(item.title||'').replace(/"/g,'&quot;')}" onerror="this.style.display='none'">`
+      ? `<img src="${item.poster}" alt="${escapeHtml(item.title)}" onerror="this.style.display='none'">`
       : `<div class="mm-poster-ph">${type === 'movie' ? '🎬' : '📺'}</div>`;
 
     // Scores — mirror regular cards: RT + IMDb, fall back to SF blend
@@ -5462,8 +5468,8 @@ renderWatchlist();
       ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">${rawProviders.map(p => platformTag(p, 'font-size:11px;padding:4px 10px;', item.title)).join('')}</div>`
       : '';
 
-    const reasonHtml   = item.reason   ? `<div class="mm-card-reason">"${item.reason}"</div>` : '';
-    const synopsisHtml = item.overview ? `<p class="mm-synopsis">${item.overview}</p>` : '';
+    const reasonHtml   = item.reason   ? `<div class="mm-card-reason">"${escapeHtml(item.reason)}"</div>` : '';
+    const synopsisHtml = item.overview ? `<p class="mm-synopsis">${escapeHtml(item.overview)}</p>` : '';
     const trailerHtml  = item.imdb_id
       ? `<button class="mm-trailer-btn" onclick="mmOpenTrailer('${item.imdb_id}','${(item.title||'').replace(/'/g,"\\'").replace(/"/g,'\\"')}')">▶ Trailer</button>`
       : '';
@@ -5475,7 +5481,7 @@ renderWatchlist();
       <div class="mm-card-poster">${posterHtml}</div>
       <div class="mm-card-body">
         <div class="mm-card-type" style="color:${typeColor};">${typeLabel}</div>
-        <div class="mm-card-title">${item.title || '—'}</div>
+        <div class="mm-card-title">${escapeHtml(item.title) || '—'}</div>
         ${year ? `<div class="mm-card-year">${year}</div>` : ''}
         ${scoresRow}
         ${providersHtml}
