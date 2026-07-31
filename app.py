@@ -123,6 +123,28 @@ def _periodic_refresh():
 
 threading.Thread(target=_periodic_refresh, daemon=True).start()
 
+# ── Lightweight per-IP rate limit for paid-AI-calling endpoints ─────────────
+# Mood Magic and StreamFinder call OpenAI/Anthropic/Gemini on every request
+# with no throttling — a scripted caller could run up API costs. This is an
+# in-memory sliding window (per gunicorn worker, resets on deploy/restart);
+# not a substitute for a real limiter, but closes the obvious abuse case
+# without adding a new dependency.
+_rate_buckets = {}
+_rate_lock = threading.Lock()
+
+def _client_ip():
+    return request.headers.get('X-Forwarded-For', request.remote_addr or '').split(',')[0].strip()
+
+def _rate_limited(key, max_calls=10, window=300):
+    now = time.time()
+    with _rate_lock:
+        bucket = _rate_buckets.setdefault(key, [])
+        bucket[:] = [t for t in bucket if now - t < window]
+        if len(bucket) >= max_calls:
+            return True
+        bucket.append(now)
+        return False
+
 @app.after_request
 def _security_headers(resp):
     """Baseline security headers — cheap, no functional risk, not covered
@@ -237,6 +259,9 @@ def streamfinder():
 
     if not words or not TMDB_KEY:
         return jsonify({'error': 'missing_input'}), 400
+
+    if _rate_limited(f'streamfinder:{_client_ip()}'):
+        return jsonify({'error': 'rate_limited'}), 429
 
     ANTHROPIC_KEY = os.getenv('ANTHROPIC_API_KEY', '')
     OPENAI_KEY    = os.getenv('OPENAI_API_KEY', '')
@@ -932,6 +957,9 @@ def mood_magic():
 
     if not genre or not vibe:
         return jsonify({'error': 'missing_input'}), 400
+
+    if _rate_limited(f'mood_magic:{_client_ip()}'):
+        return jsonify({'error': 'rate_limited'}), 429
 
     ANTHROPIC_KEY = os.getenv('ANTHROPIC_API_KEY', '')
     OPENAI_KEY    = os.getenv('OPENAI_API_KEY', '')
