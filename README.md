@@ -36,11 +36,12 @@ No accounts. No algorithms deciding for you. Just the fader.
 - **Seen It / No Thanks** — personalize your feed by dismissing titles you've watched or skipped
 - **Share My Stream** — share your current fader position and genre filters via link
 - **StreamFinder** — AI-assisted discovery from a three-word prompt (Claude / GPT / Gemini)
+- **Mood Magic** — pick a genre + vibe and get AI-curated picks pulled only from StreamFader's current catalog
 - **Trailer Lookup** — watch trailers in-app via TMDb
 - **Cast & Actor Browse** — view full cast and browse an actor's filmography
 - **5i AI Top Pick** — daily consensus recommendation from multiple AI personas
 - **Brevo Email Capture** — optional newsletter signup (requires `BREVO_API_KEY`)
-- **Anonymous Analytics** — lightweight engagement tracking, no PII stored
+- **Anonymous Analytics** — lightweight engagement tracking (no accounts, no third-party trackers); note: raw IP address is stored per event for abuse detection
 - **SEO Ready** — Open Graph tags, `robots.txt`, `sitemap.xml`
 
 ---
