@@ -35,8 +35,23 @@ NOT the `openai` SDK. Use this pattern for any future OpenAI calls in Railway ap
 ## Next Steps
 - [ ] Add streaming platform filter
 - [ ] Dark/light mode toggle
+- [ ] If you want to use `/api/patch-scores`, `/api/score-debug`, `/api/stats`, `/api/watchlist` (GET), or `/api/content?force=true` again, set `ADMIN_TOKEN` in Railway env vars and pass it as `?admin_token=...` or `X-Admin-Token` header — they now 404/lock by default (see 2026-07-31 session)
 - [x] Mobile polish pass — DONE 2026-06-21
 - [x] Pre-share audit + fixes — DONE 2026-07-11
+- [x] Security/cost audit — DONE 2026-07-31
+
+---
+## Last Session (2026-07-31) — Security + cost audit (repo-wide)
+- **Full audit** of live production app for the pattern found across sibling repos this session (exposed secrets, unauthenticated debug endpoints, cost-exposure endpoints, missing security headers, unpinned deps). Confirmed: no secrets ever committed to git history (checked `.env`, `git log --all`), `.gitignore` already solid.
+- **Unauthenticated debug/rebuild endpoints locked down**: `/api/patch-scores`, `/api/score-debug`, `/api/content?force=true` — none used by the live frontend (verified via grep), yet `force=true` bypassed the 6h cache and triggered a full synchronous TMDb/OMDb/MDBList rebuild for anyone who found the query param. Added fail-closed `_is_admin()` gate (`ADMIN_TOKEN` env var). Commit `4cc8ff4`.
+- **Unauthenticated data-dump endpoints locked down**: `GET /api/watchlist` (returned every visitor's saved titles — it's a single shared file, not scoped per session) and `/api/stats` (internal engagement metrics). Same admin gate. Commit `b007b81`.
+- **Security headers added**: X-Content-Type-Options, X-Frame-Options, Referrer-Policy via `after_request`. Skipped CSP — page relies on large inline `<script>` blocks, would need a nonce rework. Verified locally (homepage + `/api/content` still serve fine). Commit `9cfe5ff`.
+- **Cost protection on AI endpoints**: `/api/mood-magic` and `/api/streamfinder` call paid AI APIs (GPT-4o, Claude Haiku, Gemini Flash) per request with zero throttling. Added in-memory per-IP rate limit (10 calls / 5 min → 429). Process-local, resets on deploy — good enough to stop scripted abuse, not a real distributed limiter. Commit `f7ede02`.
+- **Removed unused `openai` package** from requirements.txt — never imported anywhere (app uses `openai_chat()` REST helper instead, per the Railway gotcha above). Commit `96c6f4a`.
+- **README fix**: corrected "no PII stored" claim (raw IP is stored per event in `data/events.jsonl` for abuse detection) and added missing Mood Magic feature entry. Commit `c10778a`.
+- **Flagged, not fixed**: requirements.txt still uses `>=` ranges for flask/requests/anthropic/gunicorn/google-generativeai — didn't pin to exact versions since there's no lockfile and no way to confirm what Railway actually has deployed right now; pinning blind could change production behavior on next deploy without warning. If you want this hardened, check installed versions on the actual Railway instance first.
+- All 6 commits pushed to `papjamzzz/Stream-Fader` main directly (no PR), verified `git log`/`git push` succeeded each time.
+- **Next**: nothing urgent left from this pass. If Mood Magic/StreamFinder usage looks throttled unexpectedly, it's the new rate limiter (10 req / 5 min per IP) — bump `max_calls`/`window` in `_rate_limited()` calls in `app.py` if legitimate traffic needs more headroom.
 
 ---
 ## Last Session (2026-07-11) — Pre-share audit + fixes
