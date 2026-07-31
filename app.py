@@ -123,6 +123,16 @@ def _periodic_refresh():
 
 threading.Thread(target=_periodic_refresh, daemon=True).start()
 
+@app.after_request
+def _security_headers(resp):
+    """Baseline security headers — cheap, no functional risk, not covered
+    by Railway/Flask defaults. Skips CSP: the page relies on large inline
+    <script> blocks and that would need a nonce rework to add safely."""
+    resp.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    resp.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
+    resp.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+    return resp
+
 # ── Routes ───────────────────────────────────────────────────────────────────
 
 @app.route('/')
