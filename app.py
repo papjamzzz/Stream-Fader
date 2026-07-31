@@ -4,8 +4,21 @@ from flask import Flask, render_template, jsonify, request, make_response
 from engine import get_top_content, get_cached_content, generate_top10, _score_cache, CACHE_FILE
 
 TMDB_KEY = os.getenv('TMDB_API_KEY', '')
+ADMIN_TOKEN = os.getenv('ADMIN_TOKEN', '')
 
 app = Flask(__name__)
+
+
+def _is_admin(req):
+    """Gate for internal/debug endpoints that aren't used by the live UI.
+
+    Requires an ADMIN_TOKEN to be set in the environment AND matched via
+    the X-Admin-Token header or ?admin_token= query param. If ADMIN_TOKEN
+    isn't set, these endpoints stay locked (fail closed) rather than open."""
+    if not ADMIN_TOKEN:
+        return False
+    supplied = req.headers.get('X-Admin-Token') or req.args.get('admin_token', '')
+    return supplied == ADMIN_TOKEN
 
 
 def openai_chat(messages, model='gpt-4o', max_tokens=700):
@@ -141,7 +154,10 @@ def index():
 
 @app.route('/api/content')
 def content():
-    force = request.args.get('force', 'false') == 'true'
+    # `force` bypasses the cache and triggers a full TMDb/OMDb/MDBList rebuild —
+    # expensive and not used by the live UI. Restrict to admin so it can't be
+    # hammered by anyone who finds the query param.
+    force = request.args.get('force', 'false') == 'true' and _is_admin(request)
 
     if force:
         try:
@@ -567,6 +583,8 @@ def actor_credits(actor_id):
 @app.route('/api/patch-scores')
 def patch_scores():
     """Apply seed/cached RT scores to existing cache.json without a full rebuild."""
+    if not _is_admin(request):
+        return jsonify({'error': 'not_found'}), 404
     import time as _time
     cached_raw = None
     try:
@@ -606,6 +624,8 @@ def patch_scores():
 @app.route('/api/score-debug')
 def score_debug():
     """Show score distribution to find the fader sweet spot."""
+    if not _is_admin(request):
+        return jsonify({'error': 'not_found'}), 404
     cached = get_cached_content()
     if not cached:
         return jsonify({'error': 'no data'}), 503
