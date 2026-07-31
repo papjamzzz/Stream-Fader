@@ -739,6 +739,13 @@ def watchlist_save():
 
 @app.route('/api/watchlist')
 def watchlist_get():
+    # Server-side watchlist is a single shared file (POST is "mirror to
+    # server, fire and forget" from localStorage — see index.html). The
+    # live UI reads its own list from localStorage, not this endpoint, so
+    # an unauthenticated GET here would dump every visitor's saved titles
+    # into one global list. Lock it down like the other internal routes.
+    if not _is_admin(request):
+        return jsonify({'error': 'not_found'}), 404
     return jsonify(_load_json(WATCH_FILE))
 
 
@@ -823,6 +830,8 @@ def subscribe():
 @app.route('/api/stats')
 def stats():
     """Quick engagement summary — unique sessions, swipes, saves."""
+    if not _is_admin(request):
+        return jsonify({'error': 'not_found'}), 404
     if not os.path.exists(EVENTS_FILE):
         return jsonify({'sessions': 0, 'swipes': 0, 'saves': 0, 'events': 0})
     sessions, swipes, saves = set(), 0, 0
