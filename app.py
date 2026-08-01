@@ -1,6 +1,7 @@
-import threading, os, requests, json, hashlib, time
+import threading, os, requests, json, hashlib, time, sqlite3
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request, make_response
+from urllib.parse import urlparse
 from engine import get_top_content, get_cached_content, generate_top10, _score_cache, CACHE_FILE
 
 TMDB_KEY = os.getenv('TMDB_API_KEY', '')
@@ -159,6 +160,7 @@ def _security_headers(resp):
 
 @app.route('/')
 def index():
+    log_pageview()
     seo_movies, seo_tv = [], []
     try:
         cached = get_cached_content()
@@ -799,6 +801,59 @@ def _append_event(event: dict):
     with open(EVENTS_FILE, 'a') as f:
         f.write(json.dumps(event) + '\n')
 
+# ── First-party marketing analytics (same pattern as Represented) ──────────────
+# Separate from the JSONL engagement tracker above (that one drives the
+# recommendation engine — swipes/saves/session mechanics). This is just
+# pageviews + referrer/UTM source, in its own small SQLite DB, for an
+# /admin/analytics dashboard. No third-party scripts, nothing leaves this server.
+ANALYTICS_DB = os.path.join(DATA_DIR, 'analytics.db')
+
+def _get_analytics_db():
+    os.makedirs(DATA_DIR, exist_ok=True)
+    conn = sqlite3.connect(ANALYTICS_DB)
+    conn.row_factory = sqlite3.Row
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS events (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_type       TEXT NOT NULL,
+            path             TEXT,
+            referrer_domain  TEXT,
+            utm_source       TEXT,
+            utm_medium       TEXT,
+            utm_campaign     TEXT,
+            created_at       TEXT DEFAULT (datetime('now'))
+        )
+    """)
+    return conn
+
+def _referrer_domain():
+    ref = request.headers.get('Referer', '')
+    if not ref:
+        return None
+    try:
+        return urlparse(ref).netloc or None
+    except Exception:
+        return None
+
+def log_pageview():
+    try:
+        conn = _get_analytics_db()
+        conn.execute(
+            'INSERT INTO events (event_type, path, referrer_domain, utm_source, utm_medium, utm_campaign) '
+            'VALUES (?,?,?,?,?,?)',
+            (
+                'pageview', request.path, _referrer_domain(),
+                (request.args.get('utm_source') or '')[:100] or None,
+                (request.args.get('utm_medium') or '')[:100] or None,
+                (request.args.get('utm_campaign') or '')[:100] or None,
+            )
+        )
+        conn.commit()
+        conn.close()
+    except Exception as ex:
+        print(f'[ANALYTICS] failed to log pageview: {ex}')
+
+
 @app.route('/api/track', methods=['POST'])
 def track():
     body       = request.get_json(force=True, silent=True) or {}
@@ -882,6 +937,31 @@ def stats():
             except Exception:
                 pass
     return jsonify({'sessions': len(sessions), 'swipes': swipes, 'saves': saves, 'events': total})
+
+
+@app.route('/admin/analytics')
+def admin_analytics():
+    if not _is_admin(request):
+        return jsonify({'error': 'not_found'}), 404
+
+    conn = _get_analytics_db()
+    pageviews_by_day = conn.execute("""
+        SELECT date(created_at) AS day, COUNT(*) AS n FROM events
+        WHERE event_type='pageview' AND created_at >= date('now', '-30 days')
+        GROUP BY day ORDER BY day
+    """).fetchall()
+    pageviews_by_source = conn.execute("""
+        SELECT COALESCE(NULLIF(utm_source,''), NULLIF(referrer_domain,''), 'direct') AS source, COUNT(*) AS n
+        FROM events WHERE event_type='pageview'
+        GROUP BY source ORDER BY n DESC
+    """).fetchall()
+    total_pageviews = conn.execute("SELECT COUNT(*) AS n FROM events WHERE event_type='pageview'").fetchone()['n']
+    conn.close()
+
+    return render_template('analytics.html',
+        pageviews_by_day=pageviews_by_day, pageviews_by_source=pageviews_by_source,
+        total_pageviews=total_pageviews,
+    )
 
 
 @app.route('/best-movies-streaming-now')
