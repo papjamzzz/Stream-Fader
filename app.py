@@ -182,7 +182,11 @@ def index():
         'max':       os.getenv('AFFILIATE_MAX', ''),
         'peacock':   os.getenv('AFFILIATE_PEACOCK', ''),
     }
-    resp = make_response(render_template('index.html', seo_movies=seo_movies, seo_tv=seo_tv, aff=aff))
+    # SHOW_TOUR=0 suppresses the first-visit tour entirely. Toggled from the
+    # Railway env so it can be switched for a demo without a deploy.
+    show_tour = os.getenv('SHOW_TOUR', '1') != '0'
+    resp = make_response(render_template('index.html', seo_movies=seo_movies, seo_tv=seo_tv,
+                                         aff=aff, show_tour=show_tour))
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
     return resp
 

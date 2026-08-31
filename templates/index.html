@@ -5232,8 +5232,10 @@ function showTour() {
   setTimeout(() => showStep(0), 800);
 }
 
-// Show tour only on first visit
-if (!_ls.getItem(TOUR_KEY)) {
+// Show tour only on first visit, and only if the server has it enabled.
+// SHOW_TOUR=0 on Railway suppresses it for demos.
+const TOUR_ENABLED = {{ 'true' if show_tour else 'false' }};
+if (TOUR_ENABLED && !_ls.getItem(TOUR_KEY)) {
   document.addEventListener('sf:content-loaded', () => showTour(), { once: true });
 }
 
