@@ -16,10 +16,19 @@ TRAKT_ID      = os.getenv('TRAKT_CLIENT_ID', '')
 MDBLIST_KEY   = os.getenv('MDBLIST_API_KEY', '')
 ANTHROPIC_KEY = os.getenv('ANTHROPIC_API_KEY', '')
 
-CACHE_FILE       = 'data/cache.json'
-SCORE_CACHE_FILE = 'data/score_cache.json'  # per-title score cache — survives content rebuilds
-SCORE_SEED_FILE  = 'data/score_seed.json'   # committed seed scores — bootstraps Railway on first deploy
-TOPPICK_FILE     = 'data/toppick.json'
+# Runtime caches must live on the mounted volume (DATA_DIR=/data on Railway).
+# These were relative paths, which wrote inside the container filesystem, so every
+# deploy or restart destroyed the cache. That forced a cold rebuild on the next
+# request, the rebuild ran past gunicorn's timeout, and the front end showed
+# "Couldn't load titles". Local dev falls back to ./data.
+DATA_DIR = os.getenv('DATA_DIR', 'data')
+os.makedirs(DATA_DIR, exist_ok=True)
+
+CACHE_FILE       = os.path.join(DATA_DIR, 'cache.json')
+SCORE_CACHE_FILE = os.path.join(DATA_DIR, 'score_cache.json')  # per-title score cache
+TOPPICK_FILE     = os.path.join(DATA_DIR, 'toppick.json')
+# Seed file is committed to the repo and read-only, so it stays with the code.
+SCORE_SEED_FILE  = 'data/score_seed.json'
 CACHE_TTL        = 6 * 3600    # 6 hours — refresh frequently for fresher data
 TOPPICK_TTL      = 12 * 3600
 SCORE_CACHE_TTL  = 7 * 24 * 3600  # 7 days — scores do change (RT, IMDb), refresh weekly
